@@ -1,5 +1,7 @@
 """Driverless eSCL (Apple AirScan) client for Brother DS-940DW."""
 
+from __future__ import annotations
+
 from dataclasses import dataclass
 import logging
 from pathlib import Path

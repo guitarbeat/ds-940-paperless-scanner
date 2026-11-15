@@ -1,5 +1,7 @@
 """Wait for a sheet, capture both sides, and publish one complete PDF via driverless eSCL."""
 
+from __future__ import annotations
+
 import fcntl
 import logging
 import os
