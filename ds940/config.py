@@ -18,6 +18,7 @@ class Settings:
     paper_size: str
     gemini_api_key: str = ""
     enable_ai_filing: bool = False
+    batch_timeout: float = 8.0
     web_port: int = 9400
     web_bind_ip: str = "0.0.0.0"
 
@@ -48,6 +49,7 @@ class Settings:
 
         gemini_api_key = os.environ.get("GEMINI_API_KEY", "").strip()
         enable_ai_filing = os.environ.get("ENABLE_AI_FILING", "0").strip().lower() in ("1", "true", "yes")
+        batch_timeout = float(os.environ.get("BATCH_TIMEOUT", "8.0").strip())
         web_port = int(os.environ.get("WEB_PORT", "9400").strip())
         web_bind_ip = os.environ.get("WEB_BIND_IP", "0.0.0.0").strip()
 
@@ -58,6 +60,7 @@ class Settings:
             paper_size=paper_size,
             gemini_api_key=gemini_api_key,
             enable_ai_filing=enable_ai_filing,
+            batch_timeout=batch_timeout,
             web_port=web_port,
             web_bind_ip=web_bind_ip,
         )

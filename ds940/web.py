@@ -165,6 +165,9 @@ class DashboardHandler(BaseHTTPRequestHandler):
             "uptime_seconds": uptime_sec,
             "memory_mb": metrics.get("rss_mb", 0.0),
             "updated": updated,
+            "timeout_remaining": raw.get("timeout_remaining") if isinstance(raw, dict) else None,
+            "sheet": raw.get("sheet") if isinstance(raw, dict) else None,
+            "pages_so_far": raw.get("pages_so_far") if isinstance(raw, dict) else None,
             "last_scan": last_scan,
         }
         self.send_json(data)
@@ -282,6 +285,9 @@ class DashboardHandler(BaseHTTPRequestHandler):
           badge.classList.add('badge-online');
         }} else if (data.state === 'scanning') {{
           badge.textContent = 'Scanning...';
+          badge.classList.add('badge-scanning');
+        }} else if (data.state === 'waiting_for_next_sheet') {{
+          badge.textContent = `Next Sheet? (${{data.timeout_remaining || ''}}s)`;
           badge.classList.add('badge-scanning');
         }} else {{
           badge.textContent = data.state.replace(/_/g, ' ');

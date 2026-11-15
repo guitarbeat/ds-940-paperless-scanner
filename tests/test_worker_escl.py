@@ -61,9 +61,9 @@ class WorkerEsclTests(unittest.TestCase):
         self.scanner.get_status.return_value = ScannerStatus(state="Idle", adf_state="ScannerAdfLoaded")
         self.scanner.start_scan_job.return_value = "http://192.168.0.25:8080/eSCL/ScanJobs/1"
 
-        def mock_fetch_pages(job_url, folder):
-            p1 = make_dummy_jpeg(folder / "page-1.jpg", color=(255, 0, 0))
-            p2 = make_dummy_jpeg(folder / "page-2.jpg", color=(0, 255, 0))
+        def mock_fetch_pages(job_url, folder, start_page=1, **kwargs):
+            p1 = make_dummy_jpeg(folder / f"page-{start_page}.jpg", color=(255, 0, 0))
+            p2 = make_dummy_jpeg(folder / f"page-{start_page + 1}.jpg", color=(0, 255, 0))
             return [p1, p2]
 
         self.scanner.fetch_job_pages.side_effect = mock_fetch_pages
@@ -86,6 +86,44 @@ class WorkerEsclTests(unittest.TestCase):
         if PdfReader is not None:
             reader = PdfReader(BytesIO(data))
             self.assertEqual(len(reader.pages), 2)
+
+    def test_multi_sheet_batch_collation(self):
+        calls = [0]
+
+        def mock_status(*args, **kwargs):
+            calls[0] += 1
+            if calls[0] in (1, 2):
+                # 1 = initial detection of sheet 1, 2 = detection of sheet 2
+                return ScannerStatus(state="Idle", adf_state="ScannerAdfLoaded")
+            return ScannerStatus(state="Idle", adf_state="ScannerAdfEmpty")
+
+        self.scanner.get_status.side_effect = mock_status
+        self.scanner.start_scan_job.return_value = "http://192.168.0.25:8080/eSCL/ScanJobs/batch"
+
+        def mock_fetch_pages(job_url, folder, start_page=1, **kwargs):
+            p1 = make_dummy_jpeg(folder / f"page-{start_page}.jpg", color=(255, 0, 0))
+            p2 = make_dummy_jpeg(folder / f"page-{start_page + 1}.jpg", color=(0, 255, 0))
+            return [p1, p2]
+
+        self.scanner.fetch_job_pages.side_effect = mock_fetch_pages
+
+        scan_id = capture_if_ready_escl(
+            self.scanner,
+            self.spool,
+            "a4",
+            on_scan=self.on_scan,
+            batch_timeout=1.0,
+        )
+        self.assertIsNotNone(scan_id)
+
+        delivered = list(self.consume.glob("*.pdf"))
+        self.assertEqual(len(delivered), 1)
+        data = delivered[0].read_bytes()
+        self.assertTrue(data.startswith(b"%PDF-"))
+
+        if PdfReader is not None:
+            reader = PdfReader(BytesIO(data))
+            self.assertEqual(len(reader.pages), 4)
 
     def test_retry_states(self):
         self.assertEqual(retry_state_escl(ScannerOfflineError("down")), ("scanner_offline", 15))

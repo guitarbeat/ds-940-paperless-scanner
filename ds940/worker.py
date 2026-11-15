@@ -25,7 +25,13 @@ LOG = logging.getLogger(__name__)
 
 
 def capture_if_ready_escl(
-    scanner: EsclScanner, spool: ScanSpool, paper_size: str, on_scan
+    scanner: EsclScanner,
+    spool: ScanSpool,
+    paper_size: str,
+    on_scan=None,
+    batch_timeout: float = 0.0,
+    on_status=None,
+    stop_event: Event | None = None,
 ) -> str | None:
     status = scanner.get_status()
     if status.is_jammed:
@@ -43,14 +49,64 @@ def capture_if_ready_escl(
         "paper_size": paper_size,
     }
     atomic_json(manifest_path, manifest, durable=True)
+
+    all_pages: list[Path] = []
+    sheet_count = 0
+
     try:
-        on_scan()
-        job_url = scanner.start_scan_job(duplex=True, dpi=DPI)
-        pages = scanner.fetch_job_pages(job_url, folder)
-        if not pages:
-            raise EsclError("No pages received from scanner job")
-        build_pdf(pages, folder / "document.pdf")
-        manifest.update(phase="ready", pages=len(pages))
+        while True:
+            sheet_count += 1
+            if on_status:
+                on_status("scanning", sheet=sheet_count, pages_so_far=len(all_pages))
+            elif on_scan:
+                on_scan()
+
+            job_url = scanner.start_scan_job(duplex=True, dpi=DPI)
+            new_pages = scanner.fetch_job_pages(
+                job_url, folder, start_page=len(all_pages) + 1
+            )
+            if not new_pages:
+                if not all_pages:
+                    raise EsclError("No pages received from scanner job")
+                break
+            all_pages.extend(new_pages)
+            LOG.info("Scanned sheet %d (%d pages total in batch)", sheet_count, len(all_pages))
+
+            if batch_timeout <= 0:
+                break
+
+            # Collation window: wait for user to insert next sheet
+            deadline = time.monotonic() + batch_timeout
+            next_sheet_detected = False
+
+            while time.monotonic() < deadline:
+                if stop_event and stop_event.is_set():
+                    break
+                time.sleep(0.8)
+                remaining = max(0.0, deadline - time.monotonic())
+                if on_status:
+                    on_status(
+                        "waiting_for_next_sheet",
+                        sheet=sheet_count,
+                        pages_so_far=len(all_pages),
+                        timeout_remaining=round(remaining, 1),
+                    )
+                try:
+                    s = scanner.get_status(timeout=2.0)
+                    if s.is_jammed:
+                        raise PaperJammedError("Paper jammed in scanner feeder")
+                    if s.is_paper_loaded:
+                        LOG.info("Next sheet detected within collation window!")
+                        next_sheet_detected = True
+                        break
+                except (ScannerOfflineError, ScannerBusyError):
+                    pass
+
+            if not next_sheet_detected:
+                break
+
+        build_pdf(all_pages, folder / "document.pdf")
+        manifest.update(phase="ready", pages=len(all_pages), sheets=sheet_count)
         atomic_json(manifest_path, manifest, durable=True)
         spool.publish(folder)
     except Exception as error:
@@ -112,7 +168,13 @@ def serve(settings: Settings, stop: Event):
                 next_recovery = time.monotonic() + 30
             try:
                 scanned_id = capture_if_ready_escl(
-                    scanner, spool, settings.paper_size, lambda: status("scanning")
+                    scanner,
+                    spool,
+                    settings.paper_size,
+                    on_scan=lambda: status("scanning"),
+                    batch_timeout=settings.batch_timeout,
+                    on_status=status,
+                    stop_event=stop,
                 )
                 if scanned_id:
                     LOG.info("Successfully scanned and published job: %s", scanned_id)

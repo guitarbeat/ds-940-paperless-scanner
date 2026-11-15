@@ -140,10 +140,16 @@ class EsclScanner:
         except (urllib.error.URLError, TimeoutError, OSError) as err:
             raise ScannerOfflineError(f"Failed to connect to scanner for ScanJob: {err}") from err
 
-    def fetch_job_pages(self, job_url: str, output_folder: Path, timeout: float = 60.0) -> list[Path]:
+    def fetch_job_pages(
+        self,
+        job_url: str,
+        output_folder: Path,
+        start_page: int = 1,
+        timeout: float = 60.0,
+    ) -> list[Path]:
         """Download all scanned page images for a job into the given folder."""
         pages: list[Path] = []
-        page_num = 1
+        page_num = start_page
         output_folder.mkdir(parents=True, exist_ok=True)
 
         while True:
