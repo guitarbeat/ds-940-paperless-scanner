@@ -20,7 +20,9 @@ class Settings:
     def from_environment(cls):
         address = os.environ.get("SCANNER_IP", "").strip()
         if not address:
-            address = os.environ.get("SCANNER_HOST", "192.168.0.25").strip()
+            address = os.environ.get("SCANNER_HOST", "").strip()
+        if not address:
+            raise ValueError("Scanner requires a LAN IPv4 address or hostname (e.g. SCANNER_IP=192.168.0.25)")
 
         # Allow either IPv4 address or hostname (e.g. BR5CF370DC7026.local)
         try:
