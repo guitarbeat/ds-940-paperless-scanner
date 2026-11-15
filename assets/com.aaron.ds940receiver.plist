@@ -7,10 +7,10 @@
     <key>ProgramArguments</key>
     <array>
         <string>/bin/bash</string>
-        <string>/Users/aaron/Documents/github/ds-940-paperless-scanner/scripts/run_receiver.sh</string>
+        <string>/Users/aaron/Projects/ds-940-paperless-scanner/scripts/run_receiver.sh</string>
     </array>
     <key>WorkingDirectory</key>
-    <string>/Users/aaron/Documents/github/ds-940-paperless-scanner</string>
+    <string>/Users/aaron/Projects/ds-940-paperless-scanner</string>
     <key>RunAtLoad</key>
     <true/>
     <key>KeepAlive</key>
@@ -18,8 +18,8 @@
     <key>ThrottleInterval</key>
     <integer>10</integer>
     <key>StandardOutPath</key>
-    <string>/Users/aaron/Documents/github/ds-940-paperless-scanner/work/receiver.log</string>
+    <string>/Users/aaron/Library/Logs/ds940receiver.log</string>
     <key>StandardErrorPath</key>
-    <string>/Users/aaron/Documents/github/ds-940-paperless-scanner/work/receiver-error.log</string>
+    <string>/Users/aaron/Library/Logs/ds940receiver.error.log</string>
 </dict>
 </plist>
