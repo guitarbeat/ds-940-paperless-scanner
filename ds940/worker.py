@@ -19,6 +19,7 @@ from .escl import (
     ScannerOfflineError,
 )
 from .spool import ScanSpool, atomic_json, build_pdf
+from .web import run_web_server
 
 LOG = logging.getLogger(__name__)
 
@@ -93,6 +94,11 @@ def serve(settings: Settings, stop: Event):
         enable_ai_filing=settings.enable_ai_filing,
     )
     scanner = EsclScanner(settings.scanner_ip)
+    try:
+        run_web_server(settings, stop)
+    except Exception as err:
+        LOG.warning("Could not start dashboard web server: %s", err)
+
     status("connecting")
     previous_state = None
     next_recovery = 0.0
