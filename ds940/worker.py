@@ -133,6 +133,8 @@ def main():
     os.umask(0o007)
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
     settings = Settings.from_environment()
+    settings.work.mkdir(parents=True, exist_ok=True)
+    settings.output.mkdir(parents=True, exist_ok=True)
     stop = Event()
     for signum in (signal.SIGTERM, signal.SIGINT):
         signal.signal(signum, lambda *_: stop.set())
