@@ -41,11 +41,7 @@ class Settings:
             raise ValueError("SCAN_PAPER_SIZE must be a4, auto, or legal")
 
         default_work = Path("./work")
-        default_output = (
-            Path.home() / "Scans"
-            if (Path.home() / "Scans").exists()
-            else Path.home() / "Documents" / "Scans"
-        )
+        default_output = Path.home() / "Documents" / "Scans"
 
         gemini_api_key = os.environ.get("GEMINI_API_KEY", "").strip()
         enable_ai_filing = os.environ.get("ENABLE_AI_FILING", "0").strip().lower() in ("1", "true", "yes")

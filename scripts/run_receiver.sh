@@ -6,7 +6,7 @@ export PYTHONPATH="${SCRIPT_DIR}"
 export PYTHONUNBUFFERED=1
 export SCANNER_IP="${SCANNER_IP:-192.168.0.25}"
 export SCANNER_HOST="${SCANNER_HOST:-192.168.0.25}"
-export OUTPUT_DIR="${OUTPUT_DIR:-$HOME/Scans}"
+export OUTPUT_DIR="${OUTPUT_DIR:-$HOME/Documents/Scans}"
 export WORK_DIR="${WORK_DIR:-$SCRIPT_DIR/work}"
 
 mkdir -p "$WORK_DIR" "$OUTPUT_DIR"

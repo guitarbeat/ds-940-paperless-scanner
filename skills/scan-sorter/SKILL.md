@@ -9,8 +9,7 @@ Use this skill to inspect, OCR, intelligently rename, and organize incoming PDF 
 
 ## Target Paths
 
-- **Local (MacBook Air or Mac Mini):** `~/Documents/Scans`
-- **Mac Mini Direct:** `~/Scans` (mirrored in Finder as `~/Documents/Scans`)
+- **Primary Tracked Folder (synced via iCloud):** `~/Documents/Scans`
 - **Remote Host:** Mac Mini at `100.96.177.69` via Tailscale / SSH
 
 ## Category Structure
@@ -46,11 +45,11 @@ Examples:
 Run the helper tool in dry-run preview mode:
 
 ```bash
-# On Mac Mini locally:
-python3 ~/Projects/ds-940-paperless-scanner/scripts/sort_scans.py --dir ~/Scans
+# On Mac Mini or MacBook Air locally:
+python3 ~/Projects/ds-940-paperless-scanner/scripts/sort_scans.py --dir ~/Documents/Scans
 
 # Or remotely from MacBook Air:
-ssh aaron@100.96.177.69 "python3 ~/Projects/ds-940-paperless-scanner/scripts/sort_scans.py --dir ~/Scans"
+ssh aaron@100.96.177.69 "python3 ~/Projects/ds-940-paperless-scanner/scripts/sort_scans.py --dir ~/Documents/Scans"
 ```
 
 The tool uses native Apple Vision OCR (`bin/ds940-ocr`) to read the text in milliseconds and determines the date, sender, document type, and category.
@@ -69,11 +68,11 @@ If the user wants any adjustments (e.g. custom category or different title), mod
 Execute the moves and create the category subfolders:
 
 ```bash
-# On Mac Mini locally:
-python3 ~/Projects/ds-940-paperless-scanner/scripts/sort_scans.py --dir ~/Scans --apply
+# On Mac Mini or MacBook Air locally:
+python3 ~/Projects/ds-940-paperless-scanner/scripts/sort_scans.py --dir ~/Documents/Scans --apply
 
 # Or remotely from MacBook Air:
-ssh aaron@100.96.177.69 "python3 ~/Projects/ds-940-paperless-scanner/scripts/sort_scans.py --dir ~/Scans --apply"
+ssh aaron@100.96.177.69 "python3 ~/Projects/ds-940-paperless-scanner/scripts/sort_scans.py --dir ~/Documents/Scans --apply"
 ```
 
 ### 4. Verify & Confirm
