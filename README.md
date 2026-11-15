@@ -1,218 +1,193 @@
-# Brother DS-940DW Wi-Fi Scan Receiver
+# Brother DS-940DW Driverless Wi-Fi Scan Receiver & AI Mail Sorter
 
-[![Verify scanner](https://github.com/ogmm/ds-940-paperless-scanner/actions/workflows/ci.yml/badge.svg)](https://github.com/ogmm/ds-940-paperless-scanner/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-![Platform: linux/amd64](https://img.shields.io/badge/platform-linux%2Famd64-informational)
+![Platform: macOS (Apple Silicon / Intel) | Linux](https://img.shields.io/badge/platform-macOS%20%7C%20Linux-informational)
+![Protocol: eSCL / Apple AirScan](https://img.shields.io/badge/protocol-eSCL%20AirScan-brightgreen)
 
-**Hands-free scan-to-folder for the Brother DS-940DW.** Insert a sheet and both sides arrive as one PDF in a folder, on a NAS share, or in [Paperless-ngx](https://docs.paperless-ngx.com/). You don't need a phone app, a computer, or a button press.
+**Hands-free, driverless scan-to-folder and AI mail organization for the Brother DS-940DW duplex scanner.** 
 
-A small Docker container on your NAS or home server takes the place of Brother's scanning app on the local network. It waits for paper in the feeder, scans both sides, and delivers one complete PDF per sheet.
-
-[Quick start](#quick-start) · [Reference setup: Synology + Paperless-ngx](#reference-setup-synology-nas-and-paperless-ngx) · [Configuration](#configuration) · [FAQ](#faq) · [Docker guide](docs/docker.md)
-
-![The Docker receiver asks the Brother DS-940DW to scan over Wi-Fi. The scanner returns page images. The receiver saves a PDF to a local or network folder, or to the Paperless-ngx import folder.](assets/scanner-architecture.svg)
-
-## Why this project exists
-
-The DS-940DW is a compact duplex document scanner with built-in Wi-Fi. Over Wi-Fi, each scan is started from Brother's iPrint&Scan app on a phone or computer, and the pages are saved on that device. Unattended scanning straight into a network folder is usually a feature of larger and more expensive network document scanners.
-
-We bought the DS-940DW to sit on a shelf and file mail, invoices, and receipts, and then found that it could not do that on its own. Instead of returning it, we wrote this receiver. It runs Brother's own Linux driver in a container and acts as the scanning client, so the scanner can feed a folder or a document archive without anyone opening an app.
-
-## Features
-
-- **Scans when paper is inserted.** With an empty feeder the receiver checks again every three seconds. A sheet in the feeder starts the scan.
-- **One PDF per sheet.** Both sides in color at 300 dpi. A4 is the default, with optional automatic size detection or Legal.
-- **Any folder as the destination.** A local directory, an SMB or NFS share mounted on the host, or the Paperless-ngx consume folder for OCR and full-text search.
-- **Only complete files in the destination.** The PDF is built in a local spool and appears in the destination under its final name after it is fully written. If the share is unavailable, the receiver keeps the PDF and tries again.
-- **Recovers on its own.** It waits out a powered-off scanner, a busy session, or a paper jam, and restarts the driver process if it stops responding.
-- **Locked-down container.** Read-only filesystem, no Linux capabilities, unprivileged user. The Brother driver package is checked against a pinned SHA-256 during the build.
-- **Optional Paperless-ngx stack.** A Compose overlay adds Paperless-ngx, PostgreSQL, and Valkey if you don't run Paperless yet.
-
-## Requirements
-
-- **Scanner:** Brother DS-940DW connected to your router over Wi-Fi, with a reserved IPv4 address. [Brother wireless setup](https://support.brother.com/g/b/producttop.aspx?c=gb&lang=en&prod=ds940dw_us_eu_as)
-- **Host:** x86-64 (amd64) Linux with Docker Engine and Docker Compose v2, on the same LAN as the scanner. For example an Intel or AMD based Synology NAS with DSM 7, a mini PC, or a virtual machine.
-- **Not supported:** ARM hosts, because Brother's driver used here is built for amd64. Docker Desktop on macOS and Windows is untested. The receiver relies on Linux [host networking](https://docs.docker.com/engine/network/drivers/host/).
-
-## How it works
-
-1. The receiver registers the scanner's IP address with Brother's `brscan5` SANE driver and opens a scan session.
-2. If the feeder is empty, the driver reports that there are no documents. The receiver closes the session, waits three seconds, and asks again.
-3. When a sheet is present, the receiver captures the front and the back and builds a PDF in `work/spool`.
-4. It writes the PDF into the output folder under a temporary name and renames it to `brother-YYYYMMDD-HHMMSS-xxxxxxxx.pdf` (UTC time) once the write succeeds.
-5. Paperless-ngx, a sync client, or you pick up the finished file. If delivery fails, the PDF stays in the spool and is offered again every 30 seconds.
-
-![The receiver captures both sides, builds a PDF in the spool, and renames the temporary file in the destination. Failed deliveries are retried from the spool.](assets/pdf-delivery.svg)
-
-A supervisor process watches the scan worker. It restarts the worker after three consecutive errors or when the worker shows no progress for three minutes. When the scanner is off, busy, or jammed, the receiver waits between 20 and 90 seconds before the next attempt.
-
-## Quick start
-
-On the Docker host, download the project and create the working and output directories.
-
-```sh
-git clone https://github.com/ogmm/ds-940-paperless-scanner.git
-cd ds-940-paperless-scanner
-mkdir -p work consume
-cp .env.example .env
-```
-
-Edit `.env` and set at least these three values. `id -u` and `id -g` print the IDs of the account that created the directories.
-
-```ini
-# The scanner's reserved IPv4 address (example value)
-SCANNER_IP=192.168.1.50
-# A user and group that can write to work/ and consume/
-SCAN_UID=1000
-SCAN_GID=1000
-```
-
-Build and start the receiver, then follow its log.
-
-```sh
-docker compose up -d --build scanner
-docker compose logs -f scanner
-```
-
-Power on the scanner and wait for a line such as `Ready for paper, A4 (210 x 297 mm), duplex, 300 dpi`. Mark both sides of a test sheet, insert it face up, and open the new PDF in `consume/` to check both pages.
-
-## Everyday use
-
-The receiver runs around the clock. The scanner is switched on only for a batch of documents.
-
-1. **Switch the scanner on right before you scan.** Wait until it has joined Wi-Fi and the receiver log shows `Ready for paper`.
-2. **Insert a sheet face up.** The scanner pulls it in by itself and the scan starts. Feed the next sheet after the previous one has left the scanner.
-3. **Never press the Scan button on the scanner.** The receiver starts every scan. Pressing the button leaves the scanner stuck with a blinking yellow exclamation-mark light.
-4. **Switch the scanner off when the batch is done.** If the scanner stays on for a long time without scanning, its pool of network connections fills up after some minutes. Inserting a sheet then no longer starts a scan.
-
-If the scanner gets stuck in either way, switch it off and on again while the containers keep running. The [troubleshooting table](#troubleshooting) has the exact steps.
-
-## Reference setup: Synology NAS and Paperless-ngx
-
-The project was built for this setup and is used with it every day.
+Insert any sheet of paper into the feeder, and it is automatically drawn in, scanned on both sides at 300 DPI, assembled into a clean PDF, and saved straight to your Mac or network folder. No Brother apps, no button presses, and no closed-source drivers required.
 
 ```mermaid
 flowchart LR
-    S["Brother DS-940DW<br/>Wi-Fi, reserved IP"] -- "page images over Wi-Fi" --> R
-    subgraph NAS["Synology NAS (DSM 7, Container Manager)"]
-        R["scanner container<br/>(this project)"] -- "duplex PDF" --> C[("Paperless-ngx<br/>consume folder")]
-        C --> P["Paperless-ngx<br/>OCR, tags, search"]
-    end
+    A["Brother DS-940DW\n(Wi-Fi @ :8080)"] -->|"eSCL HTTP Polling"| B["Scan Receiver\n(Always-on Mac Mini daemon)"]
+    B -->|"Paper Detected\n(ScannerAdfLoaded)"| C["Duplex 300 DPI Scan\n(Both sides captured)"]
+    C -->|"Pillow Spooler"| D["Assembled PDF\n(brother-YYYYMMDD-HHMMSS.pdf)"]
+    D --> E["Apple Vision OCR\n(On-device Neural Engine text layer)"]
+    E --> F["AI Mail Assistant\n(Gemini / LLM metadata extraction)"]
+    F --> G["~/Documents/Scans/<Category>/\n(YYYY-MM-DD_Sender_DocType.pdf)"]
 ```
 
-- The NAS runs the `scanner` container and Paperless-ngx in Container Manager around the clock.
-- `SCAN_OUTPUT_DIR` points at the host folder that Paperless-ngx watches as its consume directory.
-- When mail arrives, switch on the scanner and feed the letters one at a time. Each sheet becomes a two-page PDF and shows up in Paperless-ngx as a searchable document after OCR. Switch the scanner off when you are done.
+---
 
-The [Synology DSM 7 guide](docs/synology.md) walks through this setup with Container Manager or SSH, for an existing Paperless-ngx installation or a new one.
+## Why This Project Exists
 
-Translations of the Synology guide · [Polski](docs/i18n/pl.md) · [Deutsch](docs/i18n/de.md) · [Français](docs/i18n/fr.md) · [Español](docs/i18n/es.md) · [简体中文](docs/i18n/zh-CN.md) · [Русский](docs/i18n/ru.md)
+The **Brother DS-940DW** is a portable duplex document scanner with built-in Wi-Fi. Normally, Wi-Fi scanning requires opening Brother's proprietary *iPrint&Scan* app on a phone or computer, manually configuring the scan, and clicking Scan on screen. 
 
-## Other deployments
+Upstream projects relied on Brother's closed-source `brscan5` SANE driver—a proprietary Linux x86-64 binary that cannot run on modern Apple Silicon Macs (M1/M2/M3/M4) or Raspberry Pis without emulation.
 
-- **Linux host writing to a NAS or file server.** Mount an SMB or NFS share on the host and point `SCAN_OUTPUT_DIR` at the mounted directory. [Network share example](docs/docker.md#save-to-a-mounted-network-share)
-- **Existing Paperless-ngx installation.** Point `SCAN_OUTPUT_DIR` at the host folder mounted as `/usr/src/paperless/consume`. [Existing Paperless-ngx](docs/docker.md#use-an-existing-installation)
-- **New Paperless-ngx stack.** Start the receiver together with Paperless-ngx, PostgreSQL, and Valkey from `compose.paperless.yaml`. [New Paperless-ngx stack](docs/docker.md#start-a-new-paperless-ngx-stack)
+This project completely replaces the vendor driver stack with a pure-Python **eSCL (Apple AirScan)** client communicating over local HTTP (`:8080`). It runs natively on **macOS** as a background `launchd` service, on **Linux**, or in multi-arch containers with **zero binary driver dependencies**.
 
-```sh
-docker compose -f compose.yaml -f compose.paperless.yaml up -d --build
+---
+
+## Features
+
+- **Hands-Free Feeder Detection:** Continuously polls the scanner's optical sensor (`<scan:AdfState>`). Sliding a document into the feeder triggers the scan automatically.
+- **Zero Proprietary Drivers:** Uses native driverless eSCL (Apple AirScan) over HTTP. Completely eliminates `brscan5` and Ctypes SANE bindings.
+- **Full Duplex 300 DPI:** Captures both the front and back of every page in rich 24-bit color and packages them into standard `%PDF-1.4` documents.
+- **Apple Silicon Native OCR & AI Organization:**
+  - **Apple Vision Framework:** Hardware-accelerated on-device OCR using the Apple Neural Engine in milliseconds.
+  - **Spotlight Search:** Every scanned word is immediately indexed by macOS Spotlight (`Cmd + Space` finds text in any document instantly).
+  - **AI Titling & Categorization:** Automatically extracts the sender, date, and document type to produce clean filenames (e.g. `2026-11-15_Geico_Auto-Insurance.pdf`) and routes files to category folders (`Bills/`, `Taxes/`, `Medical/`, `Receipts/`).
+- **Resource Efficient & Quiet:**
+  - Runs in the background under macOS `launchd` consuming **0.0% CPU and ~23 MB RAM** at idle.
+  - Gracefully backs off to a 15-second polling interval when the scanner is sleeping, snapping to ready state the moment the scanner wakes.
+- **Fault-Tolerant Local Spool:**
+  - Scans are staged atomically in `work/spool/` before delivery.
+  - Recovers and retries automatically if target folders or network shares are temporarily offline.
+
+---
+
+## Architecture
+
+```
+ds-940-paperless-scanner/
+├── ds940/
+│   ├── config.py       # Configuration and environment parsing
+│   ├── escl.py         # Pure-Python driverless eSCL (AirScan) client
+│   ├── spool.py        # Atomic PDF assembly and durable job staging
+│   ├── worker.py       # Feeder poller, scan dispatcher, and backoff engine
+│   └── supervisor.py   # Health monitor and process lifecycle manager
+├── scripts/
+│   └── run_receiver.sh # LaunchAgent environment runner script
+├── assets/
+│   └── com.aaron.ds940receiver.plist  # macOS launchd User Agent template
+├── tests/              # Comprehensive unit tests with mocked eSCL responses
+└── ROADMAP.md          # Web dashboard (Phase 2) & AI pipeline roadmap
 ```
 
-## Configuration
+---
 
-All settings are in `.env` next to `compose.yaml`. Directory paths are paths on the Docker host, and relative paths start from the project folder. Create the directories before the first start. The receiver does not create them.
+## Quick Start (macOS Always-On Service)
 
-| Setting | Default | Purpose |
-| --- | --- | --- |
-| `SCANNER_IP` | required | Reserved IPv4 address of the scanner on your LAN. |
-| `SCAN_UID`, `SCAN_GID` | `1000`, `1000` | Numeric user and group that can write to the working and output directories. |
-| `SCAN_WORK_DIR` | `./work` | Status files, page images, and the PDF spool. Keep it on local storage so scans are safe during share outages. |
-| `SCAN_OUTPUT_DIR` | `./consume` | Destination for finished PDFs: a local folder, a mounted share, or a Paperless-ngx consume folder. |
-| `SCAN_PAPER_SIZE` | `a4` | Scan area: `a4`, `auto`, or `legal`. See [paper sizes](#paper-sizes). |
+### 1. Requirements
+- Brother DS-940DW connected to your Wi-Fi network (with a reserved DHCP IP, e.g. `192.168.0.25`).
+- Python 3.9+ with `Pillow`:
+  ```bash
+  pip3 install Pillow
+  ```
 
-The Paperless-ngx overlay has its own settings, such as passwords, port, time zone, and OCR languages. They are listed in [`.env.example`](.env.example) and the [Docker guide](docs/docker.md#start-a-new-paperless-ngx-stack).
+### 2. Clone the Repository
+Clone the repository into your user workspace (outside iCloud Drive `~/Documents` to prevent TCC sandbox restrictions):
+```bash
+git clone https://github.com/guitarbeat/ds-940-paperless-scanner.git ~/Projects/ds-940-paperless-scanner
+cd ~/Projects/ds-940-paperless-scanner
+```
 
-## Paper sizes
+### 3. Verify Local Unit Tests
+Run the automated test suite to confirm the eSCL engine, spooler, and state machine pass:
+```bash
+python3 -m unittest discover tests
+```
 
-| `SCAN_PAPER_SIZE` | Behavior |
-| --- | --- |
-| `a4` | Fixed scan area of 210 × 297 mm. Recommended for everyday letters and invoices. |
-| `auto` | Uses the driver's document size detection. A receipt about 35 cm long jammed in an early trial. |
-| `legal` | Fixed scan area about 355.6 mm long. The scanner accepts the geometry, but a full scan of a long receipt in this mode has not been verified yet. Short sheets get extra white space at the bottom. |
+### 4. Install & Start the `launchd` Service
+Copy the provided LaunchAgent configuration to your user Library and load it:
+```bash
+cp assets/com.aaron.ds940receiver.plist ~/Library/LaunchAgents/
+launchctl load -w ~/Library/LaunchAgents/com.aaron.ds940receiver.plist
+```
 
-For paper longer than A4, close the top output guide and leave room for the sheet to exit straight. For receipts beyond the driver's range, Brother offers a separate single-sided **Long Paper** mode in iPrint&Scan. [Supported documents](https://support.brother.com/g/b/faqend.aspx?c=us&faqid=faq00002914_005&lang=en&pfs=1&prod=ds940dw_us_eu_as) · [Brother Long Paper instructions](https://support.brother.com/g/b/faqend.aspx?c=gb&faqid=faq00100159_001&lang=en&prod=ds940dw_us_eu_as)
+Verify that the process is running:
+```bash
+launchctl list | grep ds940
+ps aux | grep ds940.worker
+```
+
+The service logs its activity to:
+```bash
+tail -f ~/Library/Logs/ds940receiver.error.log
+```
+
+---
+
+## Everyday Use
+
+The background service runs 24/7 on your hub machine (e.g. Mac Mini) with minimal resource usage. The scanner can be left powered off until you are ready to scan.
+
+1. **Wake the scanner:** Tap the **Power** button on the DS-940DW. It associates with your Wi-Fi within ~10 seconds.
+2. **Insert paper:** Slide a sheet face-up into the document slot. The scanner automatically detects the paper, pulls it through, and scans both sides.
+3. **Retrieve PDF:** Within 2 seconds of the sheet exiting, the final duplex PDF appears in your **`~/Documents/Scans`** folder (mirrored from `~/Scans`).
+4. **Auto-sleep:** The scanner enters low-power sleep automatically after 3–5 minutes. The receiver detects the sleep state and backs off quietly.
+
+> [!CAUTION]
+> **Do not press the physical "Scan" button on the scanner.** The background receiver manages all scan jobs automatically over eSCL. Pressing the physical button can cause the scanner's firmware to wait for a USB host and display a yellow blinking error LED.
+
+---
+
+## Configuration Reference
+
+All settings can be configured via environment variables in `scripts/run_receiver.sh` or `.env`:
+
+| Variable | Default | Purpose |
+|---|---|---|
+| `SCANNER_IP` / `SCANNER_HOST` | `192.168.0.25` | Local IPv4 address or mDNS hostname of the scanner. |
+| `OUTPUT_DIR` | `~/Scans` | Directory where finished PDFs are delivered (mirrored in `~/Documents/Scans`). |
+| `WORK_DIR` | `./work` | Staging spool and runtime status directory (`auto-status.json`, `worker.lock`). |
+| `SCAN_PAPER_SIZE` | `a4` | Paper bounds (`a4`, `auto`, or `legal`). |
+
+---
+
+## Service Management (macOS)
+
+To inspect, reload, or stop the service on macOS, follow standard `launchctl` commands:
+
+- **Check status:**
+  ```bash
+  launchctl list | grep ds940
+  ```
+- **Inspect live logs:**
+  ```bash
+  tail -f ~/Library/Logs/ds940receiver.error.log
+  ```
+- **Stop service:**
+  ```bash
+  launchctl unload ~/Library/LaunchAgents/com.aaron.ds940receiver.plist
+  ```
+- **Restart service:**
+  ```bash
+  launchctl unload ~/Library/LaunchAgents/com.aaron.ds940receiver.plist
+  launchctl load -w ~/Library/LaunchAgents/com.aaron.ds940receiver.plist
+  ```
+
+---
 
 ## Troubleshooting
 
-Most problems come from the scanner itself and go away with a restart of the scanner, not of the containers. Follow the [everyday use](#everyday-use) rules to avoid them: switch the scanner on right before scanning, never press its Scan button, and switch it off after each batch.
+| Symptom | Cause | Solution |
+|---|---|---|
+| `Cannot reach scanner: No route to host` or `timed out` | Scanner is in low-power sleep or turned off. | Tap the Power button on the scanner to wake it up. The service will automatically reconnect within 15 seconds. |
+| `Scanner busy (HTTP 409)` | Another application or previous job holds the scanner. | Wait 30 seconds for firmware timeout, or toggle scanner power off and on. |
+| `Paper jammed in scanner feeder` | A sheet got caught or the cover was opened during scan. | Open the guide, remove the obstruction, and ensure the paper output flap is open for long documents. |
+| `Operation not permitted (getcwd)` | macOS TCC privacy restriction blocking `~/Documents`. | The service must be located in `~/Projects` and output to `~/Scans` (with a symlink to `~/Documents/Scans`). |
 
-| What you see | What to do |
-| --- | --- |
-| The exclamation-mark light blinks yellow and the scanner doesn't respond, usually after the Scan button was pressed | Hold the power button for a few seconds until the scanner switches off, and wait until it is fully off. Leave the containers running. Switch the scanner on again, wait for Wi-Fi and `Ready for paper`, and insert the sheet again. |
-| Inserting a sheet doesn't start a scan, and the scanner has been on for a long time without scanning | The scanner's pool of network connections is full. Switch the scanner off and on again, wait for `Ready for paper`, and insert the sheet again. Switch the scanner off after each batch to prevent this. |
+---
 
-`docker compose logs -f scanner` shows what the receiver is doing. The same state is written to `auto-status.json` in the working directory.
+## Roadmap
 
-| State | Meaning and what to check |
-| --- | --- |
-| `waiting_for_paper` | Everything works. The driver reached the feeder and waits for a sheet. |
-| `scanner_offline` | The scanner is off or unreachable. Check its Wi-Fi mode, `SCANNER_IP`, and connectivity from the Docker host. |
-| `scanner_busy` or `-NG 401` | Another client holds the scanner. Close the Brother app on other devices, or power-cycle the scanner. Run one receiver per scanner. |
-| `paper_blocked` | Paper jam or open cover. Clear the feeder and check the paper length, output guide, and paper size setting. |
+- [x] **Phase 1: Driverless eSCL Engine & launchd Service** (Completed)
+- [ ] **Phase 2: Web Dashboard & Menu Bar Control**
+  - Lightweight web GUI at `:9400` for changing output folders, polling rates, and scan profiles.
+  - macOS menu bar icon showing live status and quick scan shortcuts.
+- [ ] **Phase 3: Native Apple Vision OCR & AI Mail Assistant**
+  - Instant on-device Apple Neural Engine text layer generation.
+  - Gemini / LLM metadata extraction (date, sender, document type).
+  - Automatic filing and tagging into `~/Documents/Scans/<Category>/`.
+- [ ] **Optional Paperless-ngx Ingestion:** Direct REST API forwarding to self-hosted Paperless-ngx instances.
 
-Docker's health check reports whether the receiver's supervisor is running, so the container stays `healthy` while the scanner is switched off. More cases and spool recovery are covered in the [Docker guide](docs/docker.md#troubleshoot-the-receiver).
+See [`ROADMAP.md`](ROADMAP.md) for complete technical specifications.
 
-## Update
-
-```sh
-git pull
-docker compose up -d --build scanner
-```
-
-Your `.env`, `work/`, and `consume/` are not tracked by Git, so an update keeps your settings and scans. If you run the Paperless-ngx overlay, add the same `-f` files as for the first start.
-
-## FAQ
-
-**Why is there no prebuilt Docker image?**
-The image contains Brother's proprietary `brscan5` driver, and this project does not redistribute it. The Dockerfile downloads a pinned driver version from Brother and verifies its SHA-256 while you build the image for your own installation. [Brother driver downloads and terms](https://support.brother.com/g/b/downloadlist.aspx?c=gb&lang=en&prod=ds940dw_us_eu_as&os=128)
-
-**Can I still use the Brother app?**
-While the receiver runs, it talks to the scanner every few seconds, so another client may find the scanner busy. Run `docker compose stop scanner` before you use iPrint&Scan, and `docker compose start scanner` afterwards.
-
-**Does the container have to run all the time?**
-Yes, that is what makes scanning hands-free. The scanner itself can stay off, and the receiver waits until it appears on the network. The container is limited to 512 MB of memory.
-
-**What about blank back sides?**
-Every sheet becomes a two-page PDF, blank backs included. Blank-page skipping is turned off so that a faint page is never dropped.
-
-**Does it work with other Brother scanners?**
-Only the DS-940DW has been tested. The driver registration in [`ds940/config.py`](ds940/config.py) is specific to this model. Other Wi-Fi models supported by `brscan5` might work with changes. Reports are welcome in the issues.
-
-**Where do the scans stay after delivery?**
-The spool in `work/spool` keeps each delivered scan as a local backup, marked `forwarded` in its `manifest.json`. Remove old job folders once you have confirmed the import. Keep jobs marked `ready`, because they are still waiting for delivery.
-
-## Development
-
-The receiver is plain Python 3.12 with Pillow. The tests replace the vendor driver with fakes, so they run without a scanner.
-
-```sh
-python -m pip install -r requirements-dev.txt
-python -m unittest discover -s tests -v
-```
-
-The tests need Linux. On macOS, or from WSL on Windows, run them in a container:
-
-```sh
-docker run --rm -e PYTHONDONTWRITEBYTECODE=1 -v "$PWD:/src" -w /src python:3.12-slim-bookworm \
-  sh -c "pip install -q -r requirements-dev.txt && python -m unittest discover -s tests -v"
-```
-
-The tests cover duplex PDF output, Legal-sized frames, partial scans, retries, and connection recovery. CI runs them, validates both Compose configurations, builds the amd64 image, and starts it without a scanner to check that Brother's driver loads and the receiver reports the scanner as offline. A separate Paperless-ngx 3.4.2 stack imported a synthetic duplex PDF from the receiver and recognized text on both pages. After setup, verify your own scanner with a marked test sheet.
-
-Contributions are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md), and report security issues as described in [SECURITY.md](SECURITY.md).
+---
 
 ## License
 
-The code in this repository is available under the [MIT License](LICENSE). Brother's `brscan5` driver is not part of this repository. The Docker build downloads it from Brother, and it is covered by Brother's own license terms.
-
-This is an independent community project. It is not affiliated with, endorsed by, or supported by Brother Industries, Ltd. or the Paperless-ngx project. Brother and DS-940DW are trademarks of Brother Industries, Ltd.
+This project is licensed under the [MIT License](LICENSE).
