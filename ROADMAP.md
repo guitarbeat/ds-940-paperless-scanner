@@ -22,7 +22,7 @@ Add user-facing controls and visibility so the service isn't a black box:
   - **Feeder Polling Frequency**: Configurable interval slider (e.g. 2s, 3s, 5s) with adaptive sleep backoff.
   - **RAM & Resource Guard**: Live memory and CPU consumption monitor with configurable memory ceiling and auto-recovery (e.g. gracefully recycle worker if memory exceeds 200MB).
   - **Scan Profiles**: Quick toggles for DPI (150 / 300 / 600), Color vs Grayscale, and Simplex / Duplex.
-  - **Multi-Page Collation Timeout**: Optional multi-sheet buffer (e.g. combine sheets fed within 5 seconds into a single document).
+  - [x] Multi-Page Collation Timeout: Multi-sheet buffer (8-second window) automatically merges sequential sheets into a single unified multi-page PDF.
 - **Status & History**:
   - Live scanner state indicator (`Waiting for paper`, `Scanning`, `Offline`, `Jammed`).
   - Recent scans list with 1-click preview and download.
