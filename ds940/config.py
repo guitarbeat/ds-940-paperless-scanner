@@ -1,10 +1,11 @@
 """Receiver settings and scanner network configuration."""
 
+from __future__ import annotations
+
 from dataclasses import dataclass
 from ipaddress import IPv4Address
 import os
 from pathlib import Path
-
 
 DPI = 300
 
@@ -15,6 +16,10 @@ class Settings:
     work: Path
     output: Path
     paper_size: str
+    gemini_api_key: str = ""
+    enable_ai_filing: bool = False
+    web_port: int = 9400
+    web_bind_ip: str = "0.0.0.0"
 
     @classmethod
     def from_environment(cls):
@@ -35,13 +40,26 @@ class Settings:
             raise ValueError("SCAN_PAPER_SIZE must be a4, auto, or legal")
 
         default_work = Path("./work")
-        default_output = Path.home() / "Documents" / "Scans"
+        default_output = (
+            Path.home() / "Scans"
+            if (Path.home() / "Scans").exists()
+            else Path.home() / "Documents" / "Scans"
+        )
+
+        gemini_api_key = os.environ.get("GEMINI_API_KEY", "").strip()
+        enable_ai_filing = os.environ.get("ENABLE_AI_FILING", "0").strip().lower() in ("1", "true", "yes")
+        web_port = int(os.environ.get("WEB_PORT", "9400").strip())
+        web_bind_ip = os.environ.get("WEB_BIND_IP", "0.0.0.0").strip()
 
         return cls(
-            scanner_ip,
-            Path(os.environ.get("WORK_DIR", str(default_work))),
-            Path(os.environ.get("OUTPUT_DIR", str(default_output))),
-            paper_size,
+            scanner_ip=scanner_ip,
+            work=Path(os.environ.get("WORK_DIR", str(default_work))),
+            output=Path(os.environ.get("OUTPUT_DIR", str(default_output))),
+            paper_size=paper_size,
+            gemini_api_key=gemini_api_key,
+            enable_ai_filing=enable_ai_filing,
+            web_port=web_port,
+            web_bind_ip=web_bind_ip,
         )
 
     def configure_driver(self):

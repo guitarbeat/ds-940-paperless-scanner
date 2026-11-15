@@ -86,7 +86,12 @@ def serve(settings: Settings, stop: Event):
     settings.work.mkdir(parents=True, exist_ok=True)
     settings.output.mkdir(parents=True, exist_ok=True)
 
-    spool = ScanSpool(settings.work, settings.output)
+    spool = ScanSpool(
+        settings.work,
+        settings.output,
+        gemini_api_key=settings.gemini_api_key,
+        enable_ai_filing=settings.enable_ai_filing,
+    )
     scanner = EsclScanner(settings.scanner_ip)
     status("connecting")
     previous_state = None
