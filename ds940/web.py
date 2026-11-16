@@ -259,36 +259,43 @@ class DashboardHandler(BaseHTTPRequestHandler):
   <title>Brother DS-940DW</title>
   <style>
     :root {{
-      --bg: #090a0d;
-      --surface: #121418;
+      --bg: #0b0c0f;
+      --surface: #13151a;
       --surface-subtle: #171920;
-      --surface-elevated: #1d2028;
-      --border: #222630;
-      --border-subtle: #181b22;
-      --text: #f0f2f5;
-      --text-secondary: #8a919e;
-      --text-muted: #565d6c;
-      --accent: #f0f2f5;
-      --accent-btn-text: #090a0d;
-      --status-green: #30d158;
-      --status-amber: #ff9f0a;
-      --status-muted: #626875;
+      --surface-hover: #1b1e26;
+      --surface-elevated: #222631;
+      --border: rgba(255, 255, 255, 0.075);
+      --border-subtle: rgba(255, 255, 255, 0.04);
+      --border-focus: rgba(255, 255, 255, 0.25);
+      --text: #f2f4f7;
+      --text-secondary: #9aa1ad;
+      --text-muted: #5e6573;
+      --accent: #f2f4f7;
+      --accent-subtle: rgba(255, 255, 255, 0.06);
+      --accent-btn-text: #0b0c0f;
+      --status-ready: #34c759;
+      --status-active: #f59e0b;
+      --status-standby: #64748b;
+      --status-danger: #ef4444;
+      --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
     }}
     * {{ box-sizing: border-box; margin: 0; padding: 0; }}
-    ::selection {{ background: rgba(255, 255, 255, 0.15); color: #fff; }}
-    ::-webkit-scrollbar {{ width: 8px; height: 8px; }}
-    ::-webkit-scrollbar-track {{ background: var(--bg); }}
-    ::-webkit-scrollbar-thumb {{ background: var(--border); border-radius: 4px; }}
-    ::-webkit-scrollbar-thumb:hover {{ background: var(--text-muted); }}
+    ::selection {{ background: rgba(255, 255, 255, 0.14); color: #fff; }}
+    ::-webkit-scrollbar {{ width: 6px; height: 6px; }}
+    ::-webkit-scrollbar-track {{ background: transparent; }}
+    ::-webkit-scrollbar-thumb {{ background: rgba(255, 255, 255, 0.1); border-radius: 3px; }}
+    ::-webkit-scrollbar-thumb:hover {{ background: rgba(255, 255, 255, 0.2); }}
 
     body {{
-      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", system-ui, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Inter", system-ui, sans-serif;
       background: var(--bg);
       color: var(--text);
       line-height: 1.5;
-      padding: 2.5rem 1.5rem;
+      padding: 3rem 1.5rem 4rem;
       font-variant-numeric: tabular-nums;
       -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      letter-spacing: -0.011em;
     }}
     .container {{ max-width: 1040px; margin: 0 auto; }}
 
@@ -297,176 +304,264 @@ class DashboardHandler(BaseHTTPRequestHandler):
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 1.75rem;
-      padding-bottom: 1.25rem;
+      margin-bottom: 2rem;
+      padding-bottom: 1.5rem;
       border-bottom: 1px solid var(--border-subtle);
     }}
     .brand {{
       display: flex;
       align-items: center;
-      gap: 0.75rem;
+      gap: 0.85rem;
+    }}
+    .brand-icon {{
+      width: 28px;
+      height: 28px;
+      padding: 5px;
+      background: var(--surface-subtle);
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      color: var(--text-secondary);
+      flex-shrink: 0;
+    }}
+    .brand-text {{
+      display: flex;
+      align-items: baseline;
+      gap: 0.65rem;
+      flex-wrap: wrap;
     }}
     .brand-title {{
-      font-size: 1.15rem;
+      font-size: 1.125rem;
       font-weight: 600;
-      letter-spacing: -0.015em;
+      letter-spacing: -0.02em;
+      color: var(--text);
+    }}
+    .brand-badge {{
+      font-size: 0.7rem;
+      font-weight: 500;
+      color: var(--text-muted);
+      letter-spacing: 0.02em;
     }}
 
-    /* Status Indicator */
+    /* Header Right: Status + Controls */
+    .header-actions {{
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }}
     .status-pill {{
       display: inline-flex;
       align-items: center;
       gap: 0.5rem;
-      font-size: 0.8rem;
+      font-size: 0.78rem;
       font-weight: 500;
-      padding: 0.35rem 0.75rem;
+      padding: 0.35rem 0.8rem;
       border-radius: 9999px;
       background: var(--surface);
       border: 1px solid var(--border);
       color: var(--text-secondary);
-      transition: border-color 200ms ease;
+      transition: all 180ms var(--ease-out);
     }}
     .status-dot {{
       width: 7px;
       height: 7px;
       border-radius: 50%;
-      background: var(--status-muted);
+      background: var(--status-standby);
       transition: background-color 200ms ease, box-shadow 200ms ease;
     }}
-    .status-dot.online {{ background: var(--status-green); box-shadow: 0 0 8px rgba(48, 209, 88, 0.4); }}
-    .status-dot.active {{ background: var(--status-amber); box-shadow: 0 0 8px rgba(255, 159, 10, 0.5); animation: pulse 1.5s infinite ease-in-out; }}
-    .status-dot.offline {{ background: var(--status-muted); }}
+    .status-dot.online {{ background: var(--status-ready); box-shadow: 0 0 8px rgba(52, 199, 89, 0.4); }}
+    .status-dot.active {{ background: var(--status-active); box-shadow: 0 0 8px rgba(245, 158, 11, 0.5); animation: pulse 1.6s infinite ease-in-out; }}
+    .status-dot.offline {{ background: var(--status-standby); }}
 
     @keyframes pulse {{
-      0%, 100% {{ opacity: 1; }}
-      50% {{ opacity: 0.35; }}
+      0%, 100% {{ opacity: 1; transform: scale(1); }}
+      50% {{ opacity: 0.4; transform: scale(0.9); }}
     }}
+
+    .icon-btn {{
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 30px;
+      height: 30px;
+      border-radius: 7px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 150ms var(--ease-out);
+    }}
+    .icon-btn:hover {{ color: var(--text); border-color: rgba(255, 255, 255, 0.15); background: var(--surface-hover); }}
+    .icon-btn:active {{ transform: scale(0.96); }}
 
     /* Collation Banner */
     .collation-banner {{
       display: none;
-      background: rgba(255, 159, 10, 0.08);
-      border: 1px solid rgba(255, 159, 10, 0.25);
-      border-radius: 8px;
+      background: rgba(245, 158, 11, 0.08);
+      border: 1px solid rgba(245, 158, 11, 0.22);
+      border-radius: 9px;
       padding: 0.85rem 1.25rem;
-      margin-bottom: 1.5rem;
+      margin-bottom: 1.75rem;
       position: relative;
       overflow: hidden;
+      animation: fadeIn 200ms var(--ease-out);
     }}
     .collation-banner.visible {{ display: flex; align-items: center; justify-content: space-between; }}
     .collation-info {{ display: flex; align-items: center; gap: 0.75rem; }}
-    .collation-icon {{ width: 18px; height: 18px; color: var(--status-amber); flex-shrink: 0; }}
-    .collation-text {{ font-size: 0.85rem; font-weight: 500; color: #ffbe53; }}
-    .collation-timer {{ font-size: 0.82rem; font-weight: 600; font-family: ui-monospace, Menlo, monospace; color: var(--text); }}
+    .collation-icon {{ width: 17px; height: 17px; color: var(--status-active); flex-shrink: 0; }}
+    .collation-text {{ font-size: 0.82rem; font-weight: 500; color: #fbbf24; }}
+    .collation-timer {{ font-size: 0.8rem; font-weight: 600; font-family: ui-monospace, Menlo, monospace; color: var(--text); }}
     .collation-bar {{
       position: absolute;
       bottom: 0;
       left: 0;
       height: 2px;
-      background: var(--status-amber);
+      background: var(--status-active);
       transition: width 1s linear;
     }}
 
-    /* Hardware Telemetry Strip */
+    /* Hardware Telemetry Strip (Precision Instrument Look) */
     .telemetry-card {{
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: 10px;
-      padding: 1.15rem 1.4rem;
-      margin-bottom: 1.75rem;
+      padding: 1.1rem 1.4rem;
+      margin-bottom: 2rem;
       display: grid;
-      grid-template-columns: 1.3fr 1fr 1fr 1.7fr;
+      grid-template-columns: 1.2fr 1fr 1fr 1.8fr;
       gap: 1.25rem;
+      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.2);
     }}
-    @media (max-width: 768px) {{
+    @media (max-width: 820px) {{
       .telemetry-card {{ grid-template-columns: 1fr 1fr; gap: 1rem; }}
     }}
     .metric-item {{ display: flex; flex-direction: column; gap: 0.2rem; }}
-    .metric-label {{ font-size: 0.72rem; color: var(--text-secondary); font-weight: 500; letter-spacing: 0.01em; }}
-    .metric-val {{ font-size: 0.92rem; font-weight: 600; color: var(--text); }}
+    .metric-label {{ font-size: 0.68rem; color: var(--text-muted); font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; }}
+    .metric-val {{ font-size: 0.9rem; font-weight: 500; color: var(--text); }}
     .metric-sub {{ font-size: 0.72rem; color: var(--text-muted); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }}
     .path-row {{ display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; }}
-    .copy-btn {{
+    .copy-pill {{
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
       background: none;
       border: none;
       color: var(--text-muted);
       cursor: pointer;
-      padding: 2px;
-      border-radius: 3px;
-      transition: color 150ms ease;
+      padding: 2px 6px;
+      border-radius: 4px;
+      transition: all 120ms ease;
     }}
-    .copy-btn:hover {{ color: var(--text); }}
+    .copy-pill:hover {{ color: var(--text); background: var(--surface-subtle); }}
+    .copy-pill:active {{ transform: scale(0.96); }}
 
-    /* Section & Toolbar */
+    /* Section Header & Toolbar */
     .toolbar-row {{
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 1rem;
+      margin-bottom: 0.85rem;
       gap: 1rem;
       flex-wrap: wrap;
     }}
     .section-title {{
-      font-size: 0.95rem;
+      font-size: 0.92rem;
       font-weight: 600;
       color: var(--text);
       display: flex;
       align-items: center;
-      gap: 0.5rem;
+      gap: 0.55rem;
+      letter-spacing: -0.01em;
     }}
     .count-badge {{
-      font-size: 0.72rem;
+      font-size: 0.7rem;
       font-weight: 500;
       color: var(--text-muted);
       background: var(--surface-subtle);
       border: 1px solid var(--border-subtle);
-      padding: 0.1rem 0.45rem;
-      border-radius: 4px;
+      padding: 0.08rem 0.45rem;
+      border-radius: 9999px;
     }}
     .toolbar-actions {{ display: flex; align-items: center; gap: 0.6rem; }}
     
+    .search-wrapper {{
+      position: relative;
+      display: flex;
+      align-items: center;
+    }}
     .search-input {{
       background: var(--surface);
       border: 1px solid var(--border);
-      border-radius: 6px;
-      padding: 0.4rem 0.75rem 0.4rem 2rem;
+      border-radius: 7px;
+      padding: 0.45rem 2.2rem 0.45rem 2.1rem;
       font-size: 0.8rem;
       color: var(--text);
-      width: 220px;
+      width: 240px;
       outline: none;
-      transition: border-color 150ms ease;
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%238a919e' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='8'%3E%3C/circle%3E%3Cline x1='21' y1='21' x2='16.65' y2='16.65'%3E%3C/line%3E%3C/svg%3E");
-      background-repeat: no-repeat;
-      background-position: 8px center;
+      transition: all 150ms var(--ease-out);
     }}
-    .search-input:focus {{ border-color: var(--text-secondary); }}
+    .search-input:focus {{
+      border-color: var(--border-focus);
+      background: var(--surface-hover);
+      box-shadow: 0 0 0 1px var(--border-focus);
+      width: 270px;
+    }}
     .search-input::placeholder {{ color: var(--text-muted); }}
+    .search-icon {{
+      position: absolute;
+      left: 0.65rem;
+      width: 14px;
+      height: 14px;
+      color: var(--text-muted);
+      pointer-events: none;
+    }}
+    .search-kbd {{
+      position: absolute;
+      right: 0.55rem;
+      font-size: 0.65rem;
+      font-family: ui-monospace, Menlo, monospace;
+      color: var(--text-muted);
+      background: var(--surface-subtle);
+      border: 1px solid var(--border);
+      padding: 0.1rem 0.35rem;
+      border-radius: 4px;
+      pointer-events: none;
+    }}
 
-    /* Category Filter Pills */
+    /* Category Filter Bar */
     .filter-bar {{
       display: flex;
       gap: 0.4rem;
       overflow-x: auto;
-      margin-bottom: 0.85rem;
-      padding-bottom: 0.25rem;
+      margin-bottom: 1rem;
+      padding-bottom: 0.35rem;
     }}
     .filter-pill {{
       font-size: 0.75rem;
       font-weight: 500;
-      padding: 0.25rem 0.65rem;
+      padding: 0.28rem 0.72rem;
       border-radius: 9999px;
       background: var(--surface);
       border: 1px solid var(--border);
       color: var(--text-secondary);
       cursor: pointer;
       white-space: nowrap;
-      transition: all 120ms ease;
+      transition: all 140ms var(--ease-out);
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
     }}
-    .filter-pill:hover {{ color: var(--text); border-color: var(--text-muted); }}
+    .filter-pill:hover {{
+      color: var(--text);
+      border-color: rgba(255, 255, 255, 0.15);
+      background: var(--surface-hover);
+      transform: translateY(-1px);
+    }}
+    .filter-pill:active {{ transform: scale(0.97); }}
     .filter-pill.active {{
-      background: var(--accent);
-      color: var(--accent-btn-text);
-      border-color: var(--accent);
+      background: var(--accent-subtle);
+      color: var(--text);
+      border-color: rgba(255, 255, 255, 0.22);
+      font-weight: 600;
     }}
 
     /* Document Archive List */
@@ -475,19 +570,22 @@ class DashboardHandler(BaseHTTPRequestHandler):
       border: 1px solid var(--border);
       border-radius: 10px;
       overflow: hidden;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
     }}
     table {{
       width: 100%;
       border-collapse: collapse;
-      font-size: 0.85rem;
+      font-size: 0.83rem;
       text-align: left;
     }}
     thead th {{
-      padding: 0.75rem 1.25rem;
+      padding: 0.8rem 1.25rem;
       background: var(--surface-subtle);
-      color: var(--text-secondary);
-      font-weight: 500;
-      font-size: 0.72rem;
+      color: var(--text-muted);
+      font-weight: 600;
+      font-size: 0.68rem;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
       border-bottom: 1px solid var(--border);
     }}
     tbody tr {{
@@ -495,62 +593,96 @@ class DashboardHandler(BaseHTTPRequestHandler):
       transition: background 120ms ease;
     }}
     tbody tr:last-child {{ border-bottom: none; }}
-    tbody tr:hover {{ background: rgba(255, 255, 255, 0.02); }}
+    tbody tr:hover {{
+      background: var(--surface-hover);
+    }}
     td {{
-      padding: 0.8rem 1.25rem;
+      padding: 0.85rem 1.25rem;
       vertical-align: middle;
     }}
+    
     .doc-link {{
       color: var(--text);
       text-decoration: none;
       font-weight: 500;
       display: inline-flex;
       align-items: center;
-      gap: 0.5rem;
+      gap: 0.6rem;
       cursor: pointer;
+      transition: color 120ms ease;
     }}
-    .doc-link:hover {{ color: #fff; text-decoration: underline; }}
-    .doc-icon {{ width: 16px; height: 16px; color: var(--text-secondary); flex-shrink: 0; }}
-    
+    .doc-link:hover {{ color: #fff; }}
+    .doc-icon {{
+      width: 16px;
+      height: 16px;
+      color: var(--text-muted);
+      flex-shrink: 0;
+      transition: color 120ms ease;
+    }}
+    .doc-link:hover .doc-icon {{ color: var(--text-secondary); }}
+    .doc-name {{ letter-spacing: -0.01em; }}
+    .doc-ext {{ color: var(--text-muted); font-weight: 400; }}
+
     .cat-pill {{
       display: inline-block;
-      font-size: 0.72rem;
+      font-size: 0.7rem;
       font-weight: 500;
-      padding: 0.15rem 0.55rem;
-      border-radius: 4px;
+      padding: 0.18rem 0.55rem;
+      border-radius: 5px;
       letter-spacing: 0.01em;
+      white-space: nowrap;
     }}
 
     .actions-cell {{ text-align: right; }}
-    .action-link {{
+    .action-btn {{
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      background: none;
+      border: none;
       color: var(--text-muted);
       text-decoration: none;
-      font-size: 0.75rem;
-      margin-left: 0.75rem;
-      transition: color 120ms ease;
+      font-size: 0.74rem;
+      font-weight: 500;
+      padding: 0.25rem 0.5rem;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: all 120ms ease;
     }}
-    .action-link:hover {{ color: var(--text); }}
-    .action-link.action-delete:hover {{ color: #ff453a; }}
+    .action-btn:hover {{
+      color: var(--text);
+      background: var(--surface-subtle);
+    }}
+    .action-btn:active {{ transform: scale(0.96); }}
+    .action-btn.action-delete:hover {{
+      color: #ff6961;
+      background: rgba(239, 68, 68, 0.08);
+    }}
 
     .empty-state {{
-      padding: 3.5rem 1rem;
+      padding: 4rem 1.5rem;
       text-align: center;
       color: var(--text-muted);
     }}
     .empty-icon {{
-      width: 32px;
-      height: 32px;
-      margin: 0 auto 0.75rem;
+      width: 36px;
+      height: 36px;
+      margin: 0 auto 0.85rem;
       color: var(--text-muted);
-      opacity: 0.5;
+      opacity: 0.4;
     }}
     .empty-title {{
       font-size: 0.9rem;
       font-weight: 500;
       color: var(--text-secondary);
-      margin-bottom: 0.25rem;
+      margin-bottom: 0.35rem;
     }}
-    .empty-desc {{ font-size: 0.8rem; color: var(--text-muted); }}
+    .empty-desc {{
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      max-width: 320px;
+      margin: 0 auto;
+    }}
 
     /* QuickLook Drawer / Modal */
     .preview-backdrop {{
@@ -559,26 +691,36 @@ class DashboardHandler(BaseHTTPRequestHandler):
       left: 0;
       right: 0;
       bottom: 0;
-      background: rgba(0, 0, 0, 0.7);
-      backdrop-filter: blur(4px);
+      background: rgba(4, 5, 8, 0.78);
+      backdrop-filter: blur(10px);
       display: none;
       align-items: center;
       justify-content: center;
       z-index: 1000;
       padding: 1.5rem;
+      opacity: 0;
+      transition: opacity 160ms var(--ease-out);
     }}
-    .preview-backdrop.open {{ display: flex; }}
+    .preview-backdrop.open {{
+      display: flex;
+      opacity: 1;
+    }}
     .preview-modal {{
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: 12px;
       width: 100%;
-      max-width: 900px;
-      height: 85vh;
+      max-width: 960px;
+      height: 86vh;
       display: flex;
       flex-direction: column;
       overflow: hidden;
-      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.65);
+      transform: scale(0.98);
+      transition: transform 180ms var(--ease-out);
+    }}
+    .preview-backdrop.open .preview-modal {{
+      transform: scale(1);
     }}
     .preview-header {{
       display: flex;
@@ -588,46 +730,70 @@ class DashboardHandler(BaseHTTPRequestHandler):
       border-bottom: 1px solid var(--border);
       background: var(--surface-subtle);
     }}
-    .preview-title {{ font-size: 0.9rem; font-weight: 600; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 700px; }}
-    .close-btn {{
-      background: none;
-      border: none;
-      color: var(--text-secondary);
-      cursor: pointer;
-      font-size: 1.25rem;
-      line-height: 1;
-      padding: 0.25rem;
+    .preview-header-left {{
+      display: flex;
+      align-items: center;
+      gap: 0.65rem;
+      overflow: hidden;
     }}
-    .close-btn:hover {{ color: #fff; }}
+    .preview-title {{
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: var(--text);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      max-width: 650px;
+    }}
+    .preview-meta-pill {{
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      padding: 0.15rem 0.5rem;
+      border-radius: 4px;
+      white-space: nowrap;
+    }}
+    .preview-actions {{
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }}
     .preview-frame {{
       flex: 1;
       width: 100%;
       height: 100%;
       border: none;
-      background: #1e1e1e;
+      background: #14161b;
     }}
 
     /* Toast Notification */
     .toast {{
       position: fixed;
-      bottom: 1.5rem;
-      right: 1.5rem;
+      bottom: 2rem;
+      right: 2rem;
       background: var(--surface-elevated);
       border: 1px solid var(--border);
       color: var(--text);
-      padding: 0.75rem 1.25rem;
+      padding: 0.7rem 1.2rem;
       border-radius: 8px;
-      font-size: 0.82rem;
+      font-size: 0.8rem;
       font-weight: 500;
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
-      transform: translateY(100px);
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.45);
+      transform: translateY(20px);
       opacity: 0;
-      transition: all 200ms cubic-bezier(0.16, 1, 0.3, 1);
+      transition: all 180ms var(--ease-out);
       z-index: 2000;
+      pointer-events: none;
     }}
     .toast.show {{
       transform: translateY(0);
       opacity: 1;
+    }}
+
+    @keyframes fadeIn {{
+      from {{ opacity: 0; transform: translateY(-4px); }}
+      to {{ opacity: 1; transform: translateY(0); }}
     }}
   </style>
 </head>
@@ -635,11 +801,28 @@ class DashboardHandler(BaseHTTPRequestHandler):
   <div class="container">
     <header>
       <div class="brand">
-        <span class="brand-title">Brother DS-940DW</span>
+        <svg class="brand-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="2" y="4" width="20" height="16" rx="2"/>
+          <path d="M6 12h12"/>
+          <path d="M6 8h12"/>
+        </svg>
+        <div class="brand-text">
+          <span class="brand-title">Brother DS-940DW</span>
+          <span class="brand-badge">AirScan • Duplex</span>
+        </div>
       </div>
-      <div class="status-pill">
-        <span id="status-dot" class="status-dot offline"></span>
-        <span id="status-label">Standby</span>
+      <div class="header-actions">
+        <div class="status-pill">
+          <span id="status-dot" class="status-dot offline"></span>
+          <span id="status-label">Standby</span>
+        </div>
+        <button class="icon-btn" onclick="refreshAll()" title="Refresh status and documents">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="23 4 23 10 17 10"/>
+            <polyline points="1 20 1 14 7 14"/>
+            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+          </svg>
+        </button>
       </div>
     </header>
 
@@ -659,22 +842,22 @@ class DashboardHandler(BaseHTTPRequestHandler):
       <div class="metric-item">
         <span class="metric-label">Scanner</span>
         <span class="metric-val" id="scanner-state">Connecting</span>
-        <span class="metric-sub" id="scanner-ip">{self.settings.scanner_ip}</span>
+        <span class="metric-sub" id="scanner-ip">{self.settings.scanner_ip}:8080</span>
       </div>
       <div class="metric-item">
         <span class="metric-label">Uptime</span>
         <span class="metric-val" id="uptime">--</span>
       </div>
       <div class="metric-item">
-        <span class="metric-label">RAM</span>
+        <span class="metric-label">Memory RSS</span>
         <span class="metric-val" id="ram">-- MB</span>
       </div>
       <div class="metric-item">
-        <span class="metric-label">Path</span>
+        <span class="metric-label">Destination</span>
         <div class="path-row">
           <span class="metric-val" style="font-size: 0.82rem; font-family: ui-monospace, Menlo, monospace;" id="path">{self.settings.output}</span>
-          <button class="copy-btn" onclick="copyPath()" title="Copy folder path">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <button class="copy-pill" id="copy-btn" onclick="copyPath()" title="Copy folder path">
+            <svg id="copy-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
               <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
             </svg>
@@ -689,7 +872,14 @@ class DashboardHandler(BaseHTTPRequestHandler):
         <span class="count-badge" id="scan-count">0</span>
       </div>
       <div class="toolbar-actions">
-        <input type="text" id="search-box" class="search-input" placeholder="Search... (press /)" oninput="filterScans()">
+        <div class="search-wrapper">
+          <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"/>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+          </svg>
+          <input type="text" id="search-box" class="search-input" placeholder="Search documents..." oninput="filterScans()">
+          <kbd class="search-kbd">/</kbd>
+        </div>
       </div>
     </div>
 
@@ -703,14 +893,14 @@ class DashboardHandler(BaseHTTPRequestHandler):
           <tr>
             <th>Document</th>
             <th>Category</th>
-            <th title="Date printed on the physical document or notice">Doc Date</th>
-            <th title="When sheet was physically scanned">Scanned</th>
+            <th title="Date extracted from document content">Doc Date</th>
+            <th title="Timestamp physically scanned">Scanned</th>
             <th>Size</th>
             <th class="actions-cell">Actions</th>
           </tr>
         </thead>
         <tbody id="scans-table">
-          <tr><td colspan="6" class="empty-state">Loading...</td></tr>
+          <tr><td colspan="6" class="empty-state">Loading documents...</td></tr>
         </tbody>
       </table>
     </div>
@@ -719,8 +909,26 @@ class DashboardHandler(BaseHTTPRequestHandler):
   <div id="preview-modal" class="preview-backdrop" onclick="closePreview(event)">
     <div class="preview-modal" onclick="event.stopPropagation()">
       <div class="preview-header">
-        <span class="preview-title" id="preview-filename">Document Preview</span>
-        <button class="close-btn" onclick="closePreview()">&times;</button>
+        <div class="preview-header-left">
+          <span class="preview-title" id="preview-filename">Document Preview</span>
+          <span class="preview-meta-pill" id="preview-doc-date" style="display:none;"></span>
+          <span class="preview-meta-pill" id="preview-scan-date" style="display:none;"></span>
+        </div>
+        <div class="preview-actions">
+          <a class="icon-btn" id="preview-download" href="#" download="" title="Download PDF">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="7 10 12 15 17 10"/>
+              <line x1="12" y1="15" x2="12" y2="3"/>
+            </svg>
+          </a>
+          <button class="icon-btn" onclick="closePreview()" title="Close (Esc)">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"/>
+              <line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </button>
+        </div>
       </div>
       <iframe class="preview-frame" id="preview-iframe" src="about:blank"></iframe>
     </div>
@@ -736,23 +944,55 @@ class DashboardHandler(BaseHTTPRequestHandler):
       const t = document.getElementById('toast');
       t.textContent = msg;
       t.classList.add('show');
-      setTimeout(() => t.classList.remove('show'), 3500);
+      setTimeout(() => t.classList.remove('show'), 2800);
     }}
 
     function copyPath() {{
       const p = document.getElementById('path').textContent;
       navigator.clipboard.writeText(p);
+      const icon = document.getElementById('copy-icon');
+      if (icon) {{
+        icon.innerHTML = '<polyline points="20 6 9 17 4 12"/>';
+        setTimeout(() => {{
+          icon.innerHTML = '<rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>';
+        }}, 1800);
+      }}
       showToast('Path copied to clipboard');
     }}
 
-    function getCategoryStyle(cat) {{
-      if (!cat || cat === 'Inbox') {{
-        return 'background: var(--surface-subtle); color: var(--text-secondary); border: 1px solid var(--border-subtle);';
+    function getCategoryBadge(cat) {{
+      const c = (cat || 'Inbox').trim();
+      const lower = c.toLowerCase();
+      let bg = 'rgba(255, 255, 255, 0.05)';
+      let text = 'var(--text-secondary)';
+      let border = 'rgba(255, 255, 255, 0.08)';
+
+      if (lower.includes('legal') || lower.includes('citation')) {{
+        bg = 'rgba(99, 102, 241, 0.12)';
+        text = '#a5b4fc';
+        border = 'rgba(99, 102, 241, 0.22)';
+      }} else if (lower.includes('auto') || lower.includes('vehicle')) {{
+        bg = 'rgba(245, 158, 11, 0.12)';
+        text = '#fcd34d';
+        border = 'rgba(245, 158, 11, 0.22)';
+      }} else if (lower.includes('health') || lower.includes('medical')) {{
+        bg = 'rgba(20, 184, 166, 0.12)';
+        text = '#5eead4';
+        border = 'rgba(20, 184, 166, 0.22)';
+      }} else if (lower.includes('bank') || lower.includes('finance')) {{
+        bg = 'rgba(16, 185, 129, 0.12)';
+        text = '#6ee7b7';
+        border = 'rgba(16, 185, 129, 0.22)';
+      }} else if (lower.includes('tax')) {{
+        bg = 'rgba(244, 63, 94, 0.12)';
+        text = '#fda4af';
+        border = 'rgba(244, 63, 94, 0.22)';
+      }} else if (lower.includes('utilit')) {{
+        bg = 'rgba(14, 165, 233, 0.12)';
+        text = '#7dd3fc';
+        border = 'rgba(14, 165, 233, 0.22)';
       }}
-      let hash = 0;
-      for (let i = 0; i < cat.length; i++) hash = cat.charCodeAt(i) + ((hash << 5) - hash);
-      const h = Math.abs(hash) % 360;
-      return `background: hsla(${{h}}, 65%, 50%, 0.12); color: hsl(${{h}}, 80%, 75%); border: 1px solid hsla(${{h}}, 65%, 50%, 0.25);`;
+      return `<span class="cat-pill" style="background:${{bg}};color:${{text}};border:1px solid ${{border}};">${{c}}</span>`;
     }}
 
     function updateCategoryFilters() {{
@@ -780,14 +1020,29 @@ class DashboardHandler(BaseHTTPRequestHandler):
       const modal = document.getElementById('preview-modal');
       const frame = document.getElementById('preview-iframe');
       const title = document.getElementById('preview-filename');
-      let label = filename;
-      if (docDate && scanDate) {{
-        label += ` [Doc: ${{docDate}} • Scanned: ${{scanDate}}]`;
-      }} else if (scanDate) {{
-        label += ` [Scanned: ${{scanDate}}]`;
+      const docDateEl = document.getElementById('preview-doc-date');
+      const scanDateEl = document.getElementById('preview-scan-date');
+      const dlBtn = document.getElementById('preview-download');
+
+      title.textContent = filename;
+      if (docDate) {{
+        docDateEl.textContent = 'Doc: ' + docDate;
+        docDateEl.style.display = 'inline-block';
+      }} else {{
+        docDateEl.style.display = 'none';
       }}
-      title.textContent = label;
-      frame.src = '/files/' + encodeURIComponent(relPath);
+
+      if (scanDate) {{
+        scanDateEl.textContent = 'Scanned: ' + scanDate;
+        scanDateEl.style.display = 'inline-block';
+      }} else {{
+        scanDateEl.style.display = 'none';
+      }}
+
+      const fileUrl = '/files/' + encodeURIComponent(relPath);
+      dlBtn.href = fileUrl;
+      dlBtn.download = filename;
+      frame.src = fileUrl;
       modal.classList.add('open');
     }}
 
@@ -814,6 +1069,12 @@ class DashboardHandler(BaseHTTPRequestHandler):
 
     function filterScans() {{
       renderScans();
+    }}
+
+    function refreshAll() {{
+      updateStatus();
+      loadScans();
+      showToast('Refreshed');
     }}
 
     function renderScans() {{
@@ -843,36 +1104,44 @@ class DashboardHandler(BaseHTTPRequestHandler):
                 <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
                 <polyline points="14 2 14 8 20 8"/>
               </svg>
-              <div class="empty-title">No documents</div>
-              <div class="empty-desc">Feed a sheet into the scanner to capture.</div>
+              <div class="empty-title">No documents found</div>
+              <div class="empty-desc">Feed a sheet into the Brother scanner to capture, OCR, and organize.</div>
             </td>
           </tr>
         `;
         return;
       }}
 
-      tbody.innerHTML = filtered.map(s => `
-        <tr>
-          <td>
-            <a class="doc-link" onclick="openPreview('${{s.relative_path}}', '${{s.filename}}', '${{s.doc_date || ''}}', '${{s.scan_date || ''}}')">
-              <svg class="doc-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
-                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                <polyline points="14 2 14 8 20 8"/>
-              </svg>
-              <span>${{s.filename}}</span>
-            </a>
-          </td>
-          <td><span class="cat-pill" style="${{getCategoryStyle(s.category)}}">${{s.category}}</span></td>
-          <td style="color: var(--text-secondary); font-variant-numeric: tabular-nums;">${{s.doc_date ? `<span style="font-weight: 500;">${{s.doc_date}}</span>` : '<span style="color: var(--text-muted); opacity: 0.5;">—</span>'}}</td>
-          <td style="color: var(--text-muted); font-variant-numeric: tabular-nums;">${{s.scan_date}}</td>
-          <td style="color: var(--text-secondary);">${{s.size_kb}} KB</td>
-          <td class="actions-cell">
-            <a class="action-link" onclick="openPreview('${{s.relative_path}}', '${{s.filename}}', '${{s.doc_date || ''}}', '${{s.scan_date || ''}}')">Preview</a>
-            <a class="action-link" href="/files/${{encodeURIComponent(s.relative_path)}}" download="${{s.filename}}">Download</a>
-            <a class="action-link action-delete" onclick="confirmDelete('${{s.relative_path}}', '${{s.filename}}')">Delete</a>
-          </td>
-        </tr>
-      `).join('');
+      tbody.innerHTML = filtered.map(s => {{
+        const baseName = s.filename.endsWith('.pdf') ? s.filename.slice(0, -4) : s.filename;
+        const escRel = s.relative_path.replace(/'/g, "\\'");
+        const escName = s.filename.replace(/'/g, "\\'");
+        const escDocDate = (s.doc_date || '').replace(/'/g, "\\'");
+        const escScanDate = (s.scan_date || '').replace(/'/g, "\\'");
+
+        return `
+          <tr>
+            <td>
+              <a class="doc-link" onclick="openPreview('${{escRel}}', '${{escName}}', '${{escDocDate}}', '${{escScanDate}}')">
+                <svg class="doc-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                  <polyline points="14 2 14 8 20 8"/>
+                </svg>
+                <span class="doc-name">${{baseName}}<span class="doc-ext">.pdf</span></span>
+              </a>
+            </td>
+            <td>${{getCategoryBadge(s.category)}}</td>
+            <td style="color: var(--text-secondary); font-variant-numeric: tabular-nums;">${{s.doc_date ? `<span style="font-weight: 500; color: var(--text);">${{s.doc_date}}</span>` : '<span style="color: var(--text-muted); opacity: 0.4;">—</span>'}}</td>
+            <td style="color: var(--text-muted); font-variant-numeric: tabular-nums; font-size: 0.78rem;">${{s.scan_date || '—'}}</td>
+            <td style="color: var(--text-muted); font-size: 0.78rem;">${{s.size_kb}} KB</td>
+            <td class="actions-cell">
+              <button class="action-btn" onclick="openPreview('${{escRel}}', '${{escName}}', '${{escDocDate}}', '${{escScanDate}}')">Preview</button>
+              <a class="action-btn" href="/files/${{encodeURIComponent(s.relative_path)}}" download="${{s.filename}}">Download</a>
+              <button class="action-btn action-delete" onclick="confirmDelete('${{escRel}}', '${{escName}}')">Delete</button>
+            </td>
+          </tr>
+        `;
+      }}).join('');
     }}
 
     async function updateStatus() {{
@@ -899,7 +1168,7 @@ class DashboardHandler(BaseHTTPRequestHandler):
           collationBanner.classList.remove('visible');
         }} else if (data.state === 'waiting_for_next_sheet') {{
           dot.classList.add('active');
-          label.textContent = `Batch window (${{data.timeout_remaining || ''}}s)`;
+          label.textContent = `Batch (${{data.timeout_remaining || ''}}s)`;
           stateEl.textContent = `Collation (${{data.timeout_remaining || ''}}s)`;
           
           collationBanner.classList.add('visible');
