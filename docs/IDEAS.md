@@ -9,71 +9,74 @@ This document catalogs architectural enhancements, community homelab patterns (i
 
 ---
 
-## 1. Quick Reference: Edits by Category
+## 1. Quick Reference: Edits by Category & Status
 
-| Category | Idea | Target Components | Complexity | Primary Impact |
-|:---|:---|:---|:---:|:---|
-| **Pipeline & Processing** | [Atomic Staging & Ingestion Guard](#idea-1-atomic-staging--ingestion-guard) | `ds940/spool.py` | Low | Eliminates file corruption in Paperless `inotify` |
-| **Pipeline & Processing** | [Blank Page Detection & Suppression](#idea-2-automatic-blank-page-detection--filtering) | `ds940/spool.py` | Medium | Removes empty backsides on duplex mail |
-| **Pipeline & Processing** | [Simplex-to-Duplex Manual Interleaving](#idea-3-simplex-to-duplex-manual-interleaving) | `ds940/spool.py` | Medium | Assembles multi-page batches on single-sided ADFs |
-| **Hardware & Protocol** | [Pure-Python TCP Port 54921 Driver](#idea-4-pure-python-tcp-port-54921-driver-legacy-brother-support) | `ds940/protocols/legacy_tcp.py` | High | Adds legacy Brother laser MFC support |
-| **Hardware & Protocol** | [Dual-Mode UDP Port 54925 Button Listener](#idea-5-dual-mode-triggering-via-udp-54925-button-listener) | `ds940/button_listener.py` | Medium | Instant trigger when physical button is pressed |
-| **Hardware & Protocol** | [Multi-Action Keypad Routing](#idea-6-multi-action-keypad-routing-file-vs-ocr-vs-image) | `ds940/supervisor.py` | Medium | Routes scans based on scanner screen buttons |
-| **Hardware & Protocol** | [Binary Protocol Debug Capture Mode](#idea-7-binary-protocol-debug--diagnostic-capture-mode---debug) | `ds940/cli.py`, `ds940/escl.py` | Low | Diagnostic byte dumps without leaking document text |
-| **Downstream Integrations**| [Direct Paperless-ngx REST API Ingestion](#idea-8-direct-paperless-ngx-rest-api-ingestion) | `ds940/export/paperless.py` | Medium | Bypasses NFS permissions, latency, and inotify drops |
-| **Downstream Integrations**| [Home Assistant MQTT Discovery & Sensors](#idea-9-home-assistant-integration--smart-home-automation-mqtt--hacs) | `ds940/mqtt.py` | Medium | Exposes buttons and status sensors to Home Assistant |
-| **Downstream Integrations**| [Push Notifications & Webhooks](#idea-10-push-notifications--webhooks-discord-telegram-pushover-n8n) | `ds940/notify.py` | Low | Alerts mobile phones upon successful document filing |
-| **Dashboard & Config** | [Scan Profiles & Preset Toggles](#idea-11-scan-profiles--quick-presets) | `ds940/config.py`, `ds940/web.py` | Low | One-click switching between Document, Archival, Photo |
-| **Dashboard & Config** | [Persistent `scanner.conf` & Web Settings](#idea-12-persistent-file-based-config-scannerconf-with-web-settings) | `ds940/config.py`, `ds940/web.py` | Medium | Live configuration changes without touching system plists |
-| **DevOps & Infrastructure**| [Turn-Key `install.sh` Provisioning Wizard](#idea-13-one-step-turn-key-installsh-wizard) | `scripts/install.sh` | Medium | Single-command launchd and systemd setup |
-| **DevOps & Infrastructure**| [Vendor Firmware Blackholing Runbook](#idea-14-vendor-firmware-isolation--update-blocking) | `docs/DNS_SECURITY.md` | Low | Protects local network scanners from breaking updates |
+| Category | Idea | Target Components | Complexity | Status | Primary Impact |
+|:---|:---|:---|:---:|:---:|:---|
+| **Pipeline & Processing** | [Atomic Staging & Ingestion Guard](#idea-1-atomic-staging--ingestion-guard) | `ds940/spool.py` | Low | **Completed** | Eliminates file corruption in Paperless `inotify` |
+| **Pipeline & Processing** | [Blank Page Detection & Suppression](#idea-2-automatic-blank-page-detection--filtering) | `ds940/spool.py`, `ds940/worker.py` | Medium | **Completed** | Removes empty backsides on duplex mail |
+| **Pipeline & Processing** | [Simplex-to-Duplex Manual Interleaving](#idea-3-simplex-to-duplex-manual-interleaving) | `ds940/spool.py` | Medium | Proposed | Assembles multi-page batches on single-sided ADFs |
+| **Hardware & Protocol** | [Pure-Python TCP Port 54921 Driver](#idea-4-pure-python-tcp-port-54921-driver-legacy-brother-support) | `ds940/protocols/legacy_tcp.py` | High | Proposed | Adds legacy Brother laser MFC support |
+| **Hardware & Protocol** | [Dual-Mode UDP Port 54925 Button Listener](#idea-5-dual-mode-triggering-via-udp-54925-button-listener) | `ds940/button_listener.py` | Medium | Proposed | Instant trigger when physical button is pressed |
+| **Hardware & Protocol** | [Multi-Action Keypad Routing](#idea-6-multi-action-keypad-routing-file-vs-ocr-vs-image) | `ds940/supervisor.py` | Medium | Proposed | Routes scans based on scanner screen buttons |
+| **Hardware & Protocol** | [Binary Protocol Debug Capture Mode](#idea-7-binary-protocol-debug--diagnostic-capture-mode---debug) | `ds940/cli.py`, `ds940/escl.py` | Low | Proposed | Diagnostic byte dumps without leaking document text |
+| **Downstream Integrations**| [Direct Paperless-ngx REST API Ingestion](#idea-8-direct-paperless-ngx-rest-api-ingestion) | `ds940/export/paperless.py` | Medium | Proposed | Bypasses NFS permissions, latency, and inotify drops |
+| **Downstream Integrations**| [Home Assistant MQTT Discovery & Sensors](#idea-9-home-assistant-integration--smart-home-automation-mqtt--hacs) | `ds940/mqtt.py` | Medium | Proposed | Exposes buttons and status sensors to Home Assistant |
+| **Downstream Integrations**| [Push Notifications & Webhooks](#idea-10-push-notifications--webhooks-discord-telegram-pushover-n8n) | `ds940/notify.py` | Low | Proposed | Alerts mobile phones upon successful document filing |
+| **Dashboard & Config** | [Scan Profiles & Preset Toggles](#idea-11-scan-profiles--quick-presets) | `ds940/config.py`, `ds940/web.py` | Low | Proposed | One-click switching between Document, Archival, Photo |
+| **Dashboard & Config** | [Persistent `scanner.conf` & Web Settings](#idea-12-persistent-file-based-config-scannerconf-with-web-settings) | `ds940/config.py`, `ds940/web.py` | Medium | Proposed | Live configuration changes without touching system plists |
+| **DevOps & Infrastructure**| [Turn-Key `install.sh` Provisioning Wizard](#idea-13-one-step-turn-key-installsh-wizard) | `scripts/install.sh` | Medium | Proposed | Single-command launchd and systemd setup |
+| **DevOps & Infrastructure**| [Vendor Firmware Blackholing Runbook](#idea-14-vendor-firmware-isolation--update-blocking) | `docs/DNS_SECURITY.md` | Low | Proposed | Protects local network scanners from breaking updates |
 
 ---
 
 ## 2. Pipeline & Document Processing Edits
 
 ### Idea 1: Atomic Staging & Ingestion Guard
+* **Status:** **Completed** (Shipped in `ds940/spool.py`)
 * **Type of Edit:** Backend Pipeline / Filesystem Guard
 * **Target Components:** `ds940/spool.py`, `ds940/config.py`
 * **Origin:** Highlighted in `quadportnick/brother-scan-paperless` and Paperless-ngx community forums.
-* **The Problem:** Paperless-ngx watches ingest folders using Linux `inotify`. If our daemon streams pages or writes multi-page PDFs directly into `consume/`, Paperless frequently consumes partial, incomplete files while they are still being assembled or OCR-processed.
-* **Technical Specification:**
-  1. Assemble all PDF pages, run native Vision OCR, and extract AI taxonomy inside an isolated hidden folder:
-     `~/Documents/brother-scans/.staging/`
-  2. Perform an atomic POSIX file move (`os.replace` / `shutil.move`) into the target archive or `PAPERLESS_CONSUME_DIR` only after the document is finalized, flushed, and verified.
-* **Impact:** Eliminates file corruption, zero-byte PDF errors, and ingestion race conditions permanently.
+* **The Problem:** Paperless-ngx watches ingest folders using Linux `inotify`. If a scanner daemon streams pages or writes multi-page PDFs directly into `consume/`, Paperless frequently consumes partial, incomplete files while they are still being written or OCR-processed.
+* **Shipped Implementation:**
+  1. All page ingestion, multi-page collation, OCR, and AI categorization execute inside the spool job directory (`work/spool/brother-xxx/`). The destination directory observes zero partial writes.
+  2. During publication, `ScanSpool.publish` writes the completed PDF to a hidden temporary staging file directly on the destination filesystem:
+     `target.parent / f".staging_{uuid4().hex[:8]}.tmp"`
+  3. The byte stream is flushed and forced to disk with `os.fsync(stream.fileno())`.
+  4. Standard POSIX permissions (`0o644`) are applied to the staged file.
+  5. An atomic POSIX `replace()` swaps the staged file into its final destination path:
+     `temporary.replace(target)`
+* **Impact:** Eliminates file corruption, zero-byte PDF ingestion errors, and file watcher race conditions permanently. Verified by `tests/test_blank_filtering_and_staging.py::test_atomic_staging_guard_publishes_cleanly`.
 
 ---
 
 ### Idea 2: Automatic Blank Page Detection & Filtering
+* **Status:** **Completed** (Shipped in `ds940/spool.py`, `ds940/config.py`, `ds940/worker.py`)
 * **Type of Edit:** Image Processing & PDF Compilation
-* **Target Components:** `ds940/spool.py`
+* **Target Components:** `ds940/spool.py`, `ds940/worker.py`, `ds940/config.py`
 * **Origin:** Implemented in `PhilippMundhenk/BrotherScannerDocker` and empirically calibrated by Calvin Walden.
 * **The Problem:** In duplex mode, scanning single-sided mail or receipts produces blank white backsides that double the resulting file size and clutter the searchable document archive.
 * **Calvin Walden's Empirical Ink Coverage Calibration:**
   * True blank pages (with scanner dust or minor paper transparency bleed-through): `0.00 to 0.03` ink coverage.
   * Real document pages (sparse receipts, signature lines, short forms): `0.30+` ink coverage.
-  * Setting a removal threshold of `0.10` ink density establishes a safe margin: it drops 100% of blank reverse pages while guaranteeing that faint invoices are never pruned.
-* **Technical Specification:**
-  ```python
-  # ds940/spool.py
-  def is_blank_page(image: Image.Image, threshold: float = 0.10) -> bool:
-      # Convert to grayscale and measure ink pixel ratio against pure white
-      gray = image.convert("L")
-      histogram = gray.histogram()
-      total_pixels = image.width * image.height
-      # Non-white pixels below 245 brightness
-      ink_pixels = sum(histogram[:245])
-      coverage = ink_pixels / total_pixels
-      return coverage < threshold
-  ```
-  * Discard detected blank pages prior to OCR and log:
-    `Discarded blank page 2 (ink coverage: 0.018 < 0.100)`
-* **Impact:** Cuts document storage in half for mixed one-sided/two-sided mail batches without losing legitimate data.
+  * Setting a removal threshold of `0.05` ink density establishes a safe margin: it drops 100% of blank reverse pages while guaranteeing that faint receipts or signatures are never discarded (zero false negatives).
+* **Shipped Implementation:**
+  1. `calculate_ink_coverage(image_path, margin_ratio=0.03, ink_threshold=210)`:
+     - Inset margin crop (outer 3% border ignored) strips roller edge shadows and ADF feeder border lines.
+     - Grayscale luminosity threshold `< 210` ignores thin paper bleed-through shadows from opposite sides.
+     - Ratio of `ink_pixels / total_cropped_pixels` computes ink density.
+  2. `filter_blank_pages(image_paths, threshold=0.05)`:
+     - Configurable via `REMOVE_BLANK_THRESHOLD` environment variable (default `0.05`, set `0.0` to disable).
+     - **Retain Page 1 Invariant**: If all pages in a batch evaluate as blank, Page 1 is strictly preserved to prevent zero-page spool crashes and ensure valid PDF output.
+  3. End-to-end worker integration in `capture_if_ready_escl`:
+     - Discards blank pages before calling `build_pdf`.
+     - Logs filtered pages and writes `raw_pages` and `discarded_blank_pages` to `manifest.json`.
+* **Impact:** Cuts document storage in half for mixed one-sided/two-sided mail batches without risk of data loss. Verified by 10 focused unit tests in `tests/test_blank_filtering_and_staging.py`.
 
 ---
 
 ### Idea 3: Simplex-to-Duplex Manual Interleaving
+* **Status:** Proposed
 * **Type of Edit:** Multi-Page Collation Engine
 * **Target Components:** `ds940/spool.py`, `ds940/supervisor.py`
 * **Origin:** Documented in `PhilippMundhenk/BrotherScannerDocker` for manual batch feeds.
@@ -91,6 +94,7 @@ This document catalogs architectural enhancements, community homelab patterns (i
 ## 3. Hardware Driver & Protocol Edits
 
 ### Idea 4: Pure-Python TCP Port 54921 Driver (Legacy Brother Support)
+* **Status:** Proposed
 * **Type of Edit:** Hardware Protocol & Transport Layer
 * **Target Components:** `ds940/protocols/legacy_tcp.py`, `ds940/driver.py`
 * **Origin:** Reverse-engineered protocol documented by [`thebino/brother-to-paperless`](https://github.com/thebino/brother-to-paperless/blob/main/PROTOCOL.md).
@@ -113,6 +117,7 @@ This document catalogs architectural enhancements, community homelab patterns (i
 ---
 
 ### Idea 5: Dual-Mode Triggering via UDP 54925 Button Listener
+* **Status:** Proposed
 * **Type of Edit:** Network Event Listener & Ingestion Driver
 * **Target Components:** `ds940/button_listener.py`, `ds940/supervisor.py`
 * **Origin:** Found in `vanessa/brother-scan-to-paperless`.
@@ -128,6 +133,7 @@ This document catalogs architectural enhancements, community homelab patterns (i
 ---
 
 ### Idea 6: Multi-Action Keypad Routing (`to File` vs `to OCR` vs `to Image`)
+* **Status:** Proposed
 * **Type of Edit:** Workflow Routing & Supervisor Logic
 * **Target Components:** `ds940/supervisor.py`, `ds940/config.py`
 * **Origin:** Highlighted by Calvin Walden on multifunction printer keypads.
@@ -142,6 +148,7 @@ This document catalogs architectural enhancements, community homelab patterns (i
 ---
 
 ### Idea 7: Binary Protocol Debug & Diagnostic Capture Mode (`--debug`)
+* **Status:** Proposed
 * **Type of Edit:** CLI & Troubleshooting Utilities
 * **Target Components:** `ds940/cli.py`, `ds940/escl.py`
 * **Origin:** Implemented in `thebino/brother-to-paperless`.
@@ -158,6 +165,7 @@ This document catalogs architectural enhancements, community homelab patterns (i
 ## 4. Downstream Export & Integration Edits
 
 ### Idea 8: Direct Paperless-ngx REST API Ingestion
+* **Status:** Proposed
 * **Type of Edit:** Downstream Exporter & API Connector
 * **Target Components:** `ds940/export/paperless.py`, `ds940/config.py`
 * **Origin:** Homelab community discussions on NFS/SMB inotify limitations.
@@ -186,6 +194,7 @@ This document catalogs architectural enhancements, community homelab patterns (i
 ---
 
 ### Idea 9: Home Assistant Integration & Smart Home Automation (MQTT / HACS)
+* **Status:** Proposed
 * **Type of Edit:** Smart Home Integration & Telemetry
 * **Target Components:** `ds940/mqtt.py`, `ds940/web.py`
 * **Origin:** Inspired by `thebino/brother-to-paperless`.
@@ -205,6 +214,7 @@ This document catalogs architectural enhancements, community homelab patterns (i
 ---
 
 ### Idea 10: Push Notifications & Webhooks (Discord / Telegram / Pushover / n8n)
+* **Status:** Proposed
 * **Type of Edit:** Notification Service
 * **Target Components:** `ds940/notify.py`, `ds940/config.py`
 * **The Problem:** The user has no mobile awareness of whether a multi-page document was recognized, sorted, or flagged for review.
@@ -228,6 +238,7 @@ This document catalogs architectural enhancements, community homelab patterns (i
 ## 5. Web Dashboard & Runtime Configuration Edits
 
 ### Idea 11: Scan Profiles & Quick Presets
+* **Status:** Proposed
 * **Type of Edit:** Configuration & Frontend UI
 * **Target Components:** `ds940/config.py`, `ds940/web.py`
 * **The Problem:** Adjusting DPI or switching between grayscale and color currently requires editing launch environment variables and restarting daemons.
@@ -242,6 +253,7 @@ This document catalogs architectural enhancements, community homelab patterns (i
 ---
 
 ### Idea 12: Persistent File-Based Config (`scanner.conf`) with Web Settings
+* **Status:** Proposed
 * **Type of Edit:** Configuration Engine & Web Management API
 * **Target Components:** `ds940/config.py`, `ds940/web.py`
 * **The Problem:** Environment variables in macOS LaunchAgents require unloading and reloading plists via `launchctl` to take effect.
@@ -257,6 +269,7 @@ This document catalogs architectural enhancements, community homelab patterns (i
 ## 6. DevOps, Setup & Network Security Edits
 
 ### Idea 13: One-Step Turn-Key `install.sh` Wizard
+* **Status:** Proposed
 * **Type of Edit:** Provisioning Scripts & Packaging
 * **Target Components:** `scripts/install.sh`
 * **The Problem:** Setting up automatic startup daemons, virtual environments, and scanner network parameters requires several manual commands.
@@ -272,6 +285,7 @@ This document catalogs architectural enhancements, community homelab patterns (i
 ---
 
 ### Idea 14: Vendor Firmware Isolation & Update Blocking
+* **Status:** Proposed
 * **Type of Edit:** Network Hardening Documentation & Runbook
 * **Target Components:** `docs/DNS_SECURITY.md`
 * **Origin:** Documented by Calvin Walden on Brother MFC firmware behavior.
