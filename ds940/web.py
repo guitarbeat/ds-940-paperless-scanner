@@ -73,6 +73,14 @@ class DashboardHandler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(body)
 
+    def do_HEAD(self):
+        parsed = urllib.parse.urlparse(self.path)
+        if parsed.path in ("/", "/index.html", "/api/status", "/api/scans") or parsed.path.startswith("/files/"):
+            self.send_response(200)
+            self.end_headers()
+        else:
+            self.send_error(404, "Not Found")
+
     def do_GET(self):
         parsed = urllib.parse.urlparse(self.path)
         path = parsed.path
@@ -126,8 +134,9 @@ class DashboardHandler(BaseHTTPRequestHandler):
             self.send_header("Content-Disposition", f'inline; filename="{target_path.name}"')
             self.end_headers()
             self.wfile.write(data)
-        except OSError:
-            self.send_error(500, "Error reading file")
+        except OSError as err:
+            LOG.exception("Error serving file %s: %s", target_path, err)
+            self.send_error(500, f"Error reading file: {err}")
 
     def serve_status(self):
         status_file = self.settings.work / "auto-status.json"
