@@ -259,166 +259,248 @@ class DashboardHandler(BaseHTTPRequestHandler):
   <title>Brother DS-940DW</title>
   <style>
     :root {{
-      --bg: #0c0e12;
-      --surface: #14171d;
-      --surface-subtle: #191c23;
-      --surface-hover: #1c2028;
-      --surface-active: #222631;
-      --border: rgba(255, 255, 255, 0.065);
-      --border-subtle: rgba(255, 255, 255, 0.035);
-      --border-focus: rgba(255, 255, 255, 0.22);
-      --text: #f0f2f5;
-      --text-secondary: #9aa1ad;
+      --bg-page: #f6f7f9;
+      --bg-surface: #ffffff;
+      --bg-subtle: #f0f2f5;
+      --bg-hover: #e8ecf1;
+      --bg-selected: #e2e8f0;
+      --border: #dbe0e7;
+      --border-subtle: #ebedf2;
+      --border-focus: #2563eb;
+      --text: #191c21;
       --text-muted: #5e6674;
-      --accent: #f0f2f5;
-      --status-ready: #34c759;
-      --status-active: #f59e0b;
+      --text-dim: #848f9f;
+      --accent: #1d4ed8;
+      --accent-soft: rgba(29, 78, 216, 0.08);
+      --status-ready: #16a34a;
+      --status-active: #d97706;
       --status-standby: #64748b;
-      --status-danger: #ef4444;
-      --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+      --status-danger: #dc2626;
+      --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
+      --shadow-md: 0 4px 14px rgba(0, 0, 0, 0.08);
+      --ease: cubic-bezier(0.16, 1, 0.3, 1);
     }}
+
+    [data-theme="dark"] {{
+      --bg-page: #0f1115;
+      --bg-surface: #171920;
+      --bg-subtle: #1f232d;
+      --bg-hover: #262c38;
+      --bg-selected: #243147;
+      --border: #2c3342;
+      --border-subtle: #202531;
+      --border-focus: #3b82f6;
+      --text: #f0f2f5;
+      --text-muted: #9aa1ad;
+      --text-dim: #656d79;
+      --accent: #60a5fa;
+      --accent-soft: rgba(96, 165, 250, 0.12);
+      --status-ready: #22c55e;
+      --status-active: #f59e0b;
+      --status-standby: #94a3b8;
+      --status-danger: #ef4444;
+      --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.25);
+      --shadow-md: 0 4px 14px rgba(0, 0, 0, 0.4);
+    }}
+
+    @media (prefers-color-scheme: dark) {{
+      :root:not([data-theme="light"]) {{
+        --bg-page: #0f1115;
+        --bg-surface: #171920;
+        --bg-subtle: #1f232d;
+        --bg-hover: #262c38;
+        --bg-selected: #243147;
+        --border: #2c3342;
+        --border-subtle: #202531;
+        --border-focus: #3b82f6;
+        --text: #f0f2f5;
+        --text-muted: #9aa1ad;
+        --text-dim: #656d79;
+        --accent: #60a5fa;
+        --accent-soft: rgba(96, 165, 250, 0.12);
+        --status-ready: #22c55e;
+        --status-active: #f59e0b;
+        --status-standby: #94a3b8;
+        --status-danger: #ef4444;
+        --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.25);
+        --shadow-md: 0 4px 14px rgba(0, 0, 0, 0.4);
+      }}
+    }}
+
+    @media (prefers-reduced-motion: reduce) {{
+      *, ::before, ::after {{
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+      }}
+    }}
+
     * {{ box-sizing: border-box; margin: 0; padding: 0; }}
-    ::selection {{ background: rgba(255, 255, 255, 0.12); color: #fff; }}
-    ::-webkit-scrollbar {{ width: 5px; height: 5px; }}
-    ::-webkit-scrollbar-track {{ background: transparent; }}
-    ::-webkit-scrollbar-thumb {{ background: rgba(255, 255, 255, 0.08); border-radius: 3px; }}
-    ::-webkit-scrollbar-thumb:hover {{ background: rgba(255, 255, 255, 0.18); }}
+    ::selection {{ background: var(--accent-soft); color: var(--accent); }}
 
     body {{
-      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Inter", system-ui, sans-serif;
-      background: var(--bg);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background: var(--bg-page);
       color: var(--text);
-      line-height: 1.5;
-      padding: 2.5rem 1.5rem 4rem;
+      line-height: 1.45;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
       font-variant-numeric: tabular-nums;
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
-      letter-spacing: -0.011em;
     }}
-    .container {{ max-width: 980px; margin: 0 auto; }}
+
+    button, a, input {{
+      font-family: inherit;
+    }}
+
+    button {{
+      cursor: pointer;
+    }}
+
+    :focus-visible {{
+      outline: 2px solid var(--border-focus);
+      outline-offset: 2px;
+    }}
 
     /* Header */
     header {{
+      background: var(--bg-surface);
+      border-bottom: 1px solid var(--border);
+      padding: 0.75rem 1.5rem;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 1.25rem;
+      position: sticky;
+      top: 0;
+      z-index: 100;
     }}
-    .brand {{
+
+    .brand-wrap {{
       display: flex;
       align-items: center;
       gap: 0.75rem;
     }}
-    .brand-mark {{
-      width: 22px;
-      height: 22px;
-      color: var(--text-secondary);
+
+    .brand-logo {{
+      width: 24px;
+      height: 24px;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      justify-content: center;
       flex-shrink: 0;
     }}
+
     .brand-title {{
-      font-size: 1.05rem;
+      font-size: 0.95rem;
       font-weight: 600;
-      letter-spacing: -0.02em;
+      letter-spacing: -0.015em;
       color: var(--text);
     }}
-    .header-right {{
+
+    .header-center {{
       display: flex;
       align-items: center;
-      gap: 0.75rem;
+      gap: 0.5rem;
     }}
+
     .status-badge {{
       display: inline-flex;
       align-items: center;
       gap: 0.45rem;
-      font-size: 0.75rem;
+      font-size: 0.76rem;
       font-weight: 500;
-      color: var(--text-secondary);
-      background: var(--surface);
+      color: var(--text-muted);
+      background: var(--bg-subtle);
       border: 1px solid var(--border);
-      padding: 0.28rem 0.65rem;
-      border-radius: 9999px;
+      padding: 0.25rem 0.65rem;
+      border-radius: 4px;
     }}
+
     .status-dot {{
-      width: 6px;
-      height: 6px;
+      width: 7px;
+      height: 7px;
       border-radius: 50%;
       background: var(--status-standby);
-      transition: background-color 200ms ease;
+      transition: background-color 160ms ease;
     }}
+
     .status-dot.online {{ background: var(--status-ready); }}
-    .status-dot.active {{ background: var(--status-active); animation: softPulse 1.6s infinite ease-in-out; }}
+    .status-dot.active {{ background: var(--status-active); }}
     .status-dot.offline {{ background: var(--status-standby); }}
 
-    @keyframes softPulse {{
-      0%, 100% {{ opacity: 1; }}
-      50% {{ opacity: 0.35; }}
+    .header-actions {{
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
     }}
 
-    .icon-action {{
+    .btn-icon {{
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      width: 28px;
-      height: 28px;
-      border-radius: 6px;
-      background: var(--surface);
+      width: 32px;
+      height: 32px;
+      border-radius: 5px;
+      background: var(--bg-surface);
       border: 1px solid var(--border);
       color: var(--text-muted);
-      cursor: pointer;
-      transition: all 120ms var(--ease-out);
+      transition: all 120ms var(--ease);
     }}
-    .icon-action:hover {{ color: var(--text); background: var(--surface-hover); border-color: rgba(255, 255, 255, 0.14); }}
-    .icon-action:active {{ transform: scale(0.96); }}
 
-    /* Discreet Single-Line Telemetry Strip */
-    .telemetry-strip {{
+    .btn-icon:hover {{
+      background: var(--bg-hover);
+      color: var(--text);
+      border-color: var(--border-focus);
+    }}
+
+    /* Main Workbench */
+    main.workbench {{
+      max-width: 1560px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 1.25rem 1.5rem;
+      flex: 1;
       display: flex;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 0.5rem 0.85rem;
-      font-size: 0.72rem;
-      color: var(--text-muted);
-      padding: 0.5rem 0.85rem;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 7px;
-      margin-bottom: 2rem;
-      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      flex-direction: column;
+      gap: 1rem;
     }}
-    .telemetry-item {{
-      display: inline-flex;
-      align-items: center;
-      gap: 0.35rem;
-    }}
-    .telemetry-label {{ color: var(--text-muted); opacity: 0.75; }}
-    .telemetry-value {{ color: var(--text-secondary); }}
-    .telemetry-sep {{ opacity: 0.3; }}
-    .path-copy {{
-      background: none;
-      border: none;
-      color: var(--text-muted);
-      cursor: pointer;
-      padding: 0 2px;
-      margin-left: 2px;
-      transition: color 120ms ease;
-    }}
-    .path-copy:hover {{ color: var(--text); }}
 
-    /* Multi-Sheet Collation Banner */
+    /* Collation Banner */
     .collation-banner {{
       display: none;
-      background: rgba(245, 158, 11, 0.08);
-      border: 1px solid rgba(245, 158, 11, 0.2);
-      border-radius: 8px;
+      background: rgba(217, 119, 6, 0.09);
+      border: 1px solid rgba(217, 119, 6, 0.28);
+      border-radius: 6px;
       padding: 0.75rem 1rem;
-      margin-bottom: 1.5rem;
+      align-items: center;
+      justify-content: space-between;
       position: relative;
       overflow: hidden;
-      animation: fadeIn 150ms var(--ease-out);
     }}
-    .collation-banner.visible {{ display: flex; align-items: center; justify-content: space-between; }}
-    .collation-msg {{ font-size: 0.8rem; font-weight: 500; color: #fbbf24; }}
-    .collation-timer {{ font-size: 0.76rem; font-family: ui-monospace, Menlo, monospace; color: var(--text); font-weight: 600; }}
+
+    .collation-banner.visible {{ display: flex; }}
+
+    .collation-info {{
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      font-size: 0.82rem;
+      font-weight: 500;
+      color: #b45309;
+    }}
+
+    [data-theme="dark"] .collation-info {{ color: #fbbf24; }}
+
+    .collation-time {{
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--text);
+    }}
+
     .collation-progress {{
       position: absolute;
       bottom: 0;
@@ -428,576 +510,708 @@ class DashboardHandler(BaseHTTPRequestHandler):
       transition: width 1s linear;
     }}
 
-    /* Main Section Toolbar */
-    .archive-toolbar {{
+    /* Master-Detail Split Grid */
+    .split-layout {{
+      display: grid;
+      grid-template-columns: 480px 1fr;
+      gap: 1.25rem;
+      flex: 1;
+      min-height: calc(100vh - 210px);
+    }}
+
+    /* Left Pane: Ledger */
+    .ledger-pane {{
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      box-shadow: var(--shadow-sm);
+    }}
+
+    .ledger-header {{
+      padding: 0.85rem 1rem;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg-surface);
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }}
+
+    .ledger-title-row {{
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 0.85rem;
-      gap: 1rem;
-      flex-wrap: wrap;
     }}
-    .toolbar-title-wrap {{
+
+    .ledger-title-wrap {{
       display: flex;
-      align-items: baseline;
+      align-items: center;
       gap: 0.5rem;
     }}
-    .toolbar-title {{
-      font-size: 0.95rem;
+
+    .ledger-title {{
+      font-size: 0.92rem;
       font-weight: 600;
-      letter-spacing: -0.015em;
       color: var(--text);
     }}
-    .toolbar-count {{
+
+    .ledger-count {{
       font-size: 0.72rem;
+      font-weight: 500;
       color: var(--text-muted);
-      font-variant-numeric: tabular-nums;
+      background: var(--bg-subtle);
+      border: 1px solid var(--border-subtle);
+      padding: 0.1rem 0.45rem;
+      border-radius: 4px;
     }}
-    .search-box-wrap {{
+
+    .search-row {{
       position: relative;
       display: flex;
       align-items: center;
     }}
+
     .search-input {{
-      background: var(--surface);
+      width: 100%;
+      background: var(--bg-page);
       border: 1px solid var(--border);
-      border-radius: 6px;
-      padding: 0.4rem 2rem 0.4rem 2rem;
-      font-size: 0.78rem;
+      border-radius: 5px;
+      padding: 0.45rem 2rem 0.45rem 2.1rem;
+      font-size: 0.8rem;
       color: var(--text);
-      width: 210px;
-      outline: none;
-      transition: all 140ms var(--ease-out);
+      transition: all 120ms var(--ease);
     }}
+
     .search-input:focus {{
+      background: var(--bg-surface);
       border-color: var(--border-focus);
-      background: var(--surface-hover);
-      box-shadow: 0 0 0 1px var(--border-focus);
-      width: 250px;
     }}
-    .search-input::placeholder {{ color: var(--text-muted); }}
-    .search-icon-svg {{
+
+    .search-icon {{
       position: absolute;
       left: 0.65rem;
-      width: 13px;
-      height: 13px;
-      color: var(--text-muted);
+      width: 14px;
+      height: 14px;
+      color: var(--text-dim);
       pointer-events: none;
     }}
-    .kbd-shortcut {{
+
+    .search-kbd {{
       position: absolute;
-      right: 0.5rem;
-      font-size: 0.62rem;
-      font-family: ui-monospace, Menlo, monospace;
-      color: var(--text-muted);
-      background: var(--surface-subtle);
+      right: 0.6rem;
+      font-size: 0.64rem;
+      color: var(--text-dim);
+      background: var(--bg-surface);
       border: 1px solid var(--border);
-      padding: 0.05rem 0.35rem;
+      padding: 0.1rem 0.35rem;
       border-radius: 3px;
       pointer-events: none;
     }}
 
-    /* Category Segmented Tabs */
-    .filter-tabs {{
+    /* Category Chips */
+    .category-bar {{
       display: flex;
-      gap: 0.3rem;
+      gap: 0.35rem;
       overflow-x: auto;
-      margin-bottom: 0.85rem;
-      padding-bottom: 0.2rem;
+      padding-bottom: 0.1rem;
     }}
-    .filter-tab {{
-      font-size: 0.74rem;
+
+    .category-chip {{
+      font-size: 0.73rem;
       font-weight: 500;
-      padding: 0.25rem 0.65rem;
-      border-radius: 6px;
+      padding: 0.22rem 0.55rem;
+      border-radius: 4px;
       background: transparent;
       border: 1px solid transparent;
       color: var(--text-muted);
-      cursor: pointer;
       white-space: nowrap;
-      transition: all 120ms var(--ease-out);
-      display: inline-flex;
-      align-items: center;
-      gap: 0.35rem;
+      transition: all 100ms var(--ease);
     }}
-    .filter-tab:hover {{ color: var(--text-secondary); background: var(--surface); }}
-    .filter-tab.active {{
-      background: var(--surface);
+
+    .category-chip:hover {{
+      background: var(--bg-subtle);
+      color: var(--text);
+    }}
+
+    .category-chip.active {{
+      background: var(--bg-subtle);
       border-color: var(--border);
       color: var(--text);
       font-weight: 600;
     }}
-    .filter-tab-count {{
-      font-size: 0.68rem;
-      opacity: 0.65;
+
+    /* Document Feed List */
+    .doc-list {{
+      flex: 1;
+      overflow-y: auto;
+      divide-y: 1px solid var(--border-subtle);
     }}
 
-    /* Document Ledger Table */
-    .ledger-container {{
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 9px;
-      overflow: hidden;
-    }}
-    table {{
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 0.82rem;
-      text-align: left;
-    }}
-    thead th {{
-      padding: 0.65rem 1.15rem;
-      background: var(--surface-subtle);
-      color: var(--text-muted);
-      font-weight: 500;
-      font-size: 0.68rem;
-      letter-spacing: 0.03em;
-      text-transform: uppercase;
-      border-bottom: 1px solid var(--border);
-    }}
-    tbody tr {{
+    .doc-item {{
+      padding: 0.75rem 1rem;
       border-bottom: 1px solid var(--border-subtle);
-      cursor: pointer;
-      transition: background 100ms ease;
-    }}
-    tbody tr:last-child {{ border-bottom: none; }}
-    tbody tr:hover {{ background: var(--surface-hover); }}
-    tbody tr.selected {{ background: var(--surface-active); outline: 1px solid rgba(255, 255, 255, 0.12); }}
-    td {{
-      padding: 0.75rem 1.15rem;
-      vertical-align: middle;
-    }}
-
-    /* Document Cell */
-    .doc-cell {{
       display: flex;
-      align-items: center;
+      align-items: flex-start;
       gap: 0.75rem;
-      min-width: 240px;
-    }}
-    .doc-glyph {{
-      width: 16px;
-      height: 16px;
-      color: var(--text-muted);
-      flex-shrink: 0;
-      transition: color 100ms ease;
-    }}
-    tbody tr:hover .doc-glyph {{ color: var(--text-secondary); }}
-    .doc-info {{
-      display: flex;
-      flex-direction: column;
-      gap: 0.1rem;
-      overflow: hidden;
-    }}
-    .doc-headline {{
-      font-size: 0.84rem;
-      font-weight: 500;
-      color: var(--text);
-      letter-spacing: -0.01em;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      max-width: 440px;
-    }}
-    .doc-subline {{
-      font-size: 0.68rem;
-      color: var(--text-muted);
-      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      max-width: 440px;
-    }}
-
-    /* Category Pill */
-    .cat-badge {{
-      display: inline-block;
-      font-size: 0.68rem;
-      font-weight: 500;
-      padding: 0.15rem 0.5rem;
-      border-radius: 4px;
-      letter-spacing: 0.01em;
-      white-space: nowrap;
-    }}
-
-    /* Dates & Sizes */
-    .date-val {{
-      font-size: 0.78rem;
-      color: var(--text-secondary);
-      font-variant-numeric: tabular-nums;
-    }}
-    .date-val.doc-date {{
-      font-weight: 500;
-      color: var(--text);
-    }}
-    .scan-date-val {{
-      font-size: 0.74rem;
-      color: var(--text-muted);
-      font-variant-numeric: tabular-nums;
-    }}
-    .size-val {{
-      font-size: 0.74rem;
-      color: var(--text-muted);
-      font-variant-numeric: tabular-nums;
-    }}
-
-    /* Action Buttons */
-    .actions-col {{ text-align: right; white-space: nowrap; }}
-    .row-btn {{
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      padding: 0.25rem 0.45rem;
-      font-size: 0.72rem;
-      font-weight: 500;
-      color: var(--text-muted);
-      background: none;
-      border: none;
-      border-radius: 4px;
       cursor: pointer;
-      text-decoration: none;
-      transition: all 100ms ease;
-    }}
-    .row-btn:hover {{ color: var(--text); background: var(--surface-subtle); }}
-    .row-btn:active {{ transform: scale(0.96); }}
-    .row-btn.row-delete:hover {{ color: #ff6b6b; background: rgba(239, 68, 68, 0.08); }}
-
-    /* Empty State */
-    .empty-state {{
-      padding: 3.5rem 1.5rem;
-      text-align: center;
-      color: var(--text-muted);
-    }}
-    .empty-icon {{
-      width: 28px;
-      height: 28px;
-      margin: 0 auto 0.65rem;
-      color: var(--text-muted);
-      opacity: 0.35;
-    }}
-    .empty-headline {{
-      font-size: 0.85rem;
-      font-weight: 500;
-      color: var(--text-secondary);
-      margin-bottom: 0.25rem;
-    }}
-    .empty-instruction {{
-      font-size: 0.74rem;
-      color: var(--text-muted);
+      background: var(--bg-surface);
+      transition: background 80ms ease;
     }}
 
-    /* QuickLook Drawer / Modal */
-    .preview-backdrop {{
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: rgba(3, 4, 6, 0.8);
-      backdrop-filter: blur(12px);
-      display: none;
-      align-items: center;
-      justify-content: center;
-      z-index: 1000;
-      padding: 1.5rem;
-      opacity: 0;
-      transition: opacity 140ms var(--ease-out);
+    .doc-item:hover {{
+      background: var(--bg-hover);
     }}
-    .preview-backdrop.open {{
-      display: flex;
-      opacity: 1;
+
+    .doc-item.selected {{
+      background: var(--bg-selected);
+      border-left: 3px solid var(--accent);
+      padding-left: calc(1rem - 3px);
     }}
-    .preview-modal {{
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      width: 100%;
-      max-width: 940px;
-      height: 86vh;
+
+    .doc-icon-wrap {{
+      color: var(--text-muted);
+      margin-top: 0.15rem;
+      flex-shrink: 0;
+    }}
+
+    .doc-item.selected .doc-icon-wrap {{
+      color: var(--accent);
+    }}
+
+    .doc-body {{
+      flex: 1;
+      min-width: 0;
       display: flex;
       flex-direction: column;
-      overflow: hidden;
-      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.65);
-      transform: scale(0.97);
-      transition: transform 160ms var(--ease-out);
+      gap: 0.2rem;
     }}
-    .preview-backdrop.open .preview-modal {{
-      transform: scale(1);
-    }}
-    .preview-header {{
+
+    .doc-title-row {{
       display: flex;
       justify-content: space-between;
-      align-items: center;
-      padding: 0.75rem 1.15rem;
-      border-bottom: 1px solid var(--border);
-      background: var(--surface-subtle);
+      align-items: baseline;
+      gap: 0.5rem;
     }}
-    .preview-left {{
-      display: flex;
-      align-items: center;
-      gap: 0.55rem;
-      overflow: hidden;
-    }}
-    .preview-title {{
+
+    .doc-title {{
       font-size: 0.84rem;
       font-weight: 600;
       color: var(--text);
+      white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-      white-space: nowrap;
-      max-width: 580px;
     }}
-    .preview-pill {{
-      font-size: 0.68rem;
-      color: var(--text-muted);
-      background: var(--surface);
-      border: 1px solid var(--border);
-      padding: 0.12rem 0.45rem;
-      border-radius: 3px;
-      white-space: nowrap;
+
+    .doc-size {{
+      font-size: 0.7rem;
+      color: var(--text-dim);
+      flex-shrink: 0;
     }}
-    .preview-right {{
+
+    .doc-meta-row {{
       display: flex;
       align-items: center;
-      gap: 0.35rem;
+      flex-wrap: wrap;
+      gap: 0.4rem 0.65rem;
+      font-size: 0.72rem;
+      color: var(--text-muted);
     }}
-    .preview-frame {{
+
+    .meta-tag {{
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+    }}
+
+    .category-tag {{
+      font-weight: 500;
+      background: var(--bg-subtle);
+      border: 1px solid var(--border-subtle);
+      padding: 0.05rem 0.35rem;
+      border-radius: 3px;
+      color: var(--text-muted);
+    }}
+
+    .doc-actions {{
+      margin-left: 0.25rem;
+    }}
+
+    .btn-row-action {{
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 26px;
+      height: 26px;
+      border: none;
+      background: transparent;
+      border-radius: 4px;
+      color: var(--text-dim);
+      transition: all 100ms ease;
+    }}
+
+    .btn-row-action:hover {{
+      color: var(--status-danger);
+      background: rgba(220, 38, 38, 0.08);
+    }}
+
+    /* Right Pane: Document Inspector */
+    .inspector-pane {{
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      box-shadow: var(--shadow-sm);
+    }}
+
+    .inspector-header {{
+      padding: 0.75rem 1.15rem;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg-surface);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+    }}
+
+    .inspector-info {{
+      display: flex;
+      flex-direction: column;
+      gap: 0.2rem;
+      min-width: 0;
+    }}
+
+    .inspector-title {{
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }}
+
+    .inspector-meta {{
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      font-size: 0.74rem;
+      color: var(--text-muted);
+    }}
+
+    .inspector-actions {{
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      flex-shrink: 0;
+    }}
+
+    .btn-action {{
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 0.76rem;
+      font-weight: 500;
+      color: var(--text-muted);
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      padding: 0.35rem 0.65rem;
+      border-radius: 5px;
+      text-decoration: none;
+      transition: all 100ms var(--ease);
+    }}
+
+    .btn-action:hover {{
+      background: var(--bg-hover);
+      color: var(--text);
+      border-color: var(--border-focus);
+    }}
+
+    .btn-action.btn-danger:hover {{
+      color: var(--status-danger);
+      border-color: var(--status-danger);
+      background: rgba(220, 38, 38, 0.06);
+    }}
+
+    .viewer-frame {{
       flex: 1;
       width: 100%;
       height: 100%;
+      min-height: 540px;
       border: none;
-      background: #121419;
+      background: var(--bg-subtle);
     }}
+
+    /* Zero State */
+    .zero-state {{
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 3rem 1.5rem;
+      text-align: center;
+      color: var(--text-muted);
+    }}
+
+    .zero-icon {{
+      width: 36px;
+      height: 36px;
+      color: var(--text-dim);
+      margin-bottom: 0.85rem;
+    }}
+
+    .zero-title {{
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 0.25rem;
+    }}
+
+    .zero-desc {{
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      max-width: 320px;
+      line-height: 1.4;
+    }}
+
+    /* Technical Diagnostics Footer */
+    footer.diagnostics {{
+      background: var(--bg-surface);
+      border-top: 1px solid var(--border);
+      padding: 0.6rem 1.5rem;
+      font-size: 0.72rem;
+      color: var(--text-dim);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.5rem 1.5rem;
+    }}
+
+    .diag-group {{
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.5rem 1rem;
+    }}
+
+    .diag-item {{
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+    }}
+
+    .diag-label {{
+      color: var(--text-dim);
+    }}
+
+    .diag-val {{
+      color: var(--text-muted);
+      font-weight: 500;
+    }}
+
+    .btn-copy {{
+      background: none;
+      border: none;
+      color: var(--text-dim);
+      display: inline-flex;
+      align-items: center;
+      padding: 0 2px;
+      margin-left: 2px;
+    }}
+
+    .btn-copy:hover {{ color: var(--text); }}
 
     /* Toast */
     .toast {{
       position: fixed;
-      bottom: 2rem;
+      bottom: 2.5rem;
       right: 2rem;
-      background: var(--surface-hover);
+      background: var(--bg-surface);
       border: 1px solid var(--border);
       color: var(--text);
-      padding: 0.65rem 1.1rem;
-      border-radius: 7px;
-      font-size: 0.76rem;
+      padding: 0.55rem 1rem;
+      border-radius: 6px;
+      font-size: 0.78rem;
       font-weight: 500;
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
-      transform: translateY(12px);
+      box-shadow: var(--shadow-md);
+      transform: translateY(10px);
       opacity: 0;
-      transition: all 140ms var(--ease-out);
-      z-index: 2000;
       pointer-events: none;
+      transition: all 140ms var(--ease);
+      z-index: 1000;
     }}
+
     .toast.show {{
       transform: translateY(0);
       opacity: 1;
     }}
 
-    @keyframes fadeIn {{
-      from {{ opacity: 0; transform: translateY(-4px); }}
-      to {{ opacity: 1; transform: translateY(0); }}
+    /* Mobile Drawer & Modal View */
+    @media (max-width: 960px) {{
+      .split-layout {{
+        grid-template-columns: 1fr;
+      }}
+      .inspector-pane {{
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 200;
+        border-radius: 0;
+        display: none;
+      }}
+      .inspector-pane.mobile-open {{
+        display: flex;
+      }}
+      .btn-close-mobile {{
+        display: inline-flex !important;
+      }}
+    }}
+
+    @media (min-width: 961px) {{
+      .btn-close-mobile {{
+        display: none !important;
+      }}
     }}
   </style>
 </head>
 <body>
-  <div class="container">
-    <header>
-      <div class="brand">
-        <svg class="brand-mark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <header>
+    <div class="brand-wrap">
+      <div class="brand-logo" aria-hidden="true">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <rect x="2" y="4" width="20" height="16" rx="2"/>
           <path d="M6 12h12"/>
           <path d="M6 8h12"/>
         </svg>
-        <span class="brand-title">Brother DS-940DW</span>
       </div>
-      <div class="header-right">
-        <div class="status-badge">
-          <span id="status-dot" class="status-dot offline"></span>
-          <span id="status-label">Standby</span>
-        </div>
-        <button class="icon-action" onclick="refreshAll()" title="Refresh status and documents">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="23 4 23 10 17 10"/>
-            <polyline points="1 20 1 14 7 14"/>
-            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
-          </svg>
-        </button>
-      </div>
-    </header>
+      <h1 class="brand-title">Brother DS-940DW</h1>
+    </div>
 
-    <!-- Discreet Hardware Telemetry Strip -->
-    <div class="telemetry-strip">
-      <div class="telemetry-item">
-        <span class="telemetry-label">host</span>
-        <span class="telemetry-value" id="scanner-ip">{self.settings.scanner_ip}:8080</span>
+    <div class="header-center">
+      <div class="status-badge" role="status">
+        <span id="status-dot" class="status-dot offline"></span>
+        <span id="status-label">Standby</span>
       </div>
-      <span class="telemetry-sep">/</span>
-      <div class="telemetry-item">
-        <span class="telemetry-label">state</span>
-        <span class="telemetry-value" id="scanner-state">Connecting</span>
+    </div>
+
+    <div class="header-actions">
+      <button class="btn-icon" id="theme-toggle" onclick="toggleTheme()" title="Switch color theme" aria-label="Switch color theme">
+        <svg id="theme-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="5"/>
+          <line x1="12" y1="1" x2="12" y2="3"/>
+          <line x1="12" y1="21" x2="12" y2="23"/>
+          <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+          <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+          <line x1="1" y1="12" x2="3" y2="12"/>
+          <line x1="21" y1="12" x2="23" y2="12"/>
+          <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+          <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+        </svg>
+      </button>
+      <button class="btn-icon" onclick="refreshAll()" title="Refresh documents and status" aria-label="Refresh">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="23 4 23 10 17 10"/>
+          <polyline points="1 20 1 14 7 14"/>
+          <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <main class="workbench">
+    <!-- Collation Banner -->
+    <div id="collation-banner" class="collation-banner" role="region" aria-label="Multi-sheet scan progress">
+      <div class="collation-info">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"/>
+          <line x1="12" y1="8" x2="12" y2="12"/>
+          <line x1="12" y1="16" x2="12.01" y2="16"/>
+        </svg>
+        <span id="collation-msg">Multi-sheet batch active. Insert next sheet to append...</span>
       </div>
-      <span class="telemetry-sep">/</span>
-      <div class="telemetry-item">
-        <span class="telemetry-label">uptime</span>
-        <span class="telemetry-value" id="uptime">--</span>
+      <span class="collation-time" id="collation-time">8s</span>
+      <div id="collation-bar" class="collation-progress" style="width: 100%;"></div>
+    </div>
+
+    <!-- Master-Detail Split Grid -->
+    <div class="split-layout">
+      <!-- Master: Recent Scans Ledger -->
+      <section class="ledger-pane" aria-labelledby="ledger-heading">
+        <div class="ledger-header">
+          <div class="ledger-title-row">
+            <div class="ledger-title-wrap">
+              <h2 id="ledger-heading" class="ledger-title">Recent Scans</h2>
+              <span class="ledger-count" id="scan-count">0</span>
+            </div>
+          </div>
+
+          <div class="search-row">
+            <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="11" cy="11" r="8"/>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+            <input type="search" id="search-box" class="search-input" placeholder="Search archive..." oninput="filterScans()" aria-label="Search archive">
+            <kbd class="search-kbd">/</kbd>
+          </div>
+
+          <nav class="category-bar" id="category-filters" aria-label="Filter by category">
+            <button class="category-chip active" onclick="setCategoryFilter('all', this)">All</button>
+          </nav>
+        </div>
+
+        <div class="doc-list" id="doc-list" role="listbox" aria-label="Scanned documents">
+          <div class="zero-state">
+            <div class="zero-title">Loading documents...</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Detail: Live Inspector Pane -->
+      <section class="inspector-pane" id="inspector-pane" aria-label="Document Preview and Inspector">
+        <div class="inspector-header">
+          <div class="inspector-info">
+            <div class="inspector-title" id="inspector-filename">Select a document</div>
+            <div class="inspector-meta" id="inspector-meta">
+              <span id="meta-category" class="meta-tag category-tag" style="display:none;"></span>
+              <span id="meta-doc-date" class="meta-tag" style="display:none;"></span>
+              <span id="meta-scan-date" class="meta-tag" style="display:none;"></span>
+              <span id="meta-size" class="meta-tag" style="display:none;"></span>
+            </div>
+          </div>
+
+          <div class="inspector-actions">
+            <a class="btn-action" id="btn-download" href="#" download="" title="Download PDF" style="display:none;">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="7 10 12 15 17 10"/>
+                <line x1="12" y1="15" x2="12" y2="3"/>
+              </svg>
+              <span>Download</span>
+            </a>
+            <a class="btn-action" id="btn-open-external" href="#" target="_blank" rel="noopener" title="Open in new window" style="display:none;">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+                <polyline points="15 3 21 3 21 9"/>
+                <line x1="10" y1="14" x2="21" y2="3"/>
+              </svg>
+            </a>
+            <button class="btn-action btn-danger" id="btn-delete-doc" onclick="deleteActiveDoc()" title="Delete document" style="display:none;">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="3 6 5 6 21 6"/>
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+              </svg>
+            </button>
+            <button class="btn-action btn-close-mobile" onclick="closeMobileInspector()" title="Close viewer">
+              <span>Close</span>
+            </button>
+          </div>
+        </div>
+
+        <iframe class="viewer-frame" id="viewer-frame" src="about:blank" title="Document PDF Preview"></iframe>
+
+        <div class="zero-state" id="inspector-zero" style="display:flex;">
+          <svg class="zero-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/>
+          </svg>
+          <div class="zero-title">Ready for paper</div>
+          <div class="zero-desc">Select any document in the ledger to inspect, or feed paper into the DS-940DW to scan automatically.</div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <!-- Diagnostics Footer -->
+  <footer class="diagnostics">
+    <div class="diag-group">
+      <div class="diag-item">
+        <span class="diag-label">Scanner:</span>
+        <span class="diag-val" id="diag-scanner">{self.settings.scanner_ip}:8080</span>
       </div>
-      <span class="telemetry-sep">/</span>
-      <div class="telemetry-item">
-        <span class="telemetry-label">rss</span>
-        <span class="telemetry-value" id="ram">-- MB</span>
+      <div class="diag-item">
+        <span class="diag-label">State:</span>
+        <span class="diag-val" id="diag-state">Connecting</span>
       </div>
-      <span class="telemetry-sep">/</span>
-      <div class="telemetry-item">
-        <span class="telemetry-label">storage</span>
-        <span class="telemetry-value" id="path">{self.settings.output}</span>
-        <button class="path-copy" id="copy-btn" onclick="copyPath()" title="Copy folder path">
-          <svg id="copy-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <div class="diag-item">
+        <span class="diag-label">Uptime:</span>
+        <span class="diag-val" id="diag-uptime">--</span>
+      </div>
+      <div class="diag-item">
+        <span class="diag-label">RAM:</span>
+        <span class="diag-val" id="diag-ram">-- MB</span>
+      </div>
+    </div>
+    <div class="diag-group">
+      <div class="diag-item">
+        <span class="diag-label">Archive:</span>
+        <span class="diag-val" id="diag-path">{self.settings.output}</span>
+        <button class="btn-copy" onclick="copyPath()" title="Copy folder path" aria-label="Copy folder path">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
             <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
           </svg>
         </button>
       </div>
     </div>
+  </footer>
 
-    <!-- Collation Notification Banner -->
-    <div id="collation-banner" class="collation-banner">
-      <span class="collation-msg" id="collation-msg">Multi-sheet batch active. Insert next sheet...</span>
-      <span class="collation-timer" id="collation-time">8s</span>
-      <div id="collation-bar" class="collation-progress" style="width: 100%;"></div>
-    </div>
-
-    <!-- Toolbar: Title & Search -->
-    <div class="archive-toolbar">
-      <div class="toolbar-title-wrap">
-        <span class="toolbar-title">Recent Scans</span>
-        <span class="toolbar-count" id="scan-count">0</span>
-      </div>
-      <div class="search-box-wrap">
-        <svg class="search-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="11" cy="11" r="8"/>
-          <line x1="21" y1="21" x2="16.65" y2="16.65"/>
-        </svg>
-        <input type="text" id="search-box" class="search-input" placeholder="Search archive..." oninput="filterScans()">
-        <kbd class="kbd-shortcut">/</kbd>
-      </div>
-    </div>
-
-    <!-- Category Tabs -->
-    <div class="filter-tabs" id="category-filters">
-      <button class="filter-tab active" onclick="setCategoryFilter('all', this)">All</button>
-    </div>
-
-    <!-- Document Ledger Table -->
-    <div class="ledger-container">
-      <table>
-        <thead>
-          <tr>
-            <th style="width: 48%;">Document</th>
-            <th style="width: 16%;">Category</th>
-            <th style="width: 13%;" title="Extracted document date">Doc Date</th>
-            <th style="width: 13%;" title="Timestamp physically scanned">Scanned</th>
-            <th style="width: 10%; text-align: right;">Size</th>
-            <th class="actions-col" style="width: 10px;"></th>
-          </tr>
-        </thead>
-        <tbody id="scans-table">
-          <tr><td colspan="6" class="empty-state">Loading documents...</td></tr>
-        </tbody>
-      </table>
-    </div>
-  </div>
-
-  <!-- macOS Style QuickLook Modal -->
-  <div id="preview-modal" class="preview-backdrop" onclick="closePreview(event)">
-    <div class="preview-modal" onclick="event.stopPropagation()">
-      <div class="preview-header">
-        <div class="preview-left">
-          <span class="preview-title" id="preview-filename">Document Preview</span>
-          <span class="preview-pill" id="preview-doc-date" style="display:none;"></span>
-          <span class="preview-pill" id="preview-scan-date" style="display:none;"></span>
-        </div>
-        <div class="preview-right">
-          <a class="icon-action" id="preview-download" href="#" download="" title="Download PDF">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-              <polyline points="7 10 12 15 17 10"/>
-              <line x1="12" y1="15" x2="12" y2="3"/>
-            </svg>
-          </a>
-          <button class="icon-action" onclick="closePreview()" title="Close (Esc or Space)">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <line x1="18" y1="6" x2="6" y2="18"/>
-              <line x1="6" y1="6" x2="18" y2="18"/>
-            </svg>
-          </button>
-        </div>
-      </div>
-      <iframe class="preview-frame" id="preview-iframe" src="about:blank"></iframe>
-    </div>
-  </div>
-
-  <div id="toast" class="toast">Action completed</div>
+  <div id="toast" class="toast" role="alert">Notification</div>
 
   <script>
     let allScans = [];
     let currentCategory = 'all';
     let selectedIndex = -1;
+    let activeDoc = null;
 
     function showToast(msg) {{
       const t = document.getElementById('toast');
       t.textContent = msg;
       t.classList.add('show');
-      setTimeout(() => t.classList.remove('show'), 2200);
+      setTimeout(() => t.classList.remove('show'), 2000);
     }}
 
     function copyPath() {{
-      const p = document.getElementById('path').textContent;
+      const p = document.getElementById('diag-path').textContent;
       navigator.clipboard.writeText(p);
-      const icon = document.getElementById('copy-icon');
-      if (icon) {{
-        icon.innerHTML = '<polyline points="20 6 9 17 4 12"/>';
-        setTimeout(() => {{
-          icon.innerHTML = '<rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>';
-        }}, 1600);
-      }}
       showToast('Path copied to clipboard');
     }}
 
-    function getCategoryBadge(cat) {{
-      const c = (cat || 'Inbox').trim();
-      const lower = c.toLowerCase();
-      let bg = 'rgba(255, 255, 255, 0.04)';
-      let text = 'var(--text-secondary)';
-      let border = 'rgba(255, 255, 255, 0.07)';
-
-      if (lower.includes('legal') || lower.includes('citation')) {{
-        bg = 'rgba(99, 102, 241, 0.08)';
-        text = '#a5b4fc';
-        border = 'rgba(99, 102, 241, 0.18)';
-      }} else if (lower.includes('auto') || lower.includes('vehicle')) {{
-        bg = 'rgba(245, 158, 11, 0.08)';
-        text = '#fcd34d';
-        border = 'rgba(245, 158, 11, 0.18)';
-      }} else if (lower.includes('health') || lower.includes('medical')) {{
-        bg = 'rgba(20, 184, 166, 0.08)';
-        text = '#5eead4';
-        border = 'rgba(20, 184, 166, 0.18)';
-      }} else if (lower.includes('bank') || lower.includes('finance')) {{
-        bg = 'rgba(16, 185, 129, 0.08)';
-        text = '#6ee7b7';
-        border = 'rgba(16, 185, 129, 0.18)';
-      }} else if (lower.includes('tax')) {{
-        bg = 'rgba(244, 63, 94, 0.08)';
-        text = '#fda4af';
-        border = 'rgba(244, 63, 94, 0.18)';
-      }} else if (lower.includes('utilit')) {{
-        bg = 'rgba(14, 165, 233, 0.08)';
-        text = '#7dd3fc';
-        border = 'rgba(14, 165, 233, 0.18)';
-      }}
-      return `<span class="cat-badge" style="background:${{bg}};color:${{text}};border:1px solid ${{border}};">${{c}}</span>`;
+    /* Theme Management */
+    function initTheme() {{
+      const saved = localStorage.getItem('ds940-theme') || 'system';
+      applyTheme(saved);
     }}
 
+    function applyTheme(theme) {{
+      if (theme === 'dark') {{
+        document.documentElement.setAttribute('data-theme', 'dark');
+      }} else if (theme === 'light') {{
+        document.documentElement.setAttribute('data-theme', 'light');
+      }} else {{
+        document.documentElement.removeAttribute('data-theme');
+      }}
+      localStorage.setItem('ds940-theme', theme);
+    }}
+
+    function toggleTheme() {{
+      const current = document.documentElement.getAttribute('data-theme');
+      if (!current) {{
+        const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        applyTheme(isDark ? 'light' : 'dark');
+      }} else if (current === 'dark') {{
+        applyTheme('light');
+      }} else {{
+        applyTheme('dark');
+      }}
+    }}
+
+    /* Document Title Parser */
     function parseDisplayTitle(filename) {{
       const base = filename.endsWith('.pdf') ? filename.slice(0, -4) : filename;
       const dateMatch = base.match(/^\\d{{4}}-\\d{{2}}-\\d{{2}}_(.*)$/);
@@ -1007,6 +1221,7 @@ class DashboardHandler(BaseHTTPRequestHandler):
       return base.replace(/_/g, ' · ').replace(/-/g, ' ');
     }}
 
+    /* Category Filtering */
     function updateCategoryFilters() {{
       const counts = {{}};
       allScans.forEach(s => {{
@@ -1017,105 +1232,15 @@ class DashboardHandler(BaseHTTPRequestHandler):
       const filterBar = document.getElementById('category-filters');
       const cats = Object.keys(counts).sort();
 
-      let html = `<button class="filter-tab ${{currentCategory === 'all' ? 'active' : ''}}" onclick="setCategoryFilter('all', this)">All <span class="filter-tab-count">${{allScans.length}}</span></button>`;
+      let html = `<button class="category-chip ${{currentCategory === 'all' ? 'active' : ''}}" onclick="setCategoryFilter('all', this)">All (${{allScans.length}})</button>`;
 
       cats.forEach(cat => {{
         const isActive = currentCategory.toLowerCase() === cat.toLowerCase();
         const escCat = cat.replace(/'/g, "\\'");
-        html += `<button class="filter-tab ${{isActive ? 'active' : ''}}" onclick="setCategoryFilter('${{escCat}}', this)">${{cat}} <span class="filter-tab-count">${{counts[cat]}}</span></button>`;
+        html += `<button class="category-chip ${{isActive ? 'active' : ''}}" onclick="setCategoryFilter('${{escCat}}', this)">${{cat}} (${{counts[cat]}})</button>`;
       }});
 
       filterBar.innerHTML = html;
-    }}
-
-    function openPreview(relPath, filename, docDate, scanDate) {{
-      const modal = document.getElementById('preview-modal');
-      const frame = document.getElementById('preview-iframe');
-      const title = document.getElementById('preview-filename');
-      const docDateEl = document.getElementById('preview-doc-date');
-      const scanDateEl = document.getElementById('preview-scan-date');
-      const dlBtn = document.getElementById('preview-download');
-
-      title.textContent = filename;
-      if (docDate) {{
-        docDateEl.textContent = 'Doc: ' + docDate;
-        docDateEl.style.display = 'inline-block';
-      }} else {{
-        docDateEl.style.display = 'none';
-      }}
-
-      if (scanDate) {{
-        scanDateEl.textContent = 'Scanned: ' + scanDate;
-        scanDateEl.style.display = 'inline-block';
-      }} else {{
-        scanDateEl.style.display = 'none';
-      }}
-
-      const fileUrl = '/files/' + encodeURIComponent(relPath);
-      dlBtn.href = fileUrl;
-      dlBtn.download = filename;
-      frame.src = fileUrl;
-      modal.classList.add('open');
-    }}
-
-    function closePreview() {{
-      const modal = document.getElementById('preview-modal');
-      const frame = document.getElementById('preview-iframe');
-      modal.classList.remove('open');
-      frame.src = 'about:blank';
-    }}
-
-    function isPreviewOpen() {{
-      return document.getElementById('preview-modal').classList.contains('open');
-    }}
-
-    /* Desktop-grade Keyboard Interaction (Spacebar QuickLook, Arrow Keys, / search) */
-    document.addEventListener('keydown', e => {{
-      const isInput = document.activeElement.tagName === 'INPUT';
-      
-      if (e.key === 'Escape') {{
-        if (isPreviewOpen()) {{
-          closePreview();
-        }} else if (isInput) {{
-          document.activeElement.blur();
-        }}
-      }} else if (e.key === ' ' && !isInput) {{
-        e.preventDefault();
-        if (isPreviewOpen()) {{
-          closePreview();
-        }} else {{
-          const filtered = getFilteredScans();
-          const target = selectedIndex >= 0 && selectedIndex < filtered.length ? filtered[selectedIndex] : filtered[0];
-          if (target) {{
-            openPreview(target.relative_path, target.filename, target.doc_date, target.scan_date);
-          }}
-        }}
-      }} else if (e.key === '/' && !isInput) {{
-        e.preventDefault();
-        document.getElementById('search-box').focus();
-      }} else if ((e.key === 'ArrowDown' || e.key === 'ArrowUp') && !isInput && !isPreviewOpen()) {{
-        e.preventDefault();
-        const filtered = getFilteredScans();
-        if (!filtered.length) return;
-        if (e.key === 'ArrowDown') {{
-          selectedIndex = Math.min(filtered.length - 1, selectedIndex + 1);
-        }} else {{
-          selectedIndex = Math.max(0, selectedIndex - 1);
-        }}
-        highlightSelectedRow();
-      }}
-    }});
-
-    function highlightSelectedRow() {{
-      const rows = document.querySelectorAll('#scans-table tr');
-      rows.forEach((r, idx) => {{
-        if (idx === selectedIndex) {{
-          r.classList.add('selected');
-          r.scrollIntoView({{ block: 'nearest', behavior: 'smooth' }});
-        }} else {{
-          r.classList.remove('selected');
-        }}
-      }});
     }}
 
     function setCategoryFilter(cat, el) {{
@@ -1128,12 +1253,6 @@ class DashboardHandler(BaseHTTPRequestHandler):
     function filterScans() {{
       selectedIndex = -1;
       renderScans();
-    }}
-
-    function refreshAll() {{
-      updateStatus();
-      loadScans();
-      showToast('Archive refreshed');
     }}
 
     function getFilteredScans() {{
@@ -1153,65 +1272,184 @@ class DashboardHandler(BaseHTTPRequestHandler):
       return filtered;
     }}
 
-    function renderScans() {{
-      const filtered = getFilteredScans();
-      const tbody = document.getElementById('scans-table');
+    function selectDocument(doc, index) {{
+      activeDoc = doc;
+      selectedIndex = index;
+      
+      const frame = document.getElementById('viewer-frame');
+      const zero = document.getElementById('inspector-zero');
+      const filenameEl = document.getElementById('inspector-filename');
+      const catEl = document.getElementById('meta-category');
+      const docDateEl = document.getElementById('meta-doc-date');
+      const scanDateEl = document.getElementById('meta-scan-date');
+      const sizeEl = document.getElementById('meta-size');
+      const dlBtn = document.getElementById('btn-download');
+      const openBtn = document.getElementById('btn-open-external');
+      const delBtn = document.getElementById('btn-delete-doc');
+      const pane = document.getElementById('inspector-pane');
 
-      document.getElementById('scan-count').textContent = filtered.length;
-
-      if (filtered.length === 0) {{
-        tbody.innerHTML = `
-          <tr>
-            <td colspan="6" class="empty-state">
-              <svg class="empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                <polyline points="14 2 14 8 20 8"/>
-              </svg>
-              <div class="empty-headline">No matching documents</div>
-              <div class="empty-instruction">Feed a sheet into the scanner to capture, OCR, and organize.</div>
-            </td>
-          </tr>
-        `;
+      if (!doc) {{
+        frame.src = 'about:blank';
+        frame.style.display = 'none';
+        zero.style.display = 'flex';
+        filenameEl.textContent = 'Select a document';
+        catEl.style.display = 'none';
+        docDateEl.style.display = 'none';
+        scanDateEl.style.display = 'none';
+        sizeEl.style.display = 'none';
+        dlBtn.style.display = 'none';
+        openBtn.style.display = 'none';
+        delBtn.style.display = 'none';
+        pane.classList.remove('mobile-open');
         return;
       }}
 
-      tbody.innerHTML = filtered.map((s, idx) => {{
+      const fileUrl = '/files/' + encodeURIComponent(doc.relative_path);
+      frame.src = fileUrl;
+      frame.style.display = 'block';
+      zero.style.display = 'none';
+
+      filenameEl.textContent = parseDisplayTitle(doc.filename);
+      filenameEl.title = doc.filename;
+
+      catEl.textContent = doc.category || 'Inbox';
+      catEl.style.display = 'inline-block';
+
+      docDateEl.textContent = 'Doc Date: ' + (doc.doc_date || 'Not detected');
+      docDateEl.style.display = 'inline-block';
+
+      scanDateEl.textContent = 'Scanned: ' + (doc.scan_date || 'Recent');
+      scanDateEl.style.display = 'inline-block';
+
+      sizeEl.textContent = doc.size_kb + ' KB';
+      sizeEl.style.display = 'inline-block';
+
+      dlBtn.href = fileUrl;
+      dlBtn.download = doc.filename;
+      dlBtn.style.display = 'inline-flex';
+
+      openBtn.href = fileUrl;
+      openBtn.style.display = 'inline-flex';
+
+      delBtn.style.display = 'inline-flex';
+
+      pane.classList.add('mobile-open');
+      highlightSelectedRow();
+    }}
+
+    function closeMobileInspector() {{
+      document.getElementById('inspector-pane').classList.remove('mobile-open');
+    }}
+
+    function highlightSelectedRow() {{
+      const items = document.querySelectorAll('.doc-item');
+      items.forEach((item, idx) => {{
+        if (idx === selectedIndex) {{
+          item.classList.add('selected');
+          item.setAttribute('aria-selected', 'true');
+          item.scrollIntoView({{ block: 'nearest', behavior: 'smooth' }});
+        }} else {{
+          item.classList.remove('selected');
+          item.setAttribute('aria-selected', 'false');
+        }}
+      }});
+    }}
+
+    function renderScans() {{
+      const filtered = getFilteredScans();
+      const listContainer = document.getElementById('doc-list');
+      document.getElementById('scan-count').textContent = filtered.length;
+
+      if (filtered.length === 0) {{
+        listContainer.innerHTML = `
+          <div class="zero-state">
+            <svg class="zero-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <circle cx="11" cy="11" r="8"/>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+            <div class="zero-title">No matching documents</div>
+            <div class="zero-desc">Adjust your search query or feed a new document into the scanner.</div>
+          </div>
+        `;
+        selectDocument(null, -1);
+        return;
+      }}
+
+      listContainer.innerHTML = filtered.map((s, idx) => {{
         const headline = parseDisplayTitle(s.filename);
+        const isSelected = activeDoc && activeDoc.filename === s.filename;
         const escRel = s.relative_path.replace(/'/g, "\\'");
         const escName = s.filename.replace(/'/g, "\\'");
-        const escDocDate = (s.doc_date || '').replace(/'/g, "\\'");
-        const escScanDate = (s.scan_date || '').replace(/'/g, "\\'");
-        const isSelected = idx === selectedIndex ? 'selected' : '';
 
         return `
-          <tr class="${{isSelected}}" onclick="openPreview('${{escRel}}', '${{escName}}', '${{escDocDate}}', '${{escScanDate}}')">
-            <td>
-              <div class="doc-cell">
-                <svg class="doc-glyph" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
-                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                  <polyline points="14 2 14 8 20 8"/>
-                </svg>
-                <div class="doc-info">
-                  <span class="doc-headline">${{headline}}</span>
-                  <span class="doc-subline">${{s.filename}}</span>
-                </div>
+          <div class="doc-item ${{isSelected ? 'selected' : ''}}" 
+               tabindex="0" 
+               role="option" 
+               aria-selected="${{isSelected ? 'true' : 'false'}}"
+               onclick="selectDocument(allScans.find(x => x.filename === '${{escName}}'), ${{idx}})"
+               onkeydown="if(event.key === 'Enter' || event.key === ' ') {{ selectDocument(allScans.find(x => x.filename === '${{escName}}'), ${{idx}}); event.preventDefault(); }}">
+            <div class="doc-icon-wrap" aria-hidden="true">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
+              </svg>
+            </div>
+            <div class="doc-body">
+              <div class="doc-title-row">
+                <span class="doc-title" title="${{s.filename}}">${{headline}}</span>
+                <span class="doc-size">${{s.size_kb}} KB</span>
               </div>
-            </td>
-            <td>${{getCategoryBadge(s.category)}}</td>
-            <td><span class="date-val doc-date">${{s.doc_date || '<span style="color:var(--text-muted);opacity:0.4;">—</span>'}}</span></td>
-            <td><span class="scan-date-val">${{s.scan_date || '—'}}</span></td>
-            <td style="text-align: right;"><span class="size-val">${{s.size_kb}} KB</span></td>
-            <td class="actions-col" onclick="event.stopPropagation()">
-              <button class="row-btn row-delete" onclick="confirmDelete('${{escRel}}', '${{escName}}')" title="Delete document">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <div class="doc-meta-row">
+                <span class="category-tag">${{s.category || 'Inbox'}}</span>
+                <span class="meta-tag">Doc Date: ${{s.doc_date || 'Not detected'}}</span>
+                <span class="meta-tag">Scanned: ${{s.scan_date || 'Recent'}}</span>
+              </div>
+            </div>
+            <div class="doc-actions" onclick="event.stopPropagation()">
+              <button class="btn-row-action" onclick="confirmDelete('${{escRel}}', '${{escName}}')" title="Delete document" aria-label="Delete ${{headline}}">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <polyline points="3 6 5 6 21 6"/>
                   <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
                 </svg>
               </button>
-            </td>
-          </tr>
+            </div>
+          </div>
         `;
       }}).join('');
+
+      // Auto-select the first document on desktop if none selected
+      if (selectedIndex === -1 && filtered.length > 0 && window.innerWidth > 960) {{
+        selectDocument(filtered[0], 0);
+      }}
+    }}
+
+    function deleteActiveDoc() {{
+      if (!activeDoc) return;
+      confirmDelete(activeDoc.relative_path, activeDoc.filename);
+    }}
+
+    async function confirmDelete(relPath, filename) {{
+      if (!confirm('Permanently delete ' + filename + '?')) return;
+      try {{
+        const res = await fetch('/api/delete', {{
+          method: 'POST',
+          headers: {{ 'Content-Type': 'application/json' }},
+          body: JSON.stringify({{ path: relPath }})
+        }});
+        const data = await res.json();
+        if (data.status === 'ok') {{
+          showToast('Deleted ' + filename);
+          if (activeDoc && activeDoc.filename === filename) {{
+            activeDoc = null;
+            selectedIndex = -1;
+          }}
+          await loadScans();
+        }} else {{
+          showToast('Failed to delete: ' + (data.message || 'Error'));
+        }}
+      }} catch (e) {{
+        showToast('Delete error: ' + e);
+      }}
     }}
 
     async function updateStatus() {{
@@ -1221,7 +1459,7 @@ class DashboardHandler(BaseHTTPRequestHandler):
         
         const dot = document.getElementById('status-dot');
         const label = document.getElementById('status-label');
-        const stateEl = document.getElementById('scanner-state');
+        const diagState = document.getElementById('diag-state');
         const collationBanner = document.getElementById('collation-banner');
         const collationBar = document.getElementById('collation-bar');
 
@@ -1229,32 +1467,32 @@ class DashboardHandler(BaseHTTPRequestHandler):
         if (data.state === 'waiting_for_paper') {{
           dot.classList.add('online');
           label.textContent = 'Ready for paper';
-          stateEl.textContent = 'Ready (Idle)';
+          diagState.textContent = 'Ready (Idle)';
           collationBanner.classList.remove('visible');
         }} else if (data.state === 'scanning') {{
           dot.classList.add('active');
           label.textContent = 'Scanning...';
-          stateEl.textContent = 'Scanning Duplex';
+          diagState.textContent = 'Scanning Duplex';
           collationBanner.classList.remove('visible');
         }} else if (data.state === 'waiting_for_next_sheet') {{
           dot.classList.add('active');
           label.textContent = `Batch (${{data.timeout_remaining || ''}}s)`;
-          stateEl.textContent = `Collation (${{data.timeout_remaining || ''}}s)`;
+          diagState.textContent = `Collation (${{data.timeout_remaining || ''}}s)`;
           
           collationBanner.classList.add('visible');
           document.getElementById('collation-msg').textContent = `Sheet ${{data.sheet || 1}} captured (${{data.pages_so_far || 2}} pages). Insert sheet ${{ (data.sheet || 1) + 1 }} to append...`;
-          document.getElementById('collation-time').textContent = `${{data.timeout_remaining || 0}}s remaining`;
+          document.getElementById('collation-time').textContent = `${{data.timeout_remaining || 0}}s`;
           const pct = Math.max(0, Math.min(100, ((data.timeout_remaining || 0) / 8.0) * 100));
           collationBar.style.width = pct + '%';
         }} else {{
           dot.classList.add('offline');
           label.textContent = data.state === 'scanner_offline' ? 'Offline (Sleep)' : data.state.replace(/_/g, ' ');
-          stateEl.textContent = data.state === 'scanner_offline' ? 'Standby (Sleep)' : data.state;
+          diagState.textContent = data.state === 'scanner_offline' ? 'Standby (Sleep)' : data.state;
           collationBanner.classList.remove('visible');
         }}
 
-        document.getElementById('uptime').textContent = data.uptime;
-        document.getElementById('ram').textContent = data.memory_mb + ' MB';
+        document.getElementById('diag-uptime').textContent = data.uptime;
+        document.getElementById('diag-ram').textContent = data.memory_mb + ' MB';
       }} catch (e) {{
         console.error(e);
       }}
@@ -1271,26 +1509,36 @@ class DashboardHandler(BaseHTTPRequestHandler):
       }}
     }}
 
-    async function confirmDelete(relPath, filename) {{
-      if (!confirm('Permanently delete ' + filename + '?')) return;
-      try {{
-        const res = await fetch('/api/delete', {{
-          method: 'POST',
-          headers: {{ 'Content-Type': 'application/json' }},
-          body: JSON.stringify({{ path: relPath }})
-        }});
-        const data = await res.json();
-        if (data.status === 'ok') {{
-          showToast('Deleted ' + filename);
-          await loadScans();
-        }} else {{
-          showToast('Failed to delete: ' + (data.message || 'Error'));
-        }}
-      }} catch (e) {{
-        showToast('Delete error: ' + e);
-      }}
+    function refreshAll() {{
+      updateStatus();
+      loadScans();
+      showToast('Archive refreshed');
     }}
 
+    /* Keyboard navigation */
+    document.addEventListener('keydown', e => {{
+      const isInput = document.activeElement.tagName === 'INPUT';
+      
+      if (e.key === 'Escape') {{
+        closeMobileInspector();
+        if (isInput) document.activeElement.blur();
+      }} else if (e.key === '/' && !isInput) {{
+        e.preventDefault();
+        document.getElementById('search-box').focus();
+      }} else if ((e.key === 'ArrowDown' || e.key === 'ArrowUp') && !isInput) {{
+        e.preventDefault();
+        const filtered = getFilteredScans();
+        if (!filtered.length) return;
+        if (e.key === 'ArrowDown') {{
+          selectedIndex = Math.min(filtered.length - 1, selectedIndex + 1);
+        }} else {{
+          selectedIndex = Math.max(0, selectedIndex - 1);
+        }}
+        selectDocument(filtered[selectedIndex], selectedIndex);
+      }}
+    }});
+
+    initTheme();
     updateStatus();
     loadScans();
     setInterval(updateStatus, 3000);
