@@ -16,8 +16,9 @@ repo_root = Path(__file__).resolve().parent.parent
 if str(repo_root) not in sys.path:
     sys.path.insert(0, str(repo_root))
 
-from ds940.ai import CATEGORIES, DEFAULT_CATEGORY, classify_document
+from ds940.ai import DEFAULT_CATEGORY, classify_document
 from ds940.ocr import run_ocr
+from ds940.taxonomy import TaxonomyLedger
 
 
 def find_unsorted_scans(scans_dir: Path) -> list[Path]:
@@ -32,10 +33,14 @@ def find_unsorted_scans(scans_dir: Path) -> list[Path]:
     return unsorted
 
 
-def inspect_and_classify(pdf_path: Path, api_key: str | None = None) -> dict:
-    """Run OCR and classify a single PDF."""
+def inspect_and_classify(
+    pdf_path: Path,
+    api_key: str | None = None,
+    ledger: TaxonomyLedger | None = None,
+) -> dict:
+    """Run OCR and classify a single PDF with adaptive taxonomy support."""
     ocr_result = run_ocr(pdf_path)
-    classification = classify_document(ocr_result.full_text, api_key=api_key)
+    classification = classify_document(ocr_result.full_text, api_key=api_key, ledger=ledger)
     return {
         "source": str(pdf_path),
         "source_name": pdf_path.name,
@@ -58,9 +63,10 @@ def sort_scans(
     """Inspect all unsorted scans and return plan or execute moves."""
     unsorted = find_unsorted_scans(scans_dir)
     results = []
+    ledger = TaxonomyLedger(scans_dir)
 
     for pdf in unsorted:
-        item = inspect_and_classify(pdf, api_key=api_key)
+        item = inspect_and_classify(pdf, api_key=api_key, ledger=ledger)
         target_dir = scans_dir / item["category"]
         target_path = target_dir / item["suggested_filename"]
 
@@ -88,6 +94,9 @@ def sort_scans(
             item["status"] = "preview"
 
         results.append(item)
+
+    if not dry_run and results:
+        ledger.sync_with_filesystem()
 
     return results
 

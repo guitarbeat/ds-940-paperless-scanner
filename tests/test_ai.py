@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import json
+from pathlib import Path
+import tempfile
 import unittest
 from unittest.mock import MagicMock, patch
 
@@ -11,6 +13,7 @@ from ds940.ai import (
     extract_date_heuristic,
     sanitize_filename_part,
 )
+from ds940.taxonomy import TaxonomyLedger
 
 
 class AITests(unittest.TestCase):
@@ -28,7 +31,7 @@ class AITests(unittest.TestCase):
     def test_heuristic_utility_bill(self):
         text = "Austin Energy\nAccount Number: 123456\nDue date: 2026-11-04\nTotal amount due: $142.50"
         result = classify_with_heuristic(text)
-        self.assertEqual(result.category, "Bills & Utilities")
+        self.assertEqual(result.category, "Utilities")
         self.assertEqual(result.date, "2026-11-04")
         self.assertIn("Bill", result.document_type)
         self.assertTrue(result.suggested_filename.startswith("2026-11-04_"))
@@ -36,28 +39,36 @@ class AITests(unittest.TestCase):
     def test_heuristic_irs_notice(self):
         text = "Department of the Treasury\nInternal Revenue Service (IRS)\nNotice Date: 2026-10-15\nForm 1040"
         result = classify_with_heuristic(text)
-        self.assertEqual(result.category, "Taxes & Financial")
+        self.assertEqual(result.category, "Taxes")
         self.assertEqual(result.date, "2026-10-15")
         self.assertEqual(result.document_type, "Tax-Notice")
 
     def test_heuristic_medical_record(self):
         text = "St. David's Medical Center\nPatient Clinic Summary\nDoctor: Dr. Smith\nDate: 2026-09-01"
         result = classify_with_heuristic(text)
-        self.assertEqual(result.category, "Medical & Health")
+        self.assertEqual(result.category, "Medical")
         self.assertEqual(result.document_type, "Medical-Record")
 
     def test_heuristic_insurance(self):
         text = "GEICO Auto Insurance\nPolicy Number: G-88990\nCoverage period effective 2026-08-01\nPremium"
         result = classify_with_heuristic(text)
         self.assertEqual(result.category, "Insurance")
-        self.assertEqual(result.document_type, "Insurance-Document")
+        self.assertEqual(result.document_type, "Policy")
 
     def test_heuristic_quilt_camp(self):
         text = "quilt\ncamp\nHosted by Steph Gran1110\n2024"
         result = classify_with_heuristic(text)
-        self.assertEqual(result.category, "Personal & Other")
+        self.assertEqual(result.category, "Crafts & Hobbies")
         self.assertIn("Quilt-Camp", result.sender)
         self.assertTrue(result.suggested_filename.endswith(".pdf"))
+
+    def test_learned_vendor_mapping(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            ledger = TaxonomyLedger(Path(tmpdir))
+            ledger.learn_mapping("Austin Energy", "Custom Power")
+            text = "Austin Energy\nDue date: 2026-11-04\nTotal: $99.00"
+            result = classify_with_heuristic(text, ledger=ledger)
+            self.assertEqual(result.category, "Custom Power")
 
     @patch("urllib.request.urlopen")
     def test_gemini_classification_mocked(self, mock_urlopen):
@@ -70,7 +81,7 @@ class AITests(unittest.TestCase):
                             "sender": "Austin-Energy",
                             "date": "2026-11-04",
                             "document_type": "Electric-Bill",
-                            "category": "Bills & Utilities",
+                            "category": "Utilities",
                             "suggested_filename": "2026-11-04_Austin-Energy_Electric-Bill.pdf",
                             "summary": "Monthly electric utility bill for $142.50.",
                             "confidence": 0.95
@@ -84,20 +95,19 @@ class AITests(unittest.TestCase):
 
         result = classify_with_gemini("sample text", api_key="fake-key")
         self.assertEqual(result.sender, "Austin-Energy")
-        self.assertEqual(result.category, "Bills & Utilities")
+        self.assertEqual(result.category, "Utilities")
         self.assertEqual(result.suggested_filename, "2026-11-04_Austin-Energy_Electric-Bill.pdf")
 
     @patch("urllib.request.urlopen", side_effect=OSError("Network down"))
     def test_gemini_fallback_on_network_error(self, mock_urlopen):
         text = "Austin Energy\nTotal amount due: $142.50\nDate: 2026-11-04"
         result = classify_with_gemini(text, api_key="fake-key")
-        # Should cleanly fallback to heuristic without raising exception
-        self.assertEqual(result.category, "Bills & Utilities")
+        self.assertEqual(result.category, "Utilities")
         self.assertEqual(result.date, "2026-11-04")
 
     def test_empty_document(self):
         result = classify_document("")
-        self.assertEqual(result.category, "Personal & Other")
+        self.assertEqual(result.category, "Inbox")
         self.assertIn("Scan", result.suggested_filename)
 
 

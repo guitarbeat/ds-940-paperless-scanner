@@ -1,26 +1,23 @@
-"""Document classification, metadata extraction, and smart titling."""
+"""Document classification, metadata extraction, and adaptive taxonomy learning."""
 
 from __future__ import annotations
 
 from dataclasses import dataclass
 import json
 import logging
+from pathlib import Path
 import re
 import time
+from typing import TYPE_CHECKING
 import urllib.error
 import urllib.request
 
+if TYPE_CHECKING:
+    from .taxonomy import TaxonomyLedger
+
 LOG = logging.getLogger(__name__)
 
-CATEGORIES = (
-    "Bills & Utilities",
-    "Taxes & Financial",
-    "Medical & Health",
-    "Insurance",
-    "Receipts",
-    "Personal & Other",
-)
-DEFAULT_CATEGORY = "Personal & Other"
+DEFAULT_CATEGORY = "Inbox"
 
 
 @dataclass(frozen=True)
@@ -85,57 +82,76 @@ def extract_date_heuristic(text: str) -> str:
     match = re.search(r"\b(20[2-3]\d)\b", text)
     if match:
         year = match.group(1)
-        # Use current month and day from today
         today = time.strftime("%Y-%m-%d", time.gmtime())
         return f"{year}-{today[5:7]}-{today[8:10]}"
 
     return time.strftime("%Y-%m-%d", time.gmtime())
 
 
-def classify_with_heuristic(text: str) -> DocumentClassification:
-    """Offline heuristic classifier based on keywords, date regex, and document headers."""
+def classify_with_heuristic(text: str, ledger: TaxonomyLedger | None = None) -> DocumentClassification:
+    """Offline heuristic classifier based on learned vendor mappings, keywords, and document headers."""
     date = extract_date_heuristic(text)
     lower = text.lower()
-
-    # Determine category
-    category = DEFAULT_CATEGORY
-    doc_type = "Document"
-
-    if any(k in lower for k in ["irs", "internal revenue", "tax return", "form 1040", "w-2", "1099"]):
-        category = "Taxes & Financial"
-        doc_type = "Tax-Notice"
-    elif any(k in lower for k in ["checking", "savings", "deposit", "credit card", "bank", "chase", "wells fargo", "vanguard", "fidelity", "schwab"]):
-        category = "Taxes & Financial"
-        doc_type = "Bank-Statement"
-    elif any(k in lower for k in ["electric", "water", "energy", "utility", "gas", "spectrum", "internet", "at&t", "verizon", "t-mobile", "due date", "amount due", "bill"]):
-        category = "Bills & Utilities"
-        doc_type = "Bill"
-    elif any(k in lower for k in ["clinic", "hospital", "patient", "doctor", "physician", "prescription", "pharmacy", "dental", "vision", "medical", "labcorp", "quest"]):
-        category = "Medical & Health"
-        doc_type = "Medical-Record"
-    elif any(k in lower for k in ["policy", "claim", "coverage", "deductible", "premium", "geico", "progressive", "state farm", "allstate", "insurance"]):
-        category = "Insurance"
-        doc_type = "Insurance-Document"
-    elif any(k in lower for k in ["receipt", "cashier", "subtotal", "register", "store", "merchant"]):
-        category = "Receipts"
-        doc_type = "Receipt"
-    elif any(k in lower for k in ["camp", "event", "flyer", "invitation", "host"]):
-        category = "Personal & Other"
-        doc_type = "Flyer"
 
     # Extract sender from top lines
     lines = [line.strip() for line in text.splitlines() if len(line.strip()) > 1]
     sender = "Document"
     if lines:
-        first_few = lines[:3]
-        clean_first = " ".join(first_few)
-        # Check for obvious names or combine first line
         if "camp" in lower or "quilt" in lower:
             sender = "Quilt-Camp"
+        elif "spectrum" in lower:
+            sender = "Spectrum"
+        elif "austin energy" in lower:
+            sender = "Austin-Energy"
+        elif "chase" in lower:
+            sender = "Chase"
+        elif "geico" in lower:
+            sender = "Geico"
         else:
             sender = sanitize_filename_part(lines[0], max_length=25)
 
     sender = sanitize_filename_part(sender)
+    doc_type = "Document"
+    category = None
+
+    # 1. Check ledger for learned vendor mapping first
+    if ledger:
+        matched_cat = ledger.lookup_vendor(sender)
+        if matched_cat:
+            category = matched_cat
+
+    # 2. Heuristic domain patterns if not mapped
+    if not category:
+        if any(k in lower for k in ["irs", "internal revenue", "tax return", "form 1040", "w-2", "1099"]):
+            category = "Taxes"
+            doc_type = "Tax-Notice"
+        elif any(k in lower for k in ["checking", "savings", "deposit", "credit card", "bank", "chase", "wells fargo", "vanguard", "fidelity", "schwab"]):
+            category = "Banking"
+            doc_type = "Bank-Statement"
+        elif any(k in lower for k in ["electric", "water", "energy", "utility", "gas", "spectrum", "internet", "at&t", "verizon", "t-mobile", "due date", "amount due", "bill"]):
+            category = "Utilities"
+            doc_type = "Bill"
+        elif any(k in lower for k in ["clinic", "hospital", "patient", "doctor", "physician", "prescription", "pharmacy", "dental", "vision", "medical", "labcorp", "quest"]):
+            category = "Medical"
+            doc_type = "Medical-Record"
+        elif any(k in lower for k in ["policy", "claim", "coverage", "deductible", "premium", "geico", "progressive", "state farm", "allstate", "insurance"]):
+            category = "Insurance"
+            doc_type = "Policy"
+        elif any(k in lower for k in ["receipt", "cashier", "subtotal", "register", "store", "merchant"]):
+            category = "Receipts"
+            doc_type = "Receipt"
+        elif any(k in lower for k in ["camp", "event", "flyer", "invitation", "host", "craft", "quilt"]):
+            category = "Crafts & Hobbies"
+            doc_type = "Flyer"
+        else:
+            category = DEFAULT_CATEGORY
+
+    # Register in ledger if present
+    if ledger and category:
+        ledger.register_category(category, example=sender)
+        if sender and sender != "Document":
+            ledger.learn_mapping(sender, category)
+
     doc_type = sanitize_filename_part(doc_type)
     filename = f"{date}_{sender}_{doc_type}.pdf"
 
@@ -150,31 +166,49 @@ def classify_with_heuristic(text: str) -> DocumentClassification:
     )
 
 
-def classify_with_gemini(text: str, api_key: str, timeout: float = 10.0) -> DocumentClassification:
-    """Call Gemini 2.5 Flash API with structured JSON output schema."""
+def classify_with_gemini(
+    text: str,
+    api_key: str,
+    ledger: TaxonomyLedger | None = None,
+    timeout: float = 10.0,
+) -> DocumentClassification:
+    """Call Gemini 2.5 Flash API with adaptive taxonomy guidance."""
     url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={api_key}"
 
-    prompt = f"""You are an automated document mail classifier. Analyze the following OCR text extracted from a scanned document or piece of mail:
+    # Build list of existing categories
+    existing_desc = []
+    if ledger and ledger.categories:
+        for name, meta in ledger.categories.items():
+            ex_str = f" (e.g. {', '.join(meta.examples[:3])})" if meta.examples else ""
+            desc = meta.description or "General documents"
+            existing_desc.append(f"- \"{name}\": {desc}{ex_str}")
+        categories_block = "\n".join(existing_desc)
+    else:
+        categories_block = "(None yet - you are establishing the first categories for this user's life)"
+
+    prompt = f"""You are an intelligent, adaptive personal document organizer. Analyze the following OCR text extracted from a scanned document or piece of mail:
 
 TEXT:
 \"\"\"
 {text[:4000]}
 \"\"\"
 
-Allowed Categories:
-- "Bills & Utilities"
-- "Taxes & Financial"
-- "Medical & Health"
-- "Insurance"
-- "Receipts"
-- "Personal & Other"
+CURRENT KNOWN CATEGORIES:
+{categories_block}
+
+TAXONOMY EVOLUTION RULES:
+1. If this document fits clearly into one of the current known categories above, select that category.
+2. If this document represents a distinctly new topic, domain, or area (e.g. Utilities, Housing, Taxes, Medical, Auto, Pets, Insurance, Crafts, Receipts, Education, Legal), PROPOSE A NEW, CONCISE CATEGORY name (1-3 words, Title Case).
+3. Keep category names clean, natural, and reusable (e.g. "Utilities", "Medical", "Auto & Maintenance", "Housing", "Taxes", "Receipts").
+4. NEVER use junk-drawer categories like "Personal & Other", "Misc", or "Unknown".
 
 Output valid JSON only with this structure:
 {{
-  "sender": "<Short organization, company, or sender name, e.g. Austin-Energy, IRS, Chase>",
+  "sender": "<Short organization, company, or sender name, e.g. Austin-Energy, IRS, Chase, Geico>",
   "date": "<YYYY-MM-DD date found in document, or best estimate>",
   "document_type": "<e.g. Electric-Bill, Tax-Return, Bank-Statement, Medical-Summary, Receipt, Flyer>",
-  "category": "<One of the allowed categories>",
+  "category": "<Exact existing category name OR your concise new proposed category>",
+  "category_description": "<1 sentence explanation of what belongs in this category>",
   "suggested_filename": "<YYYY-MM-DD_Sender_DocType.pdf>",
   "summary": "<1-2 sentence description>",
   "confidence": <float between 0.0 and 1.0>
@@ -201,16 +235,22 @@ Output valid JSON only with this structure:
             raw_json_str = body["candidates"][0]["content"]["parts"][0]["text"]
             result = json.loads(raw_json_str)
 
-            category = result.get("category", DEFAULT_CATEGORY)
-            if category not in CATEGORIES:
-                category = DEFAULT_CATEGORY
-
+            raw_cat = result.get("category", DEFAULT_CATEGORY).strip()
+            cat_desc = result.get("category_description", "")
             sender = sanitize_filename_part(result.get("sender", "Unknown"))
             date = result.get("date", time.strftime("%Y-%m-%d"))
             doc_type = sanitize_filename_part(result.get("document_type", "Document"))
             filename = result.get("suggested_filename", f"{date}_{sender}_{doc_type}.pdf")
             if not filename.endswith(".pdf"):
                 filename += ".pdf"
+
+            # Register/evolve category in ledger
+            category = raw_cat
+            if ledger:
+                meta = ledger.register_category(raw_cat, description=cat_desc, example=sender)
+                category = meta.name
+                if sender and sender != "Unknown":
+                    ledger.learn_mapping(sender, category)
 
             return DocumentClassification(
                 sender=sender,
@@ -223,10 +263,14 @@ Output valid JSON only with this structure:
             )
     except Exception as err:
         LOG.warning("Gemini classification failed (%s), falling back to heuristic: %s", type(err).__name__, err)
-        return classify_with_heuristic(text)
+        return classify_with_heuristic(text, ledger=ledger)
 
 
-def classify_document(text: str, api_key: str | None = None) -> DocumentClassification:
+def classify_document(
+    text: str,
+    api_key: str | None = None,
+    ledger: TaxonomyLedger | None = None,
+) -> DocumentClassification:
     """Classify a document using Gemini if key is provided, otherwise heuristic."""
     if not text.strip():
         date = time.strftime("%Y-%m-%d", time.gmtime())
@@ -241,5 +285,5 @@ def classify_document(text: str, api_key: str | None = None) -> DocumentClassifi
         )
 
     if api_key and api_key.strip():
-        return classify_with_gemini(text, api_key.strip())
-    return classify_with_heuristic(text)
+        return classify_with_gemini(text, api_key.strip(), ledger=ledger)
+    return classify_with_heuristic(text, ledger=ledger)

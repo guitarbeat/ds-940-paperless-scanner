@@ -12,6 +12,7 @@ import time
 import urllib.parse
 
 from .config import Settings
+from .taxonomy import TaxonomyLedger
 
 LOG = logging.getLogger(__name__)
 
@@ -75,7 +76,7 @@ class DashboardHandler(BaseHTTPRequestHandler):
 
     def do_HEAD(self):
         parsed = urllib.parse.urlparse(self.path)
-        if parsed.path in ("/", "/index.html", "/api/status", "/api/scans") or parsed.path.startswith("/files/"):
+        if parsed.path in ("/", "/index.html", "/api/status", "/api/scans", "/api/categories") or parsed.path.startswith("/files/"):
             self.send_response(200)
             self.end_headers()
         else:
@@ -91,6 +92,9 @@ class DashboardHandler(BaseHTTPRequestHandler):
             self.serve_status()
         elif path == "/api/scans":
             self.send_json(get_recent_scans(self.settings.output))
+        elif path == "/api/categories":
+            ledger = TaxonomyLedger(self.settings.output)
+            self.send_json(ledger.get_active_categories())
         elif path.startswith("/files/"):
             self.serve_file(path[7:])
         else:
@@ -225,18 +229,6 @@ class DashboardHandler(BaseHTTPRequestHandler):
       --status-green: #30d158;
       --status-amber: #ff9f0a;
       --status-muted: #626875;
-      --cat-bills: rgba(56, 189, 248, 0.12);
-      --cat-bills-text: #7dd3fc;
-      --cat-tax: rgba(168, 85, 247, 0.12);
-      --cat-tax-text: #c084fc;
-      --cat-health: rgba(52, 211, 153, 0.12);
-      --cat-health-text: #6ee7b7;
-      --cat-ins: rgba(251, 146, 60, 0.12);
-      --cat-ins-text: #fdba74;
-      --cat-rec: rgba(244, 114, 182, 0.12);
-      --cat-rec-text: #f472b6;
-      --cat-other: rgba(148, 163, 184, 0.12);
-      --cat-other-text: #94a3b8;
     }}
     * {{ box-sizing: border-box; margin: 0; padding: 0; }}
     ::selection {{ background: rgba(255, 255, 255, 0.15); color: #fff; }}
@@ -498,16 +490,10 @@ class DashboardHandler(BaseHTTPRequestHandler):
       display: inline-block;
       font-size: 0.72rem;
       font-weight: 500;
-      padding: 0.15rem 0.5rem;
+      padding: 0.15rem 0.55rem;
       border-radius: 4px;
+      letter-spacing: 0.01em;
     }}
-    .cat-Bills {{ background: var(--cat-bills); color: var(--cat-bills-text); }}
-    .cat-Taxes {{ background: var(--cat-tax); color: var(--cat-tax-text); }}
-    .cat-Medical {{ background: var(--cat-health); color: var(--cat-health-text); }}
-    .cat-Insurance {{ background: var(--cat-ins); color: var(--cat-ins-text); }}
-    .cat-Receipts {{ background: var(--cat-rec); color: var(--cat-rec-text); }}
-    .cat-Personal {{ background: var(--cat-other); color: var(--cat-other-text); }}
-    .cat-Inbox {{ background: var(--surface-subtle); color: var(--text-secondary); }}
 
     .actions-cell {{ text-align: right; }}
     .action-link {{
@@ -689,13 +675,7 @@ class DashboardHandler(BaseHTTPRequestHandler):
     </div>
 
     <div class="filter-bar" id="category-filters">
-      <span class="filter-pill active" onclick="setCategoryFilter('all', this)">All</span>
-      <span class="filter-pill" onclick="setCategoryFilter('Bills', this)">Bills</span>
-      <span class="filter-pill" onclick="setCategoryFilter('Tax', this)">Taxes</span>
-      <span class="filter-pill" onclick="setCategoryFilter('Medical', this)">Health</span>
-      <span class="filter-pill" onclick="setCategoryFilter('Insurance', this)">Insurance</span>
-      <span class="filter-pill" onclick="setCategoryFilter('Receipt', this)">Receipts</span>
-      <span class="filter-pill" onclick="setCategoryFilter('Personal', this)">Personal</span>
+      <span class="filter-pill active" onclick="setCategoryFilter('all', this)">All (0)</span>
     </div>
 
     <div class="table-card">
@@ -745,14 +725,35 @@ class DashboardHandler(BaseHTTPRequestHandler):
       showToast('Path copied to clipboard');
     }}
 
-    function getCategoryClass(cat) {{
-      if (cat.includes('Bills')) return 'cat-Bills';
-      if (cat.includes('Tax')) return 'cat-Taxes';
-      if (cat.includes('Medical')) return 'cat-Medical';
-      if (cat.includes('Insurance')) return 'cat-Insurance';
-      if (cat.includes('Receipt')) return 'cat-Receipts';
-      if (cat.includes('Personal')) return 'cat-Personal';
-      return 'cat-Inbox';
+    function getCategoryStyle(cat) {{
+      if (!cat || cat === 'Inbox') {{
+        return 'background: var(--surface-subtle); color: var(--text-secondary); border: 1px solid var(--border-subtle);';
+      }}
+      let hash = 0;
+      for (let i = 0; i < cat.length; i++) hash = cat.charCodeAt(i) + ((hash << 5) - hash);
+      const h = Math.abs(hash) % 360;
+      return `background: hsla(${{h}}, 65%, 50%, 0.12); color: hsl(${{h}}, 80%, 75%); border: 1px solid hsla(${{h}}, 65%, 50%, 0.25);`;
+    }}
+
+    function updateCategoryFilters() {{
+      const counts = {{}};
+      allScans.forEach(s => {{
+        const cat = s.category || 'Inbox';
+        counts[cat] = (counts[cat] || 0) + 1;
+      }});
+
+      const filterBar = document.getElementById('category-filters');
+      const cats = Object.keys(counts).sort();
+
+      let html = `<span class="filter-pill ${{currentCategory === 'all' ? 'active' : ''}}" onclick="setCategoryFilter('all', this)">All (${{allScans.length}})</span>`;
+
+      cats.forEach(cat => {{
+        const isActive = currentCategory.toLowerCase() === cat.toLowerCase();
+        const escCat = cat.replace(/'/g, "\\'");
+        html += `<span class="filter-pill ${{isActive ? 'active' : ''}}" onclick="setCategoryFilter('${{escCat}}', this)">${{cat}} (${{counts[cat]}})</span>`;
+      }});
+
+      filterBar.innerHTML = html;
     }}
 
     function openPreview(relPath, filename) {{
@@ -781,8 +782,7 @@ class DashboardHandler(BaseHTTPRequestHandler):
 
     function setCategoryFilter(cat, el) {{
       currentCategory = cat;
-      document.querySelectorAll('.filter-pill').forEach(p => p.classList.remove('active'));
-      el.classList.add('active');
+      updateCategoryFilters();
       renderScans();
     }}
 
@@ -831,7 +831,7 @@ class DashboardHandler(BaseHTTPRequestHandler):
               <span>${{s.filename}}</span>
             </a>
           </td>
-          <td><span class="cat-pill ${{getCategoryClass(s.category)}}">${{s.category}}</span></td>
+          <td><span class="cat-pill" style="${{getCategoryStyle(s.category)}}">${{s.category}}</span></td>
           <td style="color: var(--text-secondary);">${{s.size_kb}} KB</td>
           <td style="color: var(--text-muted);">${{s.date_str}}</td>
           <td class="actions-cell">
@@ -893,6 +893,7 @@ class DashboardHandler(BaseHTTPRequestHandler):
       try {{
         const res = await fetch('/api/scans');
         allScans = await res.json();
+        updateCategoryFilters();
         renderScans();
       }} catch (e) {{
         console.error(e);

@@ -74,6 +74,13 @@ class WebDashboardTests(unittest.TestCase):
             self.assertIn("Brother DS-940DW", html)
             self.assertIn("Recent Scans", html)
 
+    def test_categories_endpoint(self):
+        url = f"http://127.0.0.1:{self.port}/api/categories"
+        with urllib.request.urlopen(url, timeout=3.0) as resp:
+            self.assertEqual(resp.status, 200)
+            cats = json.loads(resp.read().decode("utf-8"))
+            self.assertIsInstance(cats, list)
+
     def test_delete_endpoint(self):
         url = f"http://127.0.0.1:{self.port}/api/delete"
         req = urllib.request.Request(
