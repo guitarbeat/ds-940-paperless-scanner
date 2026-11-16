@@ -176,7 +176,7 @@ class DashboardHandler(BaseHTTPRequestHandler):
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Brother DS-940DW Scan Hub</title>
+  <title>Brother DS-940DW</title>
   <style>
     :root {{
       --bg: #090a0d;
@@ -238,26 +238,10 @@ class DashboardHandler(BaseHTTPRequestHandler):
       align-items: center;
       gap: 0.75rem;
     }}
-    .brand-icon {{
-      width: 26px;
-      height: 26px;
-      color: var(--text);
-      flex-shrink: 0;
-    }}
     .brand-title {{
       font-size: 1.15rem;
       font-weight: 600;
       letter-spacing: -0.015em;
-    }}
-    .brand-tag {{
-      font-size: 0.72rem;
-      font-weight: 500;
-      color: var(--text-secondary);
-      background: var(--surface-subtle);
-      border: 1px solid var(--border);
-      padding: 0.15rem 0.5rem;
-      border-radius: 4px;
-      margin-left: 0.35rem;
     }}
 
     /* Status Indicator */
@@ -606,15 +590,7 @@ class DashboardHandler(BaseHTTPRequestHandler):
   <div class="container">
     <header>
       <div class="brand">
-        <svg class="brand-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/>
-          <path d="M6 9V3a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v6"/>
-          <rect x="6" y="14" width="12" height="8" rx="1"/>
-        </svg>
-        <div>
-          <span class="brand-title">Brother DS-940DW</span>
-          <span class="brand-tag">Scan Hub</span>
-        </div>
+        <span class="brand-title">Brother DS-940DW</span>
       </div>
       <div class="status-pill">
         <span id="status-dot" class="status-dot offline"></span>
@@ -636,22 +612,20 @@ class DashboardHandler(BaseHTTPRequestHandler):
 
     <div class="telemetry-card">
       <div class="metric-item">
-        <span class="metric-label">Scanner Link</span>
+        <span class="metric-label">Scanner</span>
         <span class="metric-val" id="scanner-state">Connecting</span>
-        <span class="metric-sub" id="scanner-ip">{self.settings.scanner_ip}:8080</span>
+        <span class="metric-sub" id="scanner-ip">{self.settings.scanner_ip}</span>
       </div>
       <div class="metric-item">
         <span class="metric-label">Uptime</span>
         <span class="metric-val" id="uptime">--</span>
-        <span class="metric-sub">launchd daemon</span>
       </div>
       <div class="metric-item">
-        <span class="metric-label">Memory</span>
+        <span class="metric-label">RAM</span>
         <span class="metric-val" id="ram">-- MB</span>
-        <span class="metric-sub">Apple Neural Engine</span>
       </div>
       <div class="metric-item">
-        <span class="metric-label">Storage</span>
+        <span class="metric-label">Path</span>
         <div class="path-row">
           <span class="metric-val" style="font-size: 0.82rem; font-family: ui-monospace, Menlo, monospace;" id="path">{self.settings.output}</span>
           <button class="copy-btn" onclick="copyPath()" title="Copy folder path">
@@ -661,7 +635,6 @@ class DashboardHandler(BaseHTTPRequestHandler):
             </svg>
           </button>
         </div>
-        <span class="metric-sub">iCloud Tracked</span>
       </div>
     </div>
 
@@ -671,25 +644,25 @@ class DashboardHandler(BaseHTTPRequestHandler):
         <span class="count-badge" id="scan-count">0</span>
       </div>
       <div class="toolbar-actions">
-        <input type="text" id="search-box" class="search-input" placeholder="Search files... (press /)" oninput="filterScans()">
+        <input type="text" id="search-box" class="search-input" placeholder="Search... (press /)" oninput="filterScans()">
         <button class="btn" id="sort-btn" onclick="triggerSort()">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <polyline points="23 4 23 10 17 10"/>
             <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
           </svg>
-          <span>Organize Mail</span>
+          <span>Organize</span>
         </button>
       </div>
     </div>
 
     <div class="filter-bar" id="category-filters">
-      <span class="filter-pill active" onclick="setCategoryFilter('all', this)">All Documents</span>
-      <span class="filter-pill" onclick="setCategoryFilter('Bills', this)">Bills & Utilities</span>
-      <span class="filter-pill" onclick="setCategoryFilter('Tax', this)">Taxes & Financial</span>
-      <span class="filter-pill" onclick="setCategoryFilter('Medical', this)">Medical & Health</span>
+      <span class="filter-pill active" onclick="setCategoryFilter('all', this)">All</span>
+      <span class="filter-pill" onclick="setCategoryFilter('Bills', this)">Bills</span>
+      <span class="filter-pill" onclick="setCategoryFilter('Tax', this)">Taxes</span>
+      <span class="filter-pill" onclick="setCategoryFilter('Medical', this)">Health</span>
       <span class="filter-pill" onclick="setCategoryFilter('Insurance', this)">Insurance</span>
       <span class="filter-pill" onclick="setCategoryFilter('Receipt', this)">Receipts</span>
-      <span class="filter-pill" onclick="setCategoryFilter('Personal', this)">Personal & Other</span>
+      <span class="filter-pill" onclick="setCategoryFilter('Personal', this)">Personal</span>
     </div>
 
     <div class="table-card">
@@ -699,12 +672,12 @@ class DashboardHandler(BaseHTTPRequestHandler):
             <th>Document</th>
             <th>Category</th>
             <th>Size</th>
-            <th>Scanned Date</th>
+            <th>Date</th>
             <th class="actions-cell">Actions</th>
           </tr>
         </thead>
         <tbody id="scans-table">
-          <tr><td colspan="5" class="empty-state">Loading archives...</td></tr>
+          <tr><td colspan="5" class="empty-state">Loading...</td></tr>
         </tbody>
       </table>
     </div>
@@ -806,8 +779,8 @@ class DashboardHandler(BaseHTTPRequestHandler):
                 <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
                 <polyline points="14 2 14 8 20 8"/>
               </svg>
-              <div class="empty-title">No matching documents</div>
-              <div class="empty-desc">Feed a sheet into the scanner slot to capture new scans.</div>
+              <div class="empty-title">No documents</div>
+              <div class="empty-desc">Feed a sheet into the scanner to capture.</div>
             </td>
           </tr>
         `;
