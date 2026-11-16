@@ -105,8 +105,8 @@ def main():
     parser = argparse.ArgumentParser(description="Triage and sort scanned documents into category folders.")
     parser.add_argument(
         "--dir",
-        default=str(Path.home() / "Documents" / "Scans"),
-        help="Path to scans directory (default: ~/Documents/Scans)",
+        default=str(Path.home() / "Documents" / "brother-scans"),
+        help="Path to scans directory (default: ~/Documents/brother-scans)",
     )
     parser.add_argument(
         "--apply",

@@ -18,7 +18,7 @@ Add user-facing controls and visibility so the service isn't a black box:
 ### A. Web Dashboard (`http://mac-mini.local:9400`)
 - Accessible from both **MacBook Air** and **Mac Mini** (and mobile devices).
 - **Settings & Controls**:
-  - **Save Destination**: Interactive folder picker / path editor (e.g. `~/Documents/Scans`, Desktop, or external storage).
+  - **Save Destination**: Interactive folder picker / path editor (e.g. `~/Documents/brother-scans`, Desktop, or external storage).
   - **Feeder Polling Frequency**: Configurable interval slider (e.g. 2s, 3s, 5s) with adaptive sleep backoff.
   - **RAM & Resource Guard**: Live memory and CPU consumption monitor with configurable memory ceiling and auto-recovery (e.g. gracefully recycle worker if memory exceeds 200MB).
   - **Scan Profiles**: Quick toggles for DPI (150 / 300 / 600), Color vs Grayscale, and Simplex / Duplex.
@@ -52,7 +52,7 @@ Build a lightweight, zero-bloat mail filing assistant that runs entirely on macO
      - `document_type`: "Bill", "Tax Notice", "Invoice", "Insurance Policy", "Receipt".
      - `category`: "Utilities", "Taxes", "Insurance", "Medical", "Banking".
    - Automatically renames file to `YYYY-MM-DD_[Sender]_[Document_Type].pdf`.
-   - Files into `~/Documents/Scans/<Category>/` and assigns matching macOS Finder tags.
+   - Files into `~/Documents/brother-scans/<Category>/` and assigns matching macOS Finder tags.
 
 3. **Optional Paperless-ngx Ingestion:**
    - Optional webhook/REST API forwarder to push copies to a self-hosted Paperless-ngx instance if desired.
