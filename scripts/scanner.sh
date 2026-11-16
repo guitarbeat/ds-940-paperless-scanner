@@ -4,13 +4,6 @@ set -euo pipefail
 
 TARGET="${SCANNER_SSH_TARGET:-}"
 
-# Auto-detect installed plist or use custom
-if [ -z "${SCANNER_PLIST:-}" ]; then
-    PLIST=$(ls "$HOME/Library/LaunchAgents/"*ds940receiver.plist 2>/dev/null | head -n 1 || echo "$HOME/Library/LaunchAgents/com.ds940receiver.plist")
-else
-    PLIST="$SCANNER_PLIST"
-fi
-
 run_cmd() {
     local cmd="$1"
     if [ -n "$TARGET" ]; then
@@ -25,17 +18,35 @@ cmd="${1:-}"
 case "$cmd" in
     start|on)
         echo "🟢 Starting Brother scanner receiver..."
-        run_cmd "launchctl load -w '$PLIST'"
+        run_cmd '
+            PLIST=$(ls "$HOME/Library/LaunchAgents/"*ds940receiver.plist 2>/dev/null | head -n 1)
+            if [ -n "$PLIST" ]; then
+                launchctl bootout "gui/$(id -u)" "$PLIST" 2>/dev/null || true
+                launchctl bootstrap "gui/$(id -u)" "$PLIST" 2>/dev/null || launchctl load -w "$PLIST" 2>/dev/null || true
+            fi
+        '
         echo "Receiver is now active."
         ;;
     stop|off)
         echo "🛑 Stopping Brother scanner receiver..."
-        run_cmd "launchctl unload '$PLIST' 2>/dev/null || true"
+        run_cmd '
+            PLIST=$(ls "$HOME/Library/LaunchAgents/"*ds940receiver.plist 2>/dev/null | head -n 1)
+            if [ -n "$PLIST" ]; then
+                launchctl bootout "gui/$(id -u)" "$PLIST" 2>/dev/null || launchctl unload "$PLIST" 2>/dev/null || true
+            fi
+        '
         echo "Receiver is now stopped."
         ;;
     restart)
         echo "🔄 Restarting Brother scanner receiver..."
-        run_cmd "launchctl unload '$PLIST' 2>/dev/null || true; sleep 1; launchctl load -w '$PLIST'"
+        run_cmd '
+            PLIST=$(ls "$HOME/Library/LaunchAgents/"*ds940receiver.plist 2>/dev/null | head -n 1)
+            if [ -n "$PLIST" ]; then
+                launchctl bootout "gui/$(id -u)" "$PLIST" 2>/dev/null || launchctl unload "$PLIST" 2>/dev/null || true
+                sleep 1
+                launchctl bootstrap "gui/$(id -u)" "$PLIST" 2>/dev/null || launchctl load -w "$PLIST" 2>/dev/null || true
+            fi
+        '
         echo "Receiver restarted."
         ;;
     status)
@@ -51,7 +62,6 @@ case "$cmd" in
         echo ""
         echo "Optional Environment Variables:"
         echo "  SCANNER_SSH_TARGET   Remote host (e.g. user@mac-mini.local) if running daemon on a separate hub"
-        echo "  SCANNER_PLIST        Custom path to LaunchAgent plist (default: auto-detected in ~/Library/LaunchAgents/)"
         exit 1
         ;;
 esac
