@@ -2,6 +2,7 @@
 
 This document captures architectural analysis, homelab community discussions (including [r/selfhosted](https://www.reddit.com/r/selfhosted/comments/1hy690i/brother_l2710dw_and_scanning_to_network_folder_is/)), and ideas inspired by open-source implementations:
 - [`thebino/brother-to-paperless`](https://github.com/thebino/brother-to-paperless) (Home Assistant HACS integration & pure-Python port 54921 driver)
+- [Calvin Walden's MFC-L2750DW to Paperless Workflow](https://calvinrw.com/brscan4-paperless-workflow) (Ghostscript ink coverage calibration, NFS inotify limits, & DNS firmware blocking)
 - [`vanessa/brother-scan-to-paperless`](https://github.com/vanessa/brother-scan-to-paperless) (UDP push-button listeners & SNMP scan profiles)
 - [`PhilippMundhenk/BrotherScannerDocker`](https://github.com/PhilippMundhenk/BrotherScannerDocker) (Blank page filtering & simplex interleaving)
 - [`quadportnick/brother-scan-paperless`](https://github.com/quadportnick/brother-scan-paperless) (Staging directories & Paperless inotify race condition guards)
@@ -25,18 +26,19 @@ To get documents automatically into **Paperless-ngx** without manually using USB
 
 ## 2. Key Concepts & Features to Adopt
 
-### 💡 Idea 1: Optional Direct Paperless-ngx Ingestion (`CONSUME_DIR`)
+### 💡 Idea 1: Optional Direct Paperless-ngx Ingestion (`CONSUME_DIR` vs. REST API)
 * **Concept:** Automatically export or hardlink completed, searchable PDFs straight into Paperless-ngx.
 * **Implementation Plan:**
-  - Introduce an optional environment variable in `ds940/config.py`:
+  - Introduce optional environment variables in `ds940/config.py`:
     ```bash
-    export PAPERLESS_CONSUME_DIR="/Volumes/NAS/paperless/consume"
-    # or REST API mode:
+    # REST API mode (Recommended):
     export PAPERLESS_API_URL="http://192.168.0.50:8000/api"
     export PAPERLESS_API_TOKEN="xxxxxxxxxxxx"
+    # Or local/NFS consume folder mode:
+    export PAPERLESS_CONSUME_DIR="/Volumes/NAS/paperless/consume"
     ```
-  - When `PAPERLESS_CONSUME_DIR` is set, `ds940/spool.py` copies or hardlinks the finished PDF into the consume folder right after OCR generation.
-  - Allows seamless coexistence: keep the local clean `~/Documents/brother-scans` library while simultaneously feeding self-hosted Paperless-ngx instances.
+  - When `PAPERLESS_API_URL` is set, `ds940/spool.py` directly POSTs the document to `/api/documents/post_document/`.
+  - **REST API vs. Network Share Note (from Calvin Walden):** Calvin highlighted that mounting remote NFS/SMB shares into Paperless breaks Linux `inotify` file-watching (forcing a CPU-polling fallback via `PAPERLESS_CONSUMER_POLLING=15`) and introduces UID/GID permission collisions between host VMs. Direct HTTP REST API ingestion completely eliminates network filesystem latency, permissions bugs, and inotify drops.
 
 ---
 
@@ -50,12 +52,16 @@ To get documents automatically into **Paperless-ngx** without manually using USB
 ---
 
 ### 💡 Idea 3: Automatic Blank Page Detection & Filtering
-* **Origin:** Implemented in `PhilippMundhenk/BrotherScannerDocker` via `REMOVE_BLANK_THRESHOLD`.
+* **Origin:** Implemented in `PhilippMundhenk/BrotherScannerDocker` and empirically calibrated by Calvin Walden.
 * **Concept:** When scanning duplex documents (or one-sided receipts on a duplex scanner), blank rear pages clutter the resulting PDF.
+* **Empirical Calibration & Thresholds (from Calvin Walden):**
+  - Calvin measured objective ink coverage across batches of mixed mail:
+    - Pure blank pages: `0.00 – 0.03` ink coverage.
+    - Pages with light markings, text, or signatures: `0.30+` ink coverage.
+    - Setting a removal threshold of `0.10` proved to be a rock-solid safe floor, stripping 100% of blank backsides without ever discarding sparse receipts.
 * **Implementation Plan:**
-  - Add an optional threshold parameter (e.g. `REMOVE_BLANK_THRESHOLD=0.3%`).
-  - In `ds940/spool.py`, inspect each scanned image with Pillow before compilation: compute standard deviation / edge variance or white pixel percentage.
-  - If a page has virtually zero ink/pixels, automatically discard it from the final multi-page PDF, logging: `Discarded blank page 2 (variance: 0.08 < 0.3)`.
+  - Add an optional threshold parameter (`REMOVE_BLANK_THRESHOLD=0.10`).
+  - In `ds940/spool.py`, calculate page pixel variance or ink density with Pillow before final PDF compilation. Discard pages below threshold and log: `Discarded blank page 2 (density: 0.02 < 0.10)`.
 
 ---
 
@@ -157,5 +163,30 @@ To get documents automatically into **Paperless-ngx** without manually using USB
   - `offer.bin`: The raw capability handshake buffer returned by the scanner.
   - `scan.bin`: The unparsed raw byte stream received from the scanner socket.
 * **Benefit:** When supporting new scanner models or investigating malformed TIFF/JPEG chunks, users can export and share diagnostic dumps without exposing any personal document text or image renderings.
+
+---
+
+### 💡 Idea 13: Vendor Firmware Isolation & Update Blocking
+* **Origin:** Documented by [Calvin Walden](https://calvinrw.com/brscan4-paperless-workflow).
+* **The Problem:** Brother periodically pushes silent firmware updates over Wi-Fi. In the homelab community, firmware updates have historically broken local network scan functionality, introduced proprietary protocol handshakes, or disabled third-party toner/cartridge chips.
+* **Recommendation:**
+  - Add documentation / network setup instructions recommending users blackhole Brother's firmware servers via their local DNS forwarder (Pi-hole, AdGuard Home, OPNSense, or pfSense):
+    ```
+    update.brother.co.jp
+    firmverup.brother.co.jp
+    ```
+  - This guarantees that once a scanner's local network communication is working, it remains frozen in a known working state permanently.
+
+---
+
+### 💡 Idea 14: Multi-Action Keypad Routing (`to File` vs `to OCR` vs `to Image`)
+* **Origin:** Highlighted in Calvin Walden's closing notes on multi-function printer keypads.
+* **Concept:** Brother devices with keypad buttons transmit distinct event codes depending on whether the user pressed "Scan to File", "Scan to OCR", "Scan to Image", or "Scan to E-mail".
+* **Architecture:**
+  - In our UDP listener and eSCL profile mapping, map each physical button to a dedicated destination or processing pipeline:
+    - **Scan to File:** Standard document ingest (`300 DPI Duplex` → Paperless-ngx / `~/Documents/brother-scans`).
+    - **Scan to OCR:** Instant priority filing with local LLM taxonomy and immediate Spotlight search indexing.
+    - **Scan to Image / Photo:** High-res mode (`600 DPI Color` → saved to a dedicated `Photos & Artifacts/` folder with zero lossy compression).
+
 
 
