@@ -18,7 +18,7 @@ from .escl import (
     ScannerBusyError,
     ScannerOfflineError,
 )
-from .spool import ScanSpool, atomic_json, build_pdf
+from .spool import ScanSpool, atomic_json, build_pdf, filter_blank_pages
 from .web import run_web_server
 
 LOG = logging.getLogger(__name__)
@@ -105,8 +105,25 @@ def capture_if_ready_escl(
             if not next_sheet_detected:
                 break
 
-        build_pdf(all_pages, folder / "document.pdf")
-        manifest.update(phase="ready", pages=len(all_pages), sheets=sheet_count)
+        # Blank page filtering (empirical ink coverage threshold)
+        blank_threshold = getattr(spool, "remove_blank_threshold", 0.05)
+        pages_to_build, discarded_blanks = filter_blank_pages(all_pages, threshold=blank_threshold)
+        if discarded_blanks:
+            LOG.info(
+                "Filtered %d blank page(s) (kept %d of %d raw pages)",
+                len(discarded_blanks),
+                len(pages_to_build),
+                len(all_pages),
+            )
+
+        build_pdf(pages_to_build, folder / "document.pdf")
+        manifest.update(
+            phase="ready",
+            pages=len(pages_to_build),
+            raw_pages=len(all_pages),
+            discarded_blank_pages=len(discarded_blanks),
+            sheets=sheet_count,
+        )
         atomic_json(manifest_path, manifest, durable=True)
         spool.publish(folder)
     except Exception as error:
@@ -148,6 +165,7 @@ def serve(settings: Settings, stop: Event):
         settings.output,
         gemini_api_key=settings.gemini_api_key,
         enable_ai_filing=settings.enable_ai_filing,
+        remove_blank_threshold=settings.remove_blank_threshold,
     )
     scanner = EsclScanner(settings.scanner_ip)
     try:

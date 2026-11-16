@@ -21,6 +21,7 @@ class Settings:
     batch_timeout: float = 8.0
     web_port: int = 9400
     web_bind_ip: str = "0.0.0.0"
+    remove_blank_threshold: float = 0.05
 
     @classmethod
     def from_environment(cls):
@@ -48,6 +49,7 @@ class Settings:
         batch_timeout = float(os.environ.get("BATCH_TIMEOUT", "8.0").strip())
         web_port = int(os.environ.get("WEB_PORT", "9400").strip())
         web_bind_ip = os.environ.get("WEB_BIND_IP", "0.0.0.0").strip()
+        remove_blank_threshold = float(os.environ.get("REMOVE_BLANK_THRESHOLD", "0.05").strip())
 
         return cls(
             scanner_ip=scanner_ip,
@@ -59,6 +61,7 @@ class Settings:
             batch_timeout=batch_timeout,
             web_port=web_port,
             web_bind_ip=web_bind_ip,
+            remove_blank_threshold=remove_blank_threshold,
         )
 
     def configure_driver(self):

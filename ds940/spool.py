@@ -31,6 +31,96 @@ def atomic_json(path, value, *, durable=False):
     temporary.replace(path)
 
 
+def calculate_ink_coverage(
+    image_path: Path | str,
+    margin_ratio: float = 0.03,
+    ink_threshold: int = 210,
+) -> float:
+    """Calculate the ratio of ink pixels on the page (0.0 to 1.0).
+
+    - Inset margin crop (default 3% on all sides) eliminates roller shadows and ADF feed edges.
+    - Grayscale luminosity threshold < 210 filters out paper bleed-through shadows from opposite side.
+    """
+    with Image.open(image_path) as img:
+        gray = img.convert("L")
+        w, h = gray.size
+        crop_x = int(w * margin_ratio)
+        crop_y = int(h * margin_ratio)
+        if crop_x > 0 and crop_y > 0 and (w - 2 * crop_x) > 0 and (h - 2 * crop_y) > 0:
+            gray = gray.crop((crop_x, crop_y, w - crop_x, h - crop_y))
+
+        hist = gray.histogram()
+        total_pixels = gray.width * gray.height
+        if total_pixels <= 0:
+            return 0.0
+
+        ink_pixels = sum(hist[:ink_threshold])
+        return ink_pixels / total_pixels
+
+
+def is_blank_page(
+    image_path: Path | str,
+    threshold: float = 0.05,
+    margin_ratio: float = 0.03,
+    ink_threshold: int = 210,
+) -> bool:
+    """Check if a single page image is blank."""
+    if threshold <= 0.0:
+        return False
+    cov = calculate_ink_coverage(image_path, margin_ratio=margin_ratio, ink_threshold=ink_threshold)
+    return cov < threshold
+
+
+def filter_blank_pages(
+    image_paths: list[Path],
+    threshold: float = 0.05,
+    margin_ratio: float = 0.03,
+    ink_threshold: int = 210,
+) -> tuple[list[Path], list[Path]]:
+    """Filter out blank pages from a multi-page scan batch.
+
+    Returns (kept_pages, discarded_blank_pages).
+
+    Guarantees:
+    - Retain Page 1 Invariant: If all pages are blank, Page 1 is always kept
+      to avoid zero-page spool crashes and invalid empty PDFs.
+    - Zero False Negatives: If threshold <= 0.0, filtering is disabled.
+    """
+    if not image_paths:
+        return [], []
+    if threshold <= 0.0:
+        return list(image_paths), []
+
+    kept: list[Path] = []
+    discarded: list[Path] = []
+
+    for idx, path in enumerate(image_paths):
+        try:
+            cov = calculate_ink_coverage(path, margin_ratio=margin_ratio, ink_threshold=ink_threshold)
+            if cov < threshold:
+                discarded.append(path)
+                LOG.info(
+                    "Page %d (%s) classified as blank (ink coverage: %.4f < %.4f)",
+                    idx + 1,
+                    path.name,
+                    cov,
+                    threshold,
+                )
+            else:
+                kept.append(path)
+        except Exception as err:
+            LOG.warning("Failed to evaluate blankness for %s (%s); keeping page", path.name, err)
+            kept.append(path)
+
+    # Retain Page 1 Invariant: If everything evaluated as blank, keep Page 1
+    if not kept and image_paths:
+        kept.append(image_paths[0])
+        discarded.remove(image_paths[0])
+        LOG.info("All pages evaluated as blank; retaining Page 1 as safety invariant")
+
+    return kept, discarded
+
+
 def build_pdf(images, target):
     with ExitStack() as stack:
         pages = [stack.enter_context(Image.open(path)) for path in images]
@@ -51,11 +141,13 @@ class ScanSpool:
         output,
         gemini_api_key: str = "",
         enable_ai_filing: bool = False,
+        remove_blank_threshold: float = 0.05,
     ):
         self.work = Path(work)
         self.output = Path(output)
         self.gemini_api_key = gemini_api_key
         self.enable_ai_filing = enable_ai_filing
+        self.remove_blank_threshold = remove_blank_threshold
         if not self.output.is_dir() or not os.access(self.output, os.W_OK | os.X_OK):
             raise ValueError("The output directory must be mounted and writable")
         self.jobs = self.work / "spool"
@@ -112,16 +204,22 @@ class ScanSpool:
         else:
             target = self.output / f"{folder.name}.pdf"
 
-        temporary = target.parent / f".{target.name}.part"
+        # Atomic staging guard: write to hidden .staging_xxx.tmp on target filesystem, fsync, chmod, and atomic replace
+        staging_path = target.parent / f".staging_{uuid4().hex[:8]}.tmp"
+
         if target.exists():
             if not cmp(source, target, shallow=False):
                 raise FileExistsError(f"Output already contains a different {target.name}")
         else:
-            with source.open("rb") as document, temporary.open("wb") as stream:
+            with source.open("rb") as document, staging_path.open("wb") as stream:
                 shutil.copyfileobj(document, stream)
                 stream.flush()
                 os.fsync(stream.fileno())
-            temporary.replace(target)
+            try:
+                os.chmod(staging_path, 0o644)
+            except OSError:
+                pass
+            staging_path.replace(target)
 
         destination_rel = str(target.relative_to(self.output))
         manifest.update(phase="forwarded", destination=destination_rel)
