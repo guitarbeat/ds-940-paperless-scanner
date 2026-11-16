@@ -54,5 +54,6 @@ Build a lightweight, zero-bloat mail filing assistant that runs entirely on macO
    - Automatically renames file to `YYYY-MM-DD_[Sender]_[Document_Type].pdf`.
    - Files into `~/Documents/brother-scans/<Category>/` and assigns matching macOS Finder tags.
 
-3. **Optional Paperless-ngx Ingestion:**
+3. **Optional Paperless-ngx Ingestion & Architecture:**
    - Optional webhook/REST API forwarder to push copies to a self-hosted Paperless-ngx instance if desired.
+   - See [docs/IDEAS.md](docs/IDEAS.md) for detailed architectural comparisons with other brother-to-paperless implementations, UDP button listening, scan profiles, and installer concepts.
