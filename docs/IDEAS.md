@@ -1,192 +1,286 @@
 # Architectural Ideas & Community Homelab Insights
 
-This document captures architectural analysis, homelab community discussions (including [r/selfhosted](https://www.reddit.com/r/selfhosted/comments/1hy690i/brother_l2710dw_and_scanning_to_network_folder_is/)), and ideas inspired by open-source implementations:
-- [`thebino/brother-to-paperless`](https://github.com/thebino/brother-to-paperless) (Home Assistant HACS integration & pure-Python port 54921 driver)
-- [Calvin Walden's MFC-L2750DW to Paperless Workflow](https://calvinrw.com/brscan4-paperless-workflow) (Ghostscript ink coverage calibration, NFS inotify limits, & DNS firmware blocking)
-- [`vanessa/brother-scan-to-paperless`](https://github.com/vanessa/brother-scan-to-paperless) (UDP push-button listeners & SNMP scan profiles)
-- [`PhilippMundhenk/BrotherScannerDocker`](https://github.com/PhilippMundhenk/BrotherScannerDocker) (Blank page filtering & simplex interleaving)
-- [`quadportnick/brother-scan-paperless`](https://github.com/quadportnick/brother-scan-paperless) (Staging directories & Paperless inotify race condition guards)
+This document catalogs architectural enhancements, community homelab patterns (including [r/selfhosted](https://www.reddit.com/r/selfhosted/comments/1hy690i/brother_l2710dw_and_scanning_to_network_folder_is/)), and lessons learned from open-source Brother implementations:
+- [`thebino/brother-to-paperless`](https://github.com/thebino/brother-to-paperless) (Home Assistant HACS integration and pure-Python port 54921 binary driver)
+- [Calvin Walden's MFC-L2750DW to Paperless Workflow](https://calvinrw.com/brscan4-paperless-workflow) (Ghostscript ink coverage calibration, NFS inotify limitations, and DNS firmware blackholing)
+- [`vanessa/brother-scan-to-paperless`](https://github.com/vanessa/brother-scan-to-paperless) (UDP push-button listeners and SNMP profile registration)
+- [`PhilippMundhenk/BrotherScannerDocker`](https://github.com/PhilippMundhenk/BrotherScannerDocker) (Blank page filtering and manual simplex interleaving)
+- [`quadportnick/brother-scan-paperless`](https://github.com/quadportnick/brother-scan-paperless) (Staging directories and Paperless inotify race condition guards)
 
 ---
 
-## 1. Context: The Self-Hosted Scanner Dilemma
+## 1. Quick Reference: Edits by Category
 
-In the self-hosted and homelab community (e.g. `r/selfhosted`), a ubiquitous complaint is that consumer and entry-level Brother printers and scanners (such as the MFC-L2710DW, DCP series, and portable DS line) **lack native, firmware-level Scan-to-SMBv2/v3 or Network Share capabilities**.
-
-To get documents automatically into **Paperless-ngx** without manually using USB thumbdrives or proprietary desktop utilities, users typically resort to:
-1. **Always-On Windows VM:** Running a heavy Windows virtual machine 24/7 just to keep Brother's bloated *iPrint&Scan* or *ControlCenter* app listening.
-2. **Complex SANE/`brscan` Docker Containers:** Running x86_64 containers that wrap Brother's proprietary, closed-source `brscan4`/`brscan5` Linux binaries and `brscan-skey`. These frequently suffer from memory leaks, break on Apple Silicon (ARM64), and drop connections due to SMB protocol mismatches.
-
-### How `ds-940-paperless-scanner` Solves This Natively
-* **100% Driverless AirScan/eSCL:** Uses standard HTTP eSCL over local Wi-Fi/Ethernet (`:8080`). No proprietary binaries, no SANE dependencies, and native compatibility across Apple Silicon macOS, Linux, and Docker.
-* **Hands-Free Optical Sensor Polling:** Detects paper directly via hardware feeder sensors (`<scan:AdfState>`) without needing any screen buttons pressed.
-* **On-Device Apple Neural Engine OCR:** Generates a searchable text layer in milliseconds via native Apple Vision framework (`VNRecognizeTextRequest`) instead of requiring heavy server-side OCR pipelines.
-
----
-
-## 2. Key Concepts & Features to Adopt
-
-### 💡 Idea 1: Optional Direct Paperless-ngx Ingestion (`CONSUME_DIR` vs. REST API)
-* **Concept:** Automatically export or hardlink completed, searchable PDFs straight into Paperless-ngx.
-* **Implementation Plan:**
-  - Introduce optional environment variables in `ds940/config.py`:
-    ```bash
-    # REST API mode (Recommended):
-    export PAPERLESS_API_URL="http://192.168.0.50:8000/api"
-    export PAPERLESS_API_TOKEN="xxxxxxxxxxxx"
-    # Or local/NFS consume folder mode:
-    export PAPERLESS_CONSUME_DIR="/Volumes/NAS/paperless/consume"
-    ```
-  - When `PAPERLESS_API_URL` is set, `ds940/spool.py` directly POSTs the document to `/api/documents/post_document/`.
-  - **REST API vs. Network Share Note (from Calvin Walden):** Calvin highlighted that mounting remote NFS/SMB shares into Paperless breaks Linux `inotify` file-watching (forcing a CPU-polling fallback via `PAPERLESS_CONSUMER_POLLING=15`) and introduces UID/GID permission collisions between host VMs. Direct HTTP REST API ingestion completely eliminates network filesystem latency, permissions bugs, and inotify drops.
+| Category | Idea | Target Components | Complexity | Primary Impact |
+|:---|:---|:---|:---:|:---|
+| **Pipeline & Processing** | [Atomic Staging & Ingestion Guard](#idea-1-atomic-staging--ingestion-guard) | `ds940/spool.py` | Low | Eliminates file corruption in Paperless `inotify` |
+| **Pipeline & Processing** | [Blank Page Detection & Suppression](#idea-2-automatic-blank-page-detection--filtering) | `ds940/spool.py` | Medium | Removes empty backsides on duplex mail |
+| **Pipeline & Processing** | [Simplex-to-Duplex Manual Interleaving](#idea-3-simplex-to-duplex-manual-interleaving) | `ds940/spool.py` | Medium | Assembles multi-page batches on single-sided ADFs |
+| **Hardware & Protocol** | [Pure-Python TCP Port 54921 Driver](#idea-4-pure-python-tcp-port-54921-driver-legacy-brother-support) | `ds940/protocols/legacy_tcp.py` | High | Adds legacy Brother laser MFC support |
+| **Hardware & Protocol** | [Dual-Mode UDP Port 54925 Button Listener](#idea-5-dual-mode-triggering-via-udp-54925-button-listener) | `ds940/button_listener.py` | Medium | Instant trigger when physical button is pressed |
+| **Hardware & Protocol** | [Multi-Action Keypad Routing](#idea-6-multi-action-keypad-routing-file-vs-ocr-vs-image) | `ds940/supervisor.py` | Medium | Routes scans based on scanner screen buttons |
+| **Hardware & Protocol** | [Binary Protocol Debug Capture Mode](#idea-7-binary-protocol-debug--diagnostic-capture-mode---debug) | `ds940/cli.py`, `ds940/escl.py` | Low | Diagnostic byte dumps without leaking document text |
+| **Downstream Integrations**| [Direct Paperless-ngx REST API Ingestion](#idea-8-direct-paperless-ngx-rest-api-ingestion) | `ds940/export/paperless.py` | Medium | Bypasses NFS permissions, latency, and inotify drops |
+| **Downstream Integrations**| [Home Assistant MQTT Discovery & Sensors](#idea-9-home-assistant-integration--smart-home-automation-mqtt--hacs) | `ds940/mqtt.py` | Medium | Exposes buttons and status sensors to Home Assistant |
+| **Downstream Integrations**| [Push Notifications & Webhooks](#idea-10-push-notifications--webhooks-discord-telegram-pushover-n8n) | `ds940/notify.py` | Low | Alerts mobile phones upon successful document filing |
+| **Dashboard & Config** | [Scan Profiles & Preset Toggles](#idea-11-scan-profiles--quick-presets) | `ds940/config.py`, `ds940/web.py` | Low | One-click switching between Document, Archival, Photo |
+| **Dashboard & Config** | [Persistent `scanner.conf` & Web Settings](#idea-12-persistent-file-based-config-scannerconf-with-web-settings) | `ds940/config.py`, `ds940/web.py` | Medium | Live configuration changes without touching system plists |
+| **DevOps & Infrastructure**| [Turn-Key `install.sh` Provisioning Wizard](#idea-13-one-step-turn-key-installsh-wizard) | `scripts/install.sh` | Medium | Single-command launchd and systemd setup |
+| **DevOps & Infrastructure**| [Vendor Firmware Blackholing Runbook](#idea-14-vendor-firmware-isolation--update-blocking) | `docs/DNS_SECURITY.md` | Low | Protects local network scanners from breaking updates |
 
 ---
 
-### 💡 Idea 2: Atomic Staging & Ingestion Guard
-* **Origin:** Highlighted in `quadportnick/brother-scan-paperless` and Paperless-ngx troubleshooting threads.
-* **The Problem:** Paperless-ngx monitors the consume folder using `inotify`. If a scanner service writes a multi-page PDF or OCR file directly into `consume/`, Paperless may pick up the file prematurely while it is still being assembled, resulting in corrupt or partial document ingestions.
-* **Implementation Plan:**
-  - Assemble PDFs, run OCR, and extract AI taxonomy in an isolated temporary staging folder (`~/Documents/brother-scans/.staging/`).
-  - Perform an atomic POSIX `rename()` / `shutil.move()` into the final directory (or `PAPERLESS_CONSUME_DIR`) only after all write operations and hash checks are fully finalized.
+## 2. Pipeline & Document Processing Edits
+
+### Idea 1: Atomic Staging & Ingestion Guard
+* **Type of Edit:** Backend Pipeline / Filesystem Guard
+* **Target Components:** `ds940/spool.py`, `ds940/config.py`
+* **Origin:** Highlighted in `quadportnick/brother-scan-paperless` and Paperless-ngx community forums.
+* **The Problem:** Paperless-ngx watches ingest folders using Linux `inotify`. If our daemon streams pages or writes multi-page PDFs directly into `consume/`, Paperless frequently consumes partial, incomplete files while they are still being assembled or OCR-processed.
+* **Technical Specification:**
+  1. Assemble all PDF pages, run native Vision OCR, and extract AI taxonomy inside an isolated hidden folder:
+     `~/Documents/brother-scans/.staging/`
+  2. Perform an atomic POSIX file move (`os.replace` / `shutil.move`) into the target archive or `PAPERLESS_CONSUME_DIR` only after the document is finalized, flushed, and verified.
+* **Impact:** Eliminates file corruption, zero-byte PDF errors, and ingestion race conditions permanently.
 
 ---
 
-### 💡 Idea 3: Automatic Blank Page Detection & Filtering
+### Idea 2: Automatic Blank Page Detection & Filtering
+* **Type of Edit:** Image Processing & PDF Compilation
+* **Target Components:** `ds940/spool.py`
 * **Origin:** Implemented in `PhilippMundhenk/BrotherScannerDocker` and empirically calibrated by Calvin Walden.
-* **Concept:** When scanning duplex documents (or one-sided receipts on a duplex scanner), blank rear pages clutter the resulting PDF.
-* **Empirical Calibration & Thresholds (from Calvin Walden):**
-  - Calvin measured objective ink coverage across batches of mixed mail:
-    - Pure blank pages: `0.00 – 0.03` ink coverage.
-    - Pages with light markings, text, or signatures: `0.30+` ink coverage.
-    - Setting a removal threshold of `0.10` proved to be a rock-solid safe floor, stripping 100% of blank backsides without ever discarding sparse receipts.
-* **Implementation Plan:**
-  - Add an optional threshold parameter (`REMOVE_BLANK_THRESHOLD=0.10`).
-  - In `ds940/spool.py`, calculate page pixel variance or ink density with Pillow before final PDF compilation. Discard pages below threshold and log: `Discarded blank page 2 (density: 0.02 < 0.10)`.
+* **The Problem:** In duplex mode, scanning single-sided mail or receipts produces blank white backsides that double the resulting file size and clutter the searchable document archive.
+* **Calvin Walden's Empirical Ink Coverage Calibration:**
+  * True blank pages (with scanner dust or minor paper transparency bleed-through): `0.00 to 0.03` ink coverage.
+  * Real document pages (sparse receipts, signature lines, short forms): `0.30+` ink coverage.
+  * Setting a removal threshold of `0.10` ink density establishes a safe margin: it drops 100% of blank reverse pages while guaranteeing that faint invoices are never pruned.
+* **Technical Specification:**
+  ```python
+  # ds940/spool.py
+  def is_blank_page(image: Image.Image, threshold: float = 0.10) -> bool:
+      # Convert to grayscale and measure ink pixel ratio against pure white
+      gray = image.convert("L")
+      histogram = gray.histogram()
+      total_pixels = image.width * image.height
+      # Non-white pixels below 245 brightness
+      ink_pixels = sum(histogram[:245])
+      coverage = ink_pixels / total_pixels
+      return coverage < threshold
+  ```
+  * Discard detected blank pages prior to OCR and log:
+    `Discarded blank page 2 (ink coverage: 0.018 < 0.100)`
+* **Impact:** Cuts document storage in half for mixed one-sided/two-sided mail batches without losing legitimate data.
 
 ---
 
-### 💡 Idea 4: Push Notifications & Webhooks (Telegram / Discord / Pushover / n8n)
-* **Concept:** Notify the user on their phone or homelab dashboard when a document has been scanned and filed.
-* **Payload Details:**
-  - Document Title (e.g., `2026-11-16_Labcorp_Invoice.pdf`)
-  - Detected Category & Vendor (e.g., `Medical & Health` / `Labcorp`)
-  - Page Count & Execution Time
-  - Direct HTTPS link to the document preview in the web UI (`https://scans.alw.lol/`)
-* **Implementation:**
-  - Support generic outbound webhooks (`WEBHOOK_URL="https://discord.com/api/webhooks/..."` or `TELEGRAM_TOKEN` + `TELEGRAM_CHATID`).
-  - Fire an async HTTP POST upon successful triage.
+### Idea 3: Simplex-to-Duplex Manual Interleaving
+* **Type of Edit:** Multi-Page Collation Engine
+* **Target Components:** `ds940/spool.py`, `ds940/supervisor.py`
+* **Origin:** Documented in `PhilippMundhenk/BrotherScannerDocker` for manual batch feeds.
+* **The Problem:** When duplex scanning is disabled (or when using single-sided portable scanners), scanning a double-sided multi-page stack requires manual PDF page rearranging in an external editor.
+* **Technical Specification:**
+  1. User feeds the front-page stack through the feeder: pages `[1, 3, 5]`.
+  2. User flips the stack and feeds the reverse side: pages `[6, 4, 2]`.
+  3. Supervisor detects the secondary feed within an active window (`REAR_PAGE_WAIT_SECONDS=60`).
+  4. The engine reverses the second stack to `[2, 4, 6]` and interleaves:
+     `[1, 2, 3, 4, 5, 6]`.
+* **Impact:** Provides hardware duplex emulation for single-sided document feeders.
 
 ---
 
-### 💡 Idea 5: Dual-Mode Triggering via UDP 54925 Button Listener
-* **Concept:** Listen for physical hardware button-press events in addition to optical sensor polling.
-* **Mechanism:**
-  - Brother devices broadcast UDP packets to port `54925` containing `TYPE=BR;BUTTON=SCAN` when the physical scan button is pressed.
-  - By running a lightweight background UDP socket listener on `0.0.0.0:54925`, our receiver can trigger an immediate scan cycle the microsecond the button is pressed—eliminating the standard 3-second eSCL polling sleep.
-  - Supported by periodic SNMP profile registration on OID `.1.3.6.1.4.1.2435.2.3.9.2.11.1.1.0`.
+## 3. Hardware Driver & Protocol Edits
 
----
-
-### 💡 Idea 6: Simplex-to-Duplex Manual Interleaving
-* **Origin:** Noted in `PhilippMundhenk/BrotherScannerDocker` for manual batch feeds.
-* **Concept:** For documents where automatic duplex is disabled, or for scanners with single-sided ADFs:
-  - User scans the stack of front pages (`[1, 3, 5]`).
-  - User flips the stack and scans the back pages (`[6, 4, 2]`).
-  - The software detects the "rear page" batch within a configurable window (e.g. `REAR_PAGE_WAIT_SECONDS=60`), reverses the second set, and interleaves them seamlessly into `[1, 2, 3, 4, 5, 6]`.
-
----
-
-### 💡 Idea 7: Persistent File-Based Config (`scanner.conf`) with Web Settings
-* **Concept:** Avoid editing shell files, environment variables, or launchd plists for tuning scanner settings.
-* **Mechanism:**
-  - Support `~/.config/ds940/scanner.conf` with simple `KEY=VALUE` pairs.
-  - Precedence: Environment Variables > `scanner.conf` > Code Defaults.
-  - Expose a clean "Settings" tab in the web dashboard at `scans.alw.lol` allowing users to tune polling rates, destinations, and thresholds directly from the browser.
-
----
-
-### 💡 Idea 8: One-Step Turn-Key `install.sh` Wizard
-* **Concept:** Provide a single-command setup script for new users cloning the repository.
-* **Features:**
-  - **Platform Detection:** Detects macOS vs Linux automatically.
-    - macOS: Sets up and loads `~/Library/LaunchAgents/com.ds940receiver.plist`.
-    - Linux / Proxmox: Generates and enables `/etc/systemd/system/ds940receiver.service`.
-  - **LAN Scanner Discovery:** Probes mDNS (`_uscan._tcp`) to auto-detect the scanner's local IP address without manual router checks.
-  - **Permission Check:** Verifies read/write access to destination folders and tests eSCL HTTP connectivity.
-
----
-
-### 💡 Idea 9: Scan Profiles & Presets
-* **Concept:** Allow rapid switching of resolution, color mode, and page bounds.
-* **Preset Definitions:**
-  - **Fast Document (Default):** 300 DPI Duplex, Color/Grayscale auto, A4/Letter.
-  - **Archival Text / Receipt:** 300 DPI Black & White (thresholded), high compression.
-  - **High-Res Graphic:** 600 DPI Color, maximum JPEG quality.
-* **Dashboard Integration:** Quick toggle chips in the web interface at `scans.alw.lol` to switch profiles with one click.
-
----
-
-### 💡 Idea 10: Home Assistant Integration & Smart Home Automation (HACS & MQTT)
-* **Origin:** Inspired by [`thebino/brother-to-paperless`](https://github.com/thebino/brother-to-paperless).
-* **Concept:** Expose the scanner directly to Home Assistant as a first-class smart home device without requiring complex external glue code.
-* **Entities & Architecture:**
-  - **Button Entity (`button.ds940_scan`):** Allows triggering a scan cycle directly from Home Assistant dashboards, smart displays, or physical Zigbee/Z-Wave wireless buttons (e.g., Aqara, IKEA, Lutron) placed next to the scanner.
-  - **Status Sensor (`sensor.ds940_status`):** Reports scanner state: `idle`, `scanning`, `processing_ocr`, `offline`, or `error`, along with diagnostic attributes (`last_document`, `pages_scanned`, `paper_detected`).
-  - **Event Bus Signals:** Broadcasts `brother_scan_completed` and `brother_scan_failed` events with metadata payloads (document path, vendor name, category, page count).
-* **Automation Possibilities:**
-  - Flash an ambient LED strip or smart bulb green upon successful OCR filing.
-  - Play an audio chime or voice announcement on smart speakers ("New tax document filed from Austin Water").
-  - Send rich push notifications with PDF QuickLook attachments directly to the Home Assistant Companion App.
-* **Implementation Options:**
-  - **Option A (Native HACS Custom Component):** Follow `thebino`'s blueprint to build a dedicated HACS integration communicating with our Mac Mini web API (`https://scans.alw.lol/api`).
-  - **Option B (Home Assistant MQTT Discovery):** Publish MQTT discovery payloads from `ds940/web.py` to Home Assistant's MQTT broker—automatically provisioning the button and sensor entities in HA with zero custom components needed!
-
----
-
-### 💡 Idea 11: Pure-Python TCP Port 54921 Driver (Universal Legacy Brother Compatibility)
-* **Origin:** Reverse-engineered protocol documented in [`thebino/brother-to-paperless`](https://github.com/thebino/brother-to-paperless/blob/main/PROTOCOL.md).
-* **The Problem:** Modern Brother scanners (like our DS-940DW) speak driverless eSCL/AirScan over HTTP port 8080. However, many older Brother laser MFC printers (MFC-L2700DW, MFC-J430W, MFC-7820N) do *not* support eSCL and only expose a proprietary TCP protocol on port `54921`.
-* **The Opportunity:**
-  - Historically, homelabs required Brother's closed-source `brscan4` Linux binaries or SANE to talk to port 54921.
-  - `thebino` reverse-engineered the entire binary protocol in pure Python:
-    1. Connect TCP `:54921` → receives `+OK 200\r\n`.
-    2. Lease request: `\x1bI\nR={dpi},{dpi}\nM={mode}\n\x80`.
-    3. Capability negotiation: `\x00\x1d\x00...` dimensions and ADF state.
-    4. Scan trigger: `\x1bX\nR=...` binary chunk framing with `0x82` (end-of-page) and `0x80` (end-of-scan).
-  - By adding an optional `ds940/protocols/legacy_tcp.py` backend alongside `ds940/escl.py`, this project could become the definitive **universal driverless scanner engine** for *all* Brother scanners across both modern eSCL and legacy proprietary TCP generations!
-
----
-
-### 💡 Idea 12: Binary Protocol Debug & Diagnostic Capture Mode (`--debug`)
-* **Origin:** [`thebino/brother-to-paperless`](https://github.com/thebino/brother-to-paperless).
-* **Concept:** Provide a one-flag protocol dump mode (`--debug`) that saves raw hardware transactions:
-  - `offer.bin`: The raw capability handshake buffer returned by the scanner.
-  - `scan.bin`: The unparsed raw byte stream received from the scanner socket.
-* **Benefit:** When supporting new scanner models or investigating malformed TIFF/JPEG chunks, users can export and share diagnostic dumps without exposing any personal document text or image renderings.
-
----
-
-### 💡 Idea 13: Vendor Firmware Isolation & Update Blocking
-* **Origin:** Documented by [Calvin Walden](https://calvinrw.com/brscan4-paperless-workflow).
-* **The Problem:** Brother periodically pushes silent firmware updates over Wi-Fi. In the homelab community, firmware updates have historically broken local network scan functionality, introduced proprietary protocol handshakes, or disabled third-party toner/cartridge chips.
-* **Recommendation:**
-  - Add documentation / network setup instructions recommending users blackhole Brother's firmware servers via their local DNS forwarder (Pi-hole, AdGuard Home, OPNSense, or pfSense):
+### Idea 4: Pure-Python TCP Port 54921 Driver (Legacy Brother Support)
+* **Type of Edit:** Hardware Protocol & Transport Layer
+* **Target Components:** `ds940/protocols/legacy_tcp.py`, `ds940/driver.py`
+* **Origin:** Reverse-engineered protocol documented by [`thebino/brother-to-paperless`](https://github.com/thebino/brother-to-paperless/blob/main/PROTOCOL.md).
+* **The Problem:** Modern Brother scanners (such as our DS-940DW) support standard HTTP eSCL/AirScan on port 8080. However, millions of legacy Brother laser multifunction printers (MFC-L2700DW, MFC-J430W, MFC-7820N, DCP series) only speak Brother's proprietary binary protocol over TCP port 54921, previously requiring closed-source `brscan4` Linux binaries.
+* **Technical Specification:**
+  * Implement `thebino`'s reverse-engineered pure-Python socket driver:
+    1. Connect via TCP to port `54921` -> awaits `+OK 200\r\n`.
+    2. Lease and configuration request: `\x1bI\nR={dpi},{dpi}\nM={mode}\n\x80`.
+    3. Dimension and ADF capability negotiation: `\x00\x1d\x00...`.
+    4. Binary stream ingestion: `\x1bX\nR=...` framing with `0x82` (end-of-page) and `0x80` (end-of-scan) delimiters.
+  * Register as an alternate backend in `ds940/driver.py`:
+    ```python
+    if protocol == "escl":
+        from .escl import ESCLDriver as Driver
+    elif protocol == "legacy_tcp":
+        from .protocols.legacy_tcp import LegacyTCPDriver as Driver
     ```
+* **Impact:** Transforms this project into a universal driverless scanner engine for both modern eSCL and legacy Brother hardware across macOS and Linux.
+
+---
+
+### Idea 5: Dual-Mode Triggering via UDP 54925 Button Listener
+* **Type of Edit:** Network Event Listener & Ingestion Driver
+* **Target Components:** `ds940/button_listener.py`, `ds940/supervisor.py`
+* **Origin:** Found in `vanessa/brother-scan-to-paperless`.
+* **The Problem:** Polling the HTTP eSCL scanner endpoint introduces a 2 to 3 second delay before sheet feeding starts.
+* **Technical Specification:**
+  * When a physical scan button is pushed on a Brother device, it sends a UDP broadcast packet on port `54925` containing:
+    `TYPE=BR;BUTTON=SCAN`
+  * Run an async UDP socket listener on `0.0.0.0:54925`.
+  * Trigger an immediate scan run upon packet arrival, bypassing the scheduled polling interval.
+  * Keep the current optical sensor polling as a parallel fallback for completely touch-free feeding.
+* **Impact:** Sub-millisecond scan initiation when using physical device buttons.
+
+---
+
+### Idea 6: Multi-Action Keypad Routing (`to File` vs `to OCR` vs `to Image`)
+* **Type of Edit:** Workflow Routing & Supervisor Logic
+* **Target Components:** `ds940/supervisor.py`, `ds940/config.py`
+* **Origin:** Highlighted by Calvin Walden on multifunction printer keypads.
+* **The Problem:** Users often want different workflows for different document types (receipts vs archival contracts vs color photos) without having to change configuration files.
+* **Technical Specification:**
+  * Read the action sub-code transmitted in the Brother button payload:
+    * `Scan to File`: Standard duplex document ingestion (`300 DPI Duplex` -> Paperless-ngx).
+    * `Scan to OCR`: Priority ingestion with full Apple Vision OCR and automated LLM categorization.
+    * `Scan to Image`: High-resolution photograph mode (`600 DPI Color` -> saved losslessly to `Photos/`).
+* **Impact:** Enables tactile, hardware-level workflow selection straight from the scanner front panel.
+
+---
+
+### Idea 7: Binary Protocol Debug & Diagnostic Capture Mode (`--debug`)
+* **Type of Edit:** CLI & Troubleshooting Utilities
+* **Target Components:** `ds940/cli.py`, `ds940/escl.py`
+* **Origin:** Implemented in `thebino/brother-to-paperless`.
+* **The Problem:** Troubleshooting scanner communication often requires Wireshark captures, which risk exposing private document text and credentials.
+* **Technical Specification:**
+  * Add a `--debug-capture` command-line flag.
+  * When active, save raw network packets to isolated binary artifacts:
+    * `offer.bin`: The exact XML/binary capability negotiation payload.
+    * `scan.bin`: The raw byte stream from the scanner socket before parsing.
+* **Impact:** Enables bug reporting and hardware diagnostics without leaking document images or personal information.
+
+---
+
+## 4. Downstream Export & Integration Edits
+
+### Idea 8: Direct Paperless-ngx REST API Ingestion
+* **Type of Edit:** Downstream Exporter & API Connector
+* **Target Components:** `ds940/export/paperless.py`, `ds940/config.py`
+* **Origin:** Homelab community discussions on NFS/SMB inotify limitations.
+* **The Problem:** Mounting shared network folders (NFS/SMB) into Paperless-ngx disables Linux kernel `inotify` events, forcing Paperless into slow, CPU-heavy polling loops (`PAPERLESS_CONSUMER_POLLING=15`). Network file mounts also suffer from UID/GID permission mismatches between containers and host operating systems.
+* **Technical Specification:**
+  * Introduce direct HTTP REST API integration via configuration:
+    ```bash
+    export PAPERLESS_API_URL="http://192.168.0.50:8000/api"
+    export PAPERLESS_API_TOKEN="your_auth_token_here"
+    ```
+  * Once a document is OCR-processed and filed locally, post it directly to Paperless:
+    ```python
+    # ds940/export/paperless.py
+    import requests
+
+    def upload_to_paperless(pdf_path: Path, title: str, category: str, api_url: str, token: str):
+        headers = {"Authorization": f"Token {token}"}
+        with open(pdf_path, "rb") as f:
+            files = {"document": (pdf_path.name, f, "application/pdf")}
+            data = {"title": title}
+            resp = requests.post(f"{api_url}/documents/post_document/", headers=headers, files=files, data=data)
+            resp.raise_for_status()
+    ```
+* **Impact:** Instant ingestion into Paperless-ngx with zero network filesystem dependencies or permission issues.
+
+---
+
+### Idea 9: Home Assistant Integration & Smart Home Automation (MQTT / HACS)
+* **Type of Edit:** Smart Home Integration & Telemetry
+* **Target Components:** `ds940/mqtt.py`, `ds940/web.py`
+* **Origin:** Inspired by `thebino/brother-to-paperless`.
+* **The Problem:** The scanner currently operates as an isolated appliance without visibility from home dashboards or smart displays.
+* **Technical Specification:**
+  * Implement Home Assistant MQTT Auto-Discovery:
+    * **Button Entity (`button.ds940_scan`):** Trigger a scan cycle from Home Assistant dashboards, smart switches, or wireless buttons (Zigbee, Z-Wave).
+    * **Sensor Entity (`sensor.ds940_status`):** Real-time hardware states: `idle`, `scanning`, `processing_ocr`, `offline`, or `error`.
+    * **Diagnostic Attributes:** `last_document`, `pages_scanned`, `paper_detected`.
+    * **Event Signals:** Broadcast `brother_scan_completed` events with document metadata payloads (vendor, category, page count).
+* **Automation Use Cases:**
+  * Flash an ambient desk lamp green when a scan finishes filing.
+  * Announce over smart speakers: "Tax document filed from Travis County".
+  * Send mobile alerts with document preview links via the Home Assistant Companion App.
+* **Impact:** Turns the scanner into a native smart home participant.
+
+---
+
+### Idea 10: Push Notifications & Webhooks (Discord / Telegram / Pushover / n8n)
+* **Type of Edit:** Notification Service
+* **Target Components:** `ds940/notify.py`, `ds940/config.py`
+* **The Problem:** The user has no mobile awareness of whether a multi-page document was recognized, sorted, or flagged for review.
+* **Technical Specification:**
+  * Support webhook configuration:
+    ```bash
+    export WEBHOOK_URL="https://discord.com/api/webhooks/..."
+    # or Telegram:
+    export TELEGRAM_TOKEN="bot_token"
+    export TELEGRAM_CHAT_ID="chat_id"
+    ```
+  * Send a formatted payload upon document filing:
+    * Document Title: `2026-11-16_Labcorp_Invoice.pdf`
+    * Category & Vendor: `Medical & Health / Labcorp`
+    * Metrics: `2 pages, 142 KB, 1.4s OCR time`
+    * Direct Link: `https://scans.alw.lol/`
+* **Impact:** Real-time confirmation on phones and tablets as soon as paper feeds through the scanner.
+
+---
+
+## 5. Web Dashboard & Runtime Configuration Edits
+
+### Idea 11: Scan Profiles & Quick Presets
+* **Type of Edit:** Configuration & Frontend UI
+* **Target Components:** `ds940/config.py`, `ds940/web.py`
+* **The Problem:** Adjusting DPI or switching between grayscale and color currently requires editing launch environment variables and restarting daemons.
+* **Technical Specification:**
+  * Define three operational presets in `ds940/config.py`:
+    * **Fast Document (Default):** 300 DPI, Grayscale auto, Duplex, high compression.
+    * **Archival Text / Receipt:** 300 DPI, Black and White thresholded, compact size.
+    * **High-Res Photo:** 600 DPI, Full 24-bit Color, zero lossy compression.
+  * Add profile switching chips to the header bar of `https://scans.alw.lol/`.
+* **Impact:** Immediate, one-click adjustments for specialized document batches.
+
+---
+
+### Idea 12: Persistent File-Based Config (`scanner.conf`) with Web Settings
+* **Type of Edit:** Configuration Engine & Web Management API
+* **Target Components:** `ds940/config.py`, `ds940/web.py`
+* **The Problem:** Environment variables in macOS LaunchAgents require unloading and reloading plists via `launchctl` to take effect.
+* **Technical Specification:**
+  * Read settings from `~/.config/ds940/scanner.conf` using simple `KEY=VALUE` formatting.
+  * Configuration priority:
+    `Environment Variables > ~/.config/ds940/scanner.conf > Code Defaults`
+  * Expose a settings drawer in the web interface allowing users to adjust polling intervals, destination paths, and thresholds directly from their browser.
+* **Impact:** Simple user-friendly administration without terminal commands.
+
+---
+
+## 6. DevOps, Setup & Network Security Edits
+
+### Idea 13: One-Step Turn-Key `install.sh` Wizard
+* **Type of Edit:** Provisioning Scripts & Packaging
+* **Target Components:** `scripts/install.sh`
+* **The Problem:** Setting up automatic startup daemons, virtual environments, and scanner network parameters requires several manual commands.
+* **Technical Specification:**
+  * Create an interactive POSIX setup script:
+    1. **Operating System Detection:**
+       * macOS: Generates and loads `~/Library/LaunchAgents/com.aaron.ds940receiver.plist`.
+       * Linux / Proxmox: Creates and enables `/etc/systemd/system/ds940receiver.service`.
+    2. **mDNS Hardware Discovery:** Probes local network for `_uscan._tcp` services to identify the Brother scanner IP address automatically.
+    3. **Directory Verification:** Creates storage folders, verifies permissions, and executes an eSCL connectivity handshake.
+* **Impact:** One-command onboarding for new homelab installations.
+
+---
+
+### Idea 14: Vendor Firmware Isolation & Update Blocking
+* **Type of Edit:** Network Hardening Documentation & Runbook
+* **Target Components:** `docs/DNS_SECURITY.md`
+* **Origin:** Documented by Calvin Walden on Brother MFC firmware behavior.
+* **The Problem:** Brother periodically deploys automatic firmware updates over Wi-Fi. In the homelab community, firmware updates have broken driverless eSCL scanning, introduced proprietary handshakes, or disabled third-party supplies.
+* **Technical Specification:**
+  * Document instructions to block Brother update endpoints in local DNS resolvers (Pi-hole, AdGuard Home, pfSense, OPNSense):
+    ```text
     update.brother.co.jp
     firmverup.brother.co.jp
     ```
-  - This guarantees that once a scanner's local network communication is working, it remains frozen in a known working state permanently.
-
----
-
-### 💡 Idea 14: Multi-Action Keypad Routing (`to File` vs `to OCR` vs `to Image`)
-* **Origin:** Highlighted in Calvin Walden's closing notes on multi-function printer keypads.
-* **Concept:** Brother devices with keypad buttons transmit distinct event codes depending on whether the user pressed "Scan to File", "Scan to OCR", "Scan to Image", or "Scan to E-mail".
-* **Architecture:**
-  - In our UDP listener and eSCL profile mapping, map each physical button to a dedicated destination or processing pipeline:
-    - **Scan to File:** Standard document ingest (`300 DPI Duplex` → Paperless-ngx / `~/Documents/brother-scans`).
-    - **Scan to OCR:** Instant priority filing with local LLM taxonomy and immediate Spotlight search indexing.
-    - **Scan to Image / Photo:** High-res mode (`600 DPI Color` → saved to a dedicated `Photos & Artifacts/` folder with zero lossy compression).
-
-
-
+  * Keep local subnet communication (HTTP 8080, TCP 54921, UDP 54925) fully open.
+* **Impact:** Freezes scanner firmware permanently in a stable, verified working state.
