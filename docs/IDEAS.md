@@ -1,6 +1,10 @@
 # Architectural Ideas & Community Homelab Insights
 
-This document captures architectural analysis, homelab community discussions (including [r/selfhosted](https://www.reddit.com/r/selfhosted/comments/1hy690i/brother_l2710dw_and_scanning_to_network_folder_is/)), and ideas inspired by open-source implementations ([`vanessa/brother-scan-to-paperless`](https://github.com/vanessa/brother-scan-to-paperless), [`PhilippMundhenk/BrotherScannerDocker`](https://github.com/PhilippMundhenk/BrotherScannerDocker), [`quadportnick/brother-scan-paperless`](https://github.com/quadportnick/brother-scan-paperless)), evaluating how these concepts can enhance `ds-940-paperless-scanner`.
+This document captures architectural analysis, homelab community discussions (including [r/selfhosted](https://www.reddit.com/r/selfhosted/comments/1hy690i/brother_l2710dw_and_scanning_to_network_folder_is/)), and ideas inspired by open-source implementations:
+- [`thebino/brother-to-paperless`](https://github.com/thebino/brother-to-paperless) (Home Assistant HACS integration & pure-Python port 54921 driver)
+- [`vanessa/brother-scan-to-paperless`](https://github.com/vanessa/brother-scan-to-paperless) (UDP push-button listeners & SNMP scan profiles)
+- [`PhilippMundhenk/BrotherScannerDocker`](https://github.com/PhilippMundhenk/BrotherScannerDocker) (Blank page filtering & simplex interleaving)
+- [`quadportnick/brother-scan-paperless`](https://github.com/quadportnick/brother-scan-paperless) (Staging directories & Paperless inotify race condition guards)
 
 ---
 
@@ -113,4 +117,45 @@ To get documents automatically into **Paperless-ngx** without manually using USB
   - **Archival Text / Receipt:** 300 DPI Black & White (thresholded), high compression.
   - **High-Res Graphic:** 600 DPI Color, maximum JPEG quality.
 * **Dashboard Integration:** Quick toggle chips in the web interface at `scans.alw.lol` to switch profiles with one click.
+
+---
+
+### 💡 Idea 10: Home Assistant Integration & Smart Home Automation (HACS & MQTT)
+* **Origin:** Inspired by [`thebino/brother-to-paperless`](https://github.com/thebino/brother-to-paperless).
+* **Concept:** Expose the scanner directly to Home Assistant as a first-class smart home device without requiring complex external glue code.
+* **Entities & Architecture:**
+  - **Button Entity (`button.ds940_scan`):** Allows triggering a scan cycle directly from Home Assistant dashboards, smart displays, or physical Zigbee/Z-Wave wireless buttons (e.g., Aqara, IKEA, Lutron) placed next to the scanner.
+  - **Status Sensor (`sensor.ds940_status`):** Reports scanner state: `idle`, `scanning`, `processing_ocr`, `offline`, or `error`, along with diagnostic attributes (`last_document`, `pages_scanned`, `paper_detected`).
+  - **Event Bus Signals:** Broadcasts `brother_scan_completed` and `brother_scan_failed` events with metadata payloads (document path, vendor name, category, page count).
+* **Automation Possibilities:**
+  - Flash an ambient LED strip or smart bulb green upon successful OCR filing.
+  - Play an audio chime or voice announcement on smart speakers ("New tax document filed from Austin Water").
+  - Send rich push notifications with PDF QuickLook attachments directly to the Home Assistant Companion App.
+* **Implementation Options:**
+  - **Option A (Native HACS Custom Component):** Follow `thebino`'s blueprint to build a dedicated HACS integration communicating with our Mac Mini web API (`https://scans.alw.lol/api`).
+  - **Option B (Home Assistant MQTT Discovery):** Publish MQTT discovery payloads from `ds940/web.py` to Home Assistant's MQTT broker—automatically provisioning the button and sensor entities in HA with zero custom components needed!
+
+---
+
+### 💡 Idea 11: Pure-Python TCP Port 54921 Driver (Universal Legacy Brother Compatibility)
+* **Origin:** Reverse-engineered protocol documented in [`thebino/brother-to-paperless`](https://github.com/thebino/brother-to-paperless/blob/main/PROTOCOL.md).
+* **The Problem:** Modern Brother scanners (like our DS-940DW) speak driverless eSCL/AirScan over HTTP port 8080. However, many older Brother laser MFC printers (MFC-L2700DW, MFC-J430W, MFC-7820N) do *not* support eSCL and only expose a proprietary TCP protocol on port `54921`.
+* **The Opportunity:**
+  - Historically, homelabs required Brother's closed-source `brscan4` Linux binaries or SANE to talk to port 54921.
+  - `thebino` reverse-engineered the entire binary protocol in pure Python:
+    1. Connect TCP `:54921` → receives `+OK 200\r\n`.
+    2. Lease request: `\x1bI\nR={dpi},{dpi}\nM={mode}\n\x80`.
+    3. Capability negotiation: `\x00\x1d\x00...` dimensions and ADF state.
+    4. Scan trigger: `\x1bX\nR=...` binary chunk framing with `0x82` (end-of-page) and `0x80` (end-of-scan).
+  - By adding an optional `ds940/protocols/legacy_tcp.py` backend alongside `ds940/escl.py`, this project could become the definitive **universal driverless scanner engine** for *all* Brother scanners across both modern eSCL and legacy proprietary TCP generations!
+
+---
+
+### 💡 Idea 12: Binary Protocol Debug & Diagnostic Capture Mode (`--debug`)
+* **Origin:** [`thebino/brother-to-paperless`](https://github.com/thebino/brother-to-paperless).
+* **Concept:** Provide a one-flag protocol dump mode (`--debug`) that saves raw hardware transactions:
+  - `offer.bin`: The raw capability handshake buffer returned by the scanner.
+  - `scan.bin`: The unparsed raw byte stream received from the scanner socket.
+* **Benefit:** When supporting new scanner models or investigating malformed TIFF/JPEG chunks, users can export and share diagnostic dumps without exposing any personal document text or image renderings.
+
 
