@@ -398,24 +398,6 @@ class DashboardHandler(BaseHTTPRequestHandler):
     .search-input:focus {{ border-color: var(--text-secondary); }}
     .search-input::placeholder {{ color: var(--text-muted); }}
 
-    .btn {{
-      display: inline-flex;
-      align-items: center;
-      gap: 0.4rem;
-      background: var(--accent);
-      color: var(--accent-btn-text);
-      border: 1px solid transparent;
-      padding: 0.42rem 0.85rem;
-      border-radius: 6px;
-      font-size: 0.8rem;
-      font-weight: 500;
-      cursor: pointer;
-      transition: opacity 120ms ease;
-    }}
-    .btn:hover {{ opacity: 0.92; }}
-    .btn:disabled {{ opacity: 0.45; cursor: not-allowed; }}
-    .btn svg {{ width: 14px; height: 14px; }}
-
     /* Category Filter Pills */
     .filter-bar {{
       display: flex;
@@ -664,13 +646,6 @@ class DashboardHandler(BaseHTTPRequestHandler):
       </div>
       <div class="toolbar-actions">
         <input type="text" id="search-box" class="search-input" placeholder="Search... (press /)" oninput="filterScans()">
-        <button class="btn" id="sort-btn" onclick="triggerSort()">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="23 4 23 10 17 10"/>
-            <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
-          </svg>
-          <span>Organize</span>
-        </button>
       </div>
     </div>
 
@@ -897,24 +872,6 @@ class DashboardHandler(BaseHTTPRequestHandler):
         renderScans();
       }} catch (e) {{
         console.error(e);
-      }}
-    }}
-
-    async function triggerSort() {{
-      const btn = document.getElementById('sort-btn');
-      const origHtml = btn.innerHTML;
-      btn.innerHTML = '<span>Sorting...</span>';
-      btn.disabled = true;
-      try {{
-        const res = await fetch('/api/sort', {{ method: 'POST' }});
-        const data = await res.json();
-        showToast(`Organized ${{data.moved_count}} document${{data.moved_count === 1 ? '' : 's'}}`);
-        await loadScans();
-      }} catch (e) {{
-        showToast('Sorting failed: ' + e);
-      }} finally {{
-        btn.innerHTML = origHtml;
-        btn.disabled = false;
       }}
     }}
 

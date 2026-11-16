@@ -1,33 +1,49 @@
 ---
 name: scan-sorter
-description: Triage, inspect, OCR, rename, and organize incoming scanned documents and mail from Brother DS-940DW into categorized folders in ~/Documents/Scans (Bills & Utilities, Taxes & Financial, Medical & Health, Insurance, Receipts, Personal & Other). Use when the user asks to "sort my scans", "organize my mail", "triage new scans", "clean up my scans folder", or "process scans".
+description: Multi-agent mail & document triage skill for Antigravity, Codex, Claude Code, Kiro, Cursor, and Grok. Inspects, OCRs, intelligently renames, and files incoming scans from Brother DS-940DW into adaptive, emergent category folders in ~/Documents/Scans using .taxonomy.json. Use when the user asks to "sort my scans", "organize my mail", "triage new scans", "clean up my scans folder", or "process scans".
 ---
 
-# Scan Sorter & Mail Organizer
+# Scan Sorter & Mail Organizer (Multi-Agent Skill)
 
-Use this skill to inspect, OCR, intelligently rename, and organize incoming PDF scans from the Brother DS-940DW scanner into clean, permanent category folders.
+Use this skill when Aaron asks to triage, sort, rename, or file scanned mail and documents.
+
+This skill is designed for a **multi-agent workflow** across Aaron's tools:
+- **Antigravity / Gemini**
+- **Codex / OpenAI**
+- **Claude Code**
+- **Cursor**
+- **Kiro / KiroCrew**
+- **Grok**
+
+The Brother DS-940DW captures sheets into `~/Documents/Scans` (synced via iCloud Drive across Mac Mini and MacBook Air) with on-device Apple Vision OCR text layers. Agents provide the cognitive, conversational filing layer.
+
+---
 
 ## Target Paths
 
 - **Primary Tracked Folder (synced via iCloud):** `~/Documents/Scans`
+- **Living Taxonomy Ledger:** `~/Documents/Scans/.taxonomy.json`
+- **Audit & Undo Log:** `~/Documents/Scans/SORT_LOG.md`
 - **Remote Host:** Mac Mini at `100.96.177.69` via Tailscale / SSH
 
-## Category Structure
+---
 
-Unsorted scans sit in the root of the scans directory. Sorted scans are placed into these standardized category subfolders:
+## Adaptive, Emergent Taxonomy (`.taxonomy.json`)
 
-| Category Folder | Typical Documents |
-|---|---|
-| `Bills & Utilities/` | Electric, water, gas, internet (Spectrum), cell phone (AT&T, Verizon), trash, recurring bills |
-| `Taxes & Financial/` | IRS notices, W-2, 1099, Form 1040, bank statements (Chase, Wells Fargo), brokerage/investments |
-| `Medical & Health/` | Clinic summaries, hospital bills, doctor letters, prescriptions, lab results, dental/vision |
-| `Insurance/` | Auto, home, health, life insurance policies, renewal notices, claim forms, coverage summaries |
-| `Receipts/` | Store receipts, purchase invoices, equipment/hardware receipts |
-| `Personal & Other/` | Event flyers, invitations, personal letters, non-bill correspondence |
+**Do NOT force documents into rigid, pre-canned buckets.** Categories emerge naturally as Aaron scans documents:
+
+1. **Read Existing Taxonomy**: Inspect `~/Documents/Scans/.taxonomy.json` to see current categories, descriptions, and learned vendor mappings (`Austin Energy ➔ Utilities`, `State Farm ➔ Auto Insurance`).
+2. **Match or Evolve**:
+   - If a document clearly fits an existing category (e.g. `Utilities`), assign it there and record the vendor.
+   - If a document introduces a new domain (e.g. `Auto`, `Pets`, `Housing`, `Medical`, `Crafts`, `Receipts`, `Taxes`), propose a concise, natural category (1–2 words, Title Case).
+   - Never use junk-drawer categories like `Personal & Other` or `Misc`.
+3. **Learn User Preferences**: If Aaron asks to rename or move a document, update `vendor_mappings` in `.taxonomy.json`.
+
+---
 
 ## Standard Naming Convention
 
-All sorted PDFs follow the clean naming pattern:
+All sorted PDFs follow the clean, searchable naming pattern:
 ```
 YYYY-MM-DD_[Sender]_[Document-Type].pdf
 ```
@@ -39,43 +55,32 @@ Examples:
 
 ---
 
-## Workflow
+## Agent Workflow
 
-### 1. Inventory & Preview Unsorted Scans
-Run the helper tool in dry-run preview mode:
+### 1. Inventory & OCR Unsorted Scans
+Find all unorganized `.pdf` files sitting directly in the root of `~/Documents/Scans`.
+Read each document's text (already embedded via Apple Vision OCR, or run native OCR via `bin/ds940-ocr`).
 
+Alternatively, run the helper script in dry-run preview mode:
 ```bash
-# On Mac Mini or MacBook Air locally:
 python3 ~/Projects/ds-940-paperless-scanner/scripts/sort_scans.py --dir ~/Documents/Scans
-
-# Or remotely from MacBook Air:
-ssh aaron@100.96.177.69 "python3 ~/Projects/ds-940-paperless-scanner/scripts/sort_scans.py --dir ~/Documents/Scans"
 ```
 
-The tool uses native Apple Vision OCR (`bin/ds940-ocr`) to read the text in milliseconds and determines the date, sender, document type, and category.
-
-### 2. Present Proposal to User
-Display the proposed moves in a clean markdown table:
+### 2. Conversational Proposal
+Display proposed moves to Aaron in a clear table:
 ```markdown
 | Source File | Detected Date | Sender | Category | New Filename |
 |---|---|---|---|---|
-| live_test_scan.pdf | 2024-11-15 | Quilt-Camp | Personal & Other | 2024-11-15_Quilt-Camp_Flyer.pdf |
+| scan-20261115-001.pdf | 2026-11-04 | Austin Energy | Utilities | 2026-11-04_Austin-Energy_Electric-Bill.pdf |
 ```
 
-If the user wants any adjustments (e.g. custom category or different title), modify the plan accordingly.
+If any document is ambiguous (e.g., medical bill vs insurance explanation of benefits, tax notice vs financial statement), ask Aaron for clarification before moving.
 
-### 3. Apply the File Moves
-Execute the moves and create the category subfolders:
+### 3. Execute Moves & Update Ledger
+Move the files into `~/Documents/Scans/<Category>/` and update:
+- `~/Documents/Scans/.taxonomy.json` (categories and vendor mappings)
+- `~/Documents/Scans/SORT_LOG.md` (date, source file, target relative path, sender, document type)
 
-```bash
-# On Mac Mini or MacBook Air locally:
-python3 ~/Projects/ds-940-paperless-scanner/scripts/sort_scans.py --dir ~/Documents/Scans --apply
-
-# Or remotely from MacBook Air:
-ssh aaron@100.96.177.69 "python3 ~/Projects/ds-940-paperless-scanner/scripts/sort_scans.py --dir ~/Documents/Scans --apply"
-```
-
-### 4. Verify & Confirm
-- Verify that the moved files exist in their target category subfolder.
-- Note that an entry is automatically appended to `~/Documents/Scans/SORT_LOG.md` for tracking and easy undo.
-- Report completion to the user with the final destination paths.
+### 4. Cross-System Integrations (Optional / Contextual)
+- **Actual Budget**: If a document is a receipt or bill, offer to log the transaction or check matching cleared transactions in Actual Budget.
+- **Calendar / Reminders**: If a notice contains a firm payment due date or court deadline, offer to note the deadline.
