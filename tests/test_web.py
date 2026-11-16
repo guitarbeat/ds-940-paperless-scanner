@@ -74,6 +74,20 @@ class WebDashboardTests(unittest.TestCase):
             self.assertIn("Brother DS-940DW", html)
             self.assertIn("Recent Scans", html)
 
+    def test_delete_endpoint(self):
+        url = f"http://127.0.0.1:{self.port}/api/delete"
+        req = urllib.request.Request(
+            url,
+            data=json.dumps({"path": "test_doc.pdf"}).encode("utf-8"),
+            headers={"Content-Type": "application/json"},
+            method="POST",
+        )
+        with urllib.request.urlopen(req, timeout=3.0) as resp:
+            self.assertEqual(resp.status, 200)
+            data = json.loads(resp.read().decode("utf-8"))
+            self.assertEqual(data["status"], "ok")
+        self.assertFalse((self.output / "test_doc.pdf").exists())
+
 
 if __name__ == "__main__":
     unittest.main()

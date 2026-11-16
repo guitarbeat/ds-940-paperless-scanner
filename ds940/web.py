@@ -100,8 +100,31 @@ class DashboardHandler(BaseHTTPRequestHandler):
         parsed = urllib.parse.urlparse(self.path)
         if parsed.path == "/api/sort":
             self.trigger_sort()
+        elif parsed.path == "/api/delete":
+            self.handle_delete()
         else:
             self.send_error(404, "Not Found")
+
+    def handle_delete(self):
+        try:
+            content_len = int(self.headers.get("Content-Length", 0))
+            payload = json.loads(self.rfile.read(content_len).decode("utf-8"))
+            rel_path = payload.get("path", "").lstrip("/")
+            if not rel_path:
+                self.send_json({"status": "error", "message": "Missing path"}, status=400)
+                return
+
+            target_path = (self.settings.output / rel_path).resolve()
+            output_resolved = self.settings.output.resolve()
+            target_path.relative_to(output_resolved)
+
+            if target_path.is_file():
+                target_path.unlink()
+                self.send_json({"status": "ok", "deleted": rel_path})
+            else:
+                self.send_json({"status": "error", "message": "File not found"}, status=404)
+        except (ValueError, OSError) as err:
+            self.send_json({"status": "error", "message": str(err)}, status=400)
 
     def trigger_sort(self):
         from ..scripts.sort_scans import sort_scans
@@ -495,6 +518,7 @@ class DashboardHandler(BaseHTTPRequestHandler):
       transition: color 120ms ease;
     }}
     .action-link:hover {{ color: var(--text); }}
+    .action-link.action-delete:hover {{ color: #ff453a; }}
 
     .empty-state {{
       padding: 3.5rem 1rem;
@@ -813,6 +837,7 @@ class DashboardHandler(BaseHTTPRequestHandler):
           <td class="actions-cell">
             <a class="action-link" onclick="openPreview('${{s.relative_path}}', '${{s.filename}}')">Preview</a>
             <a class="action-link" href="/files/${{encodeURIComponent(s.relative_path)}}" download="${{s.filename}}">Download</a>
+            <a class="action-link action-delete" onclick="confirmDelete('${{s.relative_path}}', '${{s.filename}}')">Delete</a>
           </td>
         </tr>
       `).join('');
@@ -889,6 +914,26 @@ class DashboardHandler(BaseHTTPRequestHandler):
       }} finally {{
         btn.innerHTML = origHtml;
         btn.disabled = false;
+      }}
+    }}
+
+    async function confirmDelete(relPath, filename) {{
+      if (!confirm('Permanently delete ' + filename + '?')) return;
+      try {{
+        const res = await fetch('/api/delete', {{
+          method: 'POST',
+          headers: {{ 'Content-Type': 'application/json' }},
+          body: JSON.stringify({{ path: relPath }})
+        }});
+        const data = await res.json();
+        if (data.status === 'ok') {{
+          showToast('Deleted ' + filename);
+          await loadScans();
+        }} else {{
+          showToast('Failed to delete: ' + (data.message || 'Error'));
+        }}
+      }} catch (e) {{
+        showToast('Delete error: ' + e);
       }}
     }}
 
