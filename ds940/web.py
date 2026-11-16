@@ -7,6 +7,7 @@ import json
 import logging
 import os
 from pathlib import Path
+import re
 import threading
 import time
 import urllib.parse
@@ -33,6 +34,25 @@ def get_recent_scans(output_dir: Path, limit: int = 100) -> list[dict]:
     if not output_dir.exists():
         return []
 
+    log_map: dict[str, str] = {}
+    sort_log = output_dir / "SORT_LOG.md"
+    if sort_log.exists():
+        try:
+            for line in sort_log.read_text(encoding="utf-8").splitlines():
+                m = re.search(r"\*\*([^\*]+)\*\*:\s*Moved\s*`([^`]+)`\s*→\s*`([^`]+)`", line)
+                if m:
+                    log_ts, src_name, dst_rel = m.groups()
+                    src_m = re.search(r"brother-(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})(\d{2})", src_name)
+                    if src_m:
+                        y, mo, d, h, mi, s = src_m.groups()
+                        scan_date_str = f"{y}-{mo}-{d} {h}:{mi}"
+                    else:
+                        scan_date_str = log_ts[:16]
+                    log_map[dst_rel.strip()] = scan_date_str
+                    log_map[Path(dst_rel.strip()).name] = scan_date_str
+        except Exception:
+            pass
+
     files = []
     for root, _, filenames in os.walk(output_dir):
         for fname in filenames:
@@ -42,6 +62,28 @@ def get_recent_scans(output_dir: Path, limit: int = 100) -> list[dict]:
                     stat = full_path.stat()
                     rel_path = full_path.relative_to(output_dir)
                     category = rel_path.parent.name if rel_path.parent.name else "Inbox"
+
+                    # 1. Document Date (e.g. 2026-10-02 from 2026-10-02_Austin-Municipal-Court_...)
+                    doc_date_match = re.match(r"^(\d{4}-\d{2}-\d{2})", fname)
+                    doc_date = doc_date_match.group(1) if doc_date_match else None
+
+                    # 2. Scan Date (when it was scanned by Brother DS-940DW)
+                    scan_date = None
+                    birth = getattr(stat, "st_birthtime", None)
+                    if birth is not None and birth > 0:
+                        scan_date = time.strftime("%Y-%m-%d %H:%M", time.localtime(birth))
+                    elif str(rel_path) in log_map:
+                        scan_date = log_map[str(rel_path)]
+                    elif fname in log_map:
+                        scan_date = log_map[fname]
+                    else:
+                        src_m = re.search(r"brother-(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})(\d{2})", fname)
+                        if src_m:
+                            y, mo, d, h, mi, s = src_m.groups()
+                            scan_date = f"{y}-{mo}-{d} {h}:{mi}"
+                        else:
+                            scan_date = time.strftime("%Y-%m-%d %H:%M", time.localtime(stat.st_mtime))
+
                     files.append({
                         "filename": fname,
                         "relative_path": str(rel_path),
@@ -49,7 +91,9 @@ def get_recent_scans(output_dir: Path, limit: int = 100) -> list[dict]:
                         "size_bytes": stat.st_size,
                         "size_kb": round(stat.st_size / 1024, 1),
                         "modified": stat.st_mtime,
-                        "date_str": time.strftime("%Y-%m-%d %H:%M", time.localtime(stat.st_mtime)),
+                        "doc_date": doc_date,
+                        "scan_date": scan_date,
+                        "date_str": scan_date,
                     })
                 except OSError:
                     continue
@@ -659,13 +703,14 @@ class DashboardHandler(BaseHTTPRequestHandler):
           <tr>
             <th>Document</th>
             <th>Category</th>
+            <th title="Date printed on the physical document or notice">Doc Date</th>
+            <th title="When sheet was physically scanned">Scanned</th>
             <th>Size</th>
-            <th>Date</th>
             <th class="actions-cell">Actions</th>
           </tr>
         </thead>
         <tbody id="scans-table">
-          <tr><td colspan="5" class="empty-state">Loading...</td></tr>
+          <tr><td colspan="6" class="empty-state">Loading...</td></tr>
         </tbody>
       </table>
     </div>
@@ -731,11 +776,17 @@ class DashboardHandler(BaseHTTPRequestHandler):
       filterBar.innerHTML = html;
     }}
 
-    function openPreview(relPath, filename) {{
+    function openPreview(relPath, filename, docDate, scanDate) {{
       const modal = document.getElementById('preview-modal');
       const frame = document.getElementById('preview-iframe');
       const title = document.getElementById('preview-filename');
-      title.textContent = filename;
+      let label = filename;
+      if (docDate && scanDate) {{
+        label += ` [Doc: ${{docDate}} • Scanned: ${{scanDate}}]`;
+      }} else if (scanDate) {{
+        label += ` [Scanned: ${{scanDate}}]`;
+      }}
+      title.textContent = label;
       frame.src = '/files/' + encodeURIComponent(relPath);
       modal.classList.add('open');
     }}
@@ -774,7 +825,12 @@ class DashboardHandler(BaseHTTPRequestHandler):
         filtered = filtered.filter(s => s.category.toLowerCase().includes(currentCategory.toLowerCase()));
       }}
       if (query) {{
-        filtered = filtered.filter(s => s.filename.toLowerCase().includes(query) || s.category.toLowerCase().includes(query));
+        filtered = filtered.filter(s => 
+          s.filename.toLowerCase().includes(query) || 
+          s.category.toLowerCase().includes(query) ||
+          (s.doc_date && s.doc_date.toLowerCase().includes(query)) ||
+          (s.scan_date && s.scan_date.toLowerCase().includes(query))
+        );
       }}
 
       document.getElementById('scan-count').textContent = filtered.length;
@@ -782,7 +838,7 @@ class DashboardHandler(BaseHTTPRequestHandler):
       if (filtered.length === 0) {{
         tbody.innerHTML = `
           <tr>
-            <td colspan="5" class="empty-state">
+            <td colspan="6" class="empty-state">
               <svg class="empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                 <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
                 <polyline points="14 2 14 8 20 8"/>
@@ -798,7 +854,7 @@ class DashboardHandler(BaseHTTPRequestHandler):
       tbody.innerHTML = filtered.map(s => `
         <tr>
           <td>
-            <a class="doc-link" onclick="openPreview('${{s.relative_path}}', '${{s.filename}}')">
+            <a class="doc-link" onclick="openPreview('${{s.relative_path}}', '${{s.filename}}', '${{s.doc_date || ''}}', '${{s.scan_date || ''}}')">
               <svg class="doc-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
                 <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
                 <polyline points="14 2 14 8 20 8"/>
@@ -807,10 +863,11 @@ class DashboardHandler(BaseHTTPRequestHandler):
             </a>
           </td>
           <td><span class="cat-pill" style="${{getCategoryStyle(s.category)}}">${{s.category}}</span></td>
+          <td style="color: var(--text-secondary); font-variant-numeric: tabular-nums;">${{s.doc_date ? `<span style="font-weight: 500;">${{s.doc_date}}</span>` : '<span style="color: var(--text-muted); opacity: 0.5;">—</span>'}}</td>
+          <td style="color: var(--text-muted); font-variant-numeric: tabular-nums;">${{s.scan_date}}</td>
           <td style="color: var(--text-secondary);">${{s.size_kb}} KB</td>
-          <td style="color: var(--text-muted);">${{s.date_str}}</td>
           <td class="actions-cell">
-            <a class="action-link" onclick="openPreview('${{s.relative_path}}', '${{s.filename}}')">Preview</a>
+            <a class="action-link" onclick="openPreview('${{s.relative_path}}', '${{s.filename}}', '${{s.doc_date || ''}}', '${{s.scan_date || ''}}')">Preview</a>
             <a class="action-link" href="/files/${{encodeURIComponent(s.relative_path)}}" download="${{s.filename}}">Download</a>
             <a class="action-link action-delete" onclick="confirmDelete('${{s.relative_path}}', '${{s.filename}}')">Delete</a>
           </td>

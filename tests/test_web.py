@@ -30,6 +30,11 @@ class WebDashboardTests(unittest.TestCase):
         dummy_pdf = self.output / "test_doc.pdf"
         dummy_pdf.write_bytes(b"%PDF-1.4 sample")
 
+        bills_dir = self.output / "Bills"
+        bills_dir.mkdir(parents=True, exist_ok=True)
+        dated_pdf = bills_dir / "2026-10-02_Austin-Energy_Bill.pdf"
+        dated_pdf.write_bytes(b"%PDF-1.4 sample bill")
+
         self.settings = Settings(
             scanner_ip="192.168.0.25",
             work=self.work,
@@ -63,8 +68,18 @@ class WebDashboardTests(unittest.TestCase):
             self.assertEqual(resp.status, 200)
             scans = json.loads(resp.read().decode("utf-8"))
             self.assertIsInstance(scans, list)
-            self.assertEqual(len(scans), 1)
-            self.assertEqual(scans[0]["filename"], "test_doc.pdf")
+            self.assertEqual(len(scans), 2)
+            
+            by_name = {s["filename"]: s for s in scans}
+            self.assertIn("test_doc.pdf", by_name)
+            self.assertIn("2026-10-02_Austin-Energy_Bill.pdf", by_name)
+
+            self.assertIsNone(by_name["test_doc.pdf"]["doc_date"])
+            self.assertIsNotNone(by_name["test_doc.pdf"]["scan_date"])
+
+            self.assertEqual(by_name["2026-10-02_Austin-Energy_Bill.pdf"]["doc_date"], "2026-10-02")
+            self.assertIsNotNone(by_name["2026-10-02_Austin-Energy_Bill.pdf"]["scan_date"])
+            self.assertEqual(by_name["2026-10-02_Austin-Energy_Bill.pdf"]["category"], "Bills")
 
     def test_dashboard_html(self):
         url = f"http://127.0.0.1:{self.port}/"
@@ -73,6 +88,8 @@ class WebDashboardTests(unittest.TestCase):
             html = resp.read().decode("utf-8")
             self.assertIn("Brother DS-940DW", html)
             self.assertIn("Recent Scans", html)
+            self.assertIn("Doc Date", html)
+            self.assertIn("Scanned", html)
 
     def test_categories_endpoint(self):
         url = f"http://127.0.0.1:{self.port}/api/categories"
