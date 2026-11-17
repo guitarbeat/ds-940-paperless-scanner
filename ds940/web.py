@@ -313,6 +313,8 @@ class DashboardHandler(BaseHTTPRequestHandler):
       --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
       --shadow-md: 0 4px 14px rgba(0, 0, 0, 0.08);
       --ease: cubic-bezier(0.16, 1, 0.3, 1);
+      --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+      --ease-press: cubic-bezier(0.4, 0, 0.2, 1);
     }}
 
     [data-theme="dark"] {{
@@ -392,6 +394,25 @@ class DashboardHandler(BaseHTTPRequestHandler):
 
     button {{
       cursor: pointer;
+      user-select: none;
+    }}
+
+    button:active,
+    .btn-strip:active,
+    .btn-icon:active,
+    .btn-action:active,
+    .btn-copy:active,
+    .category-chip:active,
+    .btn-row-action:active {{
+      transform: scale(0.96);
+    }}
+
+    h1, h2, h3, .brand-title, .strip-title, .ledger-title, .inspector-title, .zero-title {{
+      text-wrap: balance;
+    }}
+
+    p, .strip-detail, .zero-desc, .doc-meta-row {{
+      text-wrap: pretty;
     }}
 
     :focus-visible {{
@@ -542,7 +563,7 @@ class DashboardHandler(BaseHTTPRequestHandler):
       padding: 0.22rem 0.6rem;
       border-radius: 4px;
       cursor: pointer;
-      transition: all 100ms var(--ease);
+      transition: background-color 100ms var(--ease), border-color 100ms var(--ease), color 100ms var(--ease), transform 80ms var(--ease-press);
     }}
 
     .btn-strip:hover {{
@@ -580,7 +601,7 @@ class DashboardHandler(BaseHTTPRequestHandler):
       background: var(--bg-surface);
       border: 1px solid var(--border);
       color: var(--text-muted);
-      transition: all 120ms var(--ease);
+      transition: background-color 120ms var(--ease), border-color 120ms var(--ease), color 120ms var(--ease), transform 80ms var(--ease-press);
     }}
 
     .btn-icon:hover {{
@@ -659,17 +680,25 @@ class DashboardHandler(BaseHTTPRequestHandler):
     }}
 
     .btn-copy {{
+      position: relative;
       background: none;
       border: 1px solid var(--border);
       color: var(--text-dim);
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      padding: 0.1rem 0.25rem;
+      width: 20px;
+      height: 18px;
       border-radius: 3px;
       cursor: pointer;
-      transition: all 100ms var(--ease);
+      transition: background-color 100ms var(--ease), border-color 100ms var(--ease), color 100ms var(--ease), transform 80ms var(--ease-press);
       line-height: 1;
+    }}
+
+    .btn-copy::before {{
+      content: "";
+      position: absolute;
+      inset: -6px;
     }}
 
     .btn-copy:hover {{
@@ -832,16 +861,17 @@ class DashboardHandler(BaseHTTPRequestHandler):
       width: 100%;
       background: var(--bg-page);
       border: 1px solid var(--border);
-      border-radius: 5px;
+      border-radius: 6px;
       padding: 0.45rem 2rem 0.45rem 2.1rem;
       font-size: 0.8rem;
       color: var(--text);
-      transition: all 120ms var(--ease);
+      transition: background-color 120ms var(--ease), border-color 120ms var(--ease), box-shadow 120ms var(--ease);
     }}
 
     .search-input:focus {{
       background: var(--bg-surface);
       border-color: var(--border-focus);
+      box-shadow: 0 0 0 3px var(--accent-soft);
     }}
 
     .search-icon {{
@@ -882,7 +912,7 @@ class DashboardHandler(BaseHTTPRequestHandler):
       border: 1px solid transparent;
       color: var(--text-muted);
       white-space: nowrap;
-      transition: all 100ms var(--ease);
+      transition: background-color 100ms var(--ease), border-color 100ms var(--ease), color 100ms var(--ease), transform 80ms var(--ease-press);
     }}
 
     .category-chip:hover {{
@@ -912,7 +942,7 @@ class DashboardHandler(BaseHTTPRequestHandler):
       gap: 0.75rem;
       cursor: pointer;
       background: var(--bg-surface);
-      transition: background 80ms ease;
+      transition: background-color 90ms var(--ease-out);
     }}
 
     .doc-item:hover {{
@@ -994,16 +1024,23 @@ class DashboardHandler(BaseHTTPRequestHandler):
     }}
 
     .btn-row-action {{
+      position: relative;
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      width: 26px;
-      height: 26px;
+      width: 28px;
+      height: 28px;
       border: none;
       background: transparent;
       border-radius: 4px;
       color: var(--text-dim);
-      transition: all 100ms ease;
+      transition: background-color 100ms var(--ease), color 100ms var(--ease), transform 80ms var(--ease-press);
+    }}
+
+    .btn-row-action::before {{
+      content: "";
+      position: absolute;
+      inset: -4px;
     }}
 
     .btn-row-action:hover {{
@@ -1072,10 +1109,10 @@ class DashboardHandler(BaseHTTPRequestHandler):
       color: var(--text-muted);
       background: var(--bg-surface);
       border: 1px solid var(--border);
-      padding: 0.35rem 0.65rem;
+      padding: 0.35rem 0.65rem 0.35rem 0.52rem;
       border-radius: 5px;
       text-decoration: none;
-      transition: all 100ms var(--ease);
+      transition: background-color 100ms var(--ease), border-color 100ms var(--ease), color 100ms var(--ease), transform 80ms var(--ease-press);
     }}
 
     .btn-action:hover {{
@@ -1145,15 +1182,15 @@ class DashboardHandler(BaseHTTPRequestHandler):
       font-size: 0.78rem;
       font-weight: 500;
       box-shadow: var(--shadow-md);
-      transform: translateY(10px);
+      transform: translateY(8px) scale(0.96);
       opacity: 0;
       pointer-events: none;
-      transition: all 140ms var(--ease);
+      transition: opacity 160ms var(--ease-out), transform 160ms var(--ease-out);
       z-index: 1000;
     }}
 
     .toast.show {{
-      transform: translateY(0);
+      transform: translateY(0) scale(1);
       opacity: 1;
     }}
 
