@@ -2660,7 +2660,7 @@ class DashboardHandler(BaseHTTPRequestHandler):
           strip.classList.add('state-warning');
           stripTitle.textContent = 'Paper Jam / Feed Error';
           stripBadge.textContent = 'Clear Paper & Press Power';
-          stripDetail.textContent = '1. Gently pull paper from rollers · 2. Press Power once to clear red (!) error · 3. Re-insert';
+          stripDetail.textContent = `Feeder jam detected at ${{scannerIp}} · Follow recovery instructions in alert banner below`;
           if (stripActions) {{
             stripActions.innerHTML = '<button class="btn-strip btn-strip-primary" onclick="refreshAll()">Check Hardware</button>';
           }}
