@@ -315,6 +315,7 @@ class DashboardHandler(BaseHTTPRequestHandler):
       --text-muted: #5e6674;
       --text-dim: #848f9f;
       --accent: #1d4ed8;
+      --accent-hover: #1e40af;
       --accent-soft: rgba(29, 78, 216, 0.08);
       --status-ready: #16a34a;
       --status-active: #d97706;
@@ -322,6 +323,7 @@ class DashboardHandler(BaseHTTPRequestHandler):
       --status-danger: #dc2626;
       --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
       --shadow-md: 0 4px 14px rgba(0, 0, 0, 0.08);
+      --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.12);
       --ease: cubic-bezier(0.16, 1, 0.3, 1);
       --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
       --ease-press: cubic-bezier(0.4, 0, 0.2, 1);
@@ -340,6 +342,7 @@ class DashboardHandler(BaseHTTPRequestHandler):
       --text-muted: #9aa1ad;
       --text-dim: #656d79;
       --accent: #60a5fa;
+      --accent-hover: #3b82f6;
       --accent-soft: rgba(96, 165, 250, 0.12);
       --status-ready: #22c55e;
       --status-active: #f59e0b;
@@ -347,6 +350,7 @@ class DashboardHandler(BaseHTTPRequestHandler):
       --status-danger: #ef4444;
       --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.25);
       --shadow-md: 0 4px 14px rgba(0, 0, 0, 0.4);
+      --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.5);
     }}
 
     @media (prefers-color-scheme: dark) {{
@@ -363,6 +367,7 @@ class DashboardHandler(BaseHTTPRequestHandler):
         --text-muted: #9aa1ad;
         --text-dim: #656d79;
         --accent: #60a5fa;
+        --accent-hover: #3b82f6;
         --accent-soft: rgba(96, 165, 250, 0.12);
         --status-ready: #22c55e;
         --status-active: #f59e0b;
@@ -370,6 +375,7 @@ class DashboardHandler(BaseHTTPRequestHandler):
         --status-danger: #ef4444;
         --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.25);
         --shadow-md: 0 4px 14px rgba(0, 0, 0, 0.4);
+        --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.5);
       }}
     }}
 
@@ -413,7 +419,8 @@ class DashboardHandler(BaseHTTPRequestHandler):
     .btn-action:active,
     .btn-copy:active,
     .category-chip:active,
-    .btn-row-action:active {{
+    .btn-row-action:active,
+    .btn-alert-action:active {{
       transform: scale(0.96);
     }}
 
@@ -447,22 +454,24 @@ class DashboardHandler(BaseHTTPRequestHandler):
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 0.65rem 1.5rem 0.5rem;
-      gap: 1rem;
+      padding: 0.6rem 1.25rem;
+      gap: 0.75rem 1rem;
       background: var(--bg-surface);
+      flex-wrap: wrap;
     }}
 
     .header-brand-status {{
       display: flex;
       align-items: center;
-      gap: 0.85rem;
+      gap: 0.75rem;
       flex-shrink: 0;
+      min-width: 0;
     }}
 
     .brand-wrap {{
       display: flex;
       align-items: center;
-      gap: 0.65rem;
+      gap: 0.6rem;
       flex-shrink: 0;
     }}
 
@@ -495,8 +504,9 @@ class DashboardHandler(BaseHTTPRequestHandler):
     .header-status-indicator {{
       display: flex;
       align-items: center;
-      gap: 0.6rem;
+      gap: 0.55rem;
       flex-shrink: 0;
+      min-width: 0;
     }}
 
     .strip-beacon {{
@@ -505,7 +515,7 @@ class DashboardHandler(BaseHTTPRequestHandler):
       border-radius: 50%;
       background: var(--status-ready);
       flex-shrink: 0;
-      transition: background-color 160ms ease;
+      transition: background-color 160ms ease, box-shadow 160ms ease;
     }}
 
     .status-dot {{
@@ -513,7 +523,7 @@ class DashboardHandler(BaseHTTPRequestHandler):
     }}
 
     .strip-title {{
-      font-size: 0.92rem;
+      font-size: 0.9rem;
       font-weight: 600;
       letter-spacing: -0.015em;
       color: var(--text);
@@ -526,7 +536,7 @@ class DashboardHandler(BaseHTTPRequestHandler):
       font-size: 0.68rem;
       font-weight: 600;
       padding: 0.12rem 0.45rem;
-      border-radius: 3px;
+      border-radius: 4px;
       background: var(--bg-subtle);
       border: 1px solid var(--border);
       color: var(--text-muted);
@@ -555,15 +565,15 @@ class DashboardHandler(BaseHTTPRequestHandler):
     .header-session-actions {{
       display: flex;
       align-items: center;
-      gap: 0.65rem;
-      margin-left: auto;
+      gap: 0.55rem;
       flex-shrink: 0;
+      margin-left: auto;
     }}
 
     .header-global-actions {{
       display: flex;
       align-items: center;
-      gap: 0.65rem;
+      gap: 0.55rem;
       flex-shrink: 0;
     }}
 
@@ -601,7 +611,7 @@ class DashboardHandler(BaseHTTPRequestHandler):
     }}
 
     .strip-countdown-num {{
-      font-size: 0.9rem;
+      font-size: 0.88rem;
       font-weight: 600;
       font-variant-numeric: tabular-nums;
       color: var(--status-active);
@@ -617,7 +627,7 @@ class DashboardHandler(BaseHTTPRequestHandler):
     .strip-btn-group {{
       display: inline-flex;
       align-items: center;
-      gap: 0.45rem;
+      gap: 0.4rem;
       flex-shrink: 0;
     }}
 
@@ -630,8 +640,8 @@ class DashboardHandler(BaseHTTPRequestHandler):
       color: var(--text-muted);
       background: var(--bg-surface);
       border: 1px solid var(--border);
-      padding: 0.22rem 0.6rem;
-      border-radius: 4px;
+      padding: 0.24rem 0.6rem;
+      border-radius: 5px;
       cursor: pointer;
       transition: background-color 100ms var(--ease), border-color 100ms var(--ease), color 100ms var(--ease), transform 80ms var(--ease-press);
     }}
@@ -655,6 +665,33 @@ class DashboardHandler(BaseHTTPRequestHandler):
       color: #ffffff;
     }}
 
+    .btn-strip-accent {{
+      background: var(--accent-soft);
+      border-color: rgba(37, 99, 235, 0.25);
+      color: var(--accent);
+      font-weight: 600;
+    }}
+
+    .btn-strip-accent:hover {{
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #ffffff;
+    }}
+
+    .sort-spinner {{
+      display: inline-block;
+      width: 11px;
+      height: 11px;
+      border: 2px solid currentColor;
+      border-right-color: transparent;
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+    }}
+
+    @keyframes spin {{
+      to {{ transform: rotate(360deg); }}
+    }}
+
     .header-actions {{
       display: flex;
       align-items: center;
@@ -667,7 +704,7 @@ class DashboardHandler(BaseHTTPRequestHandler):
       justify-content: center;
       width: 28px;
       height: 28px;
-      border-radius: 4px;
+      border-radius: 5px;
       background: var(--bg-surface);
       border: 1px solid var(--border);
       color: var(--text-muted);
@@ -686,6 +723,99 @@ class DashboardHandler(BaseHTTPRequestHandler):
       color: var(--accent);
     }}
 
+    /* Hardware Alert Banner */
+    .alert-banner {{
+      background: rgba(220, 38, 38, 0.08);
+      border-bottom: 1px solid rgba(220, 38, 38, 0.25);
+      animation: alertSlideDown 160ms var(--ease-out);
+    }}
+
+    [data-theme="dark"] .alert-banner {{
+      background: rgba(239, 68, 68, 0.12);
+      border-bottom-color: rgba(239, 68, 68, 0.3);
+    }}
+
+    @keyframes alertSlideDown {{
+      from {{ transform: translateY(-8px); opacity: 0; }}
+      to {{ transform: translateY(0); opacity: 1; }}
+    }}
+
+    .alert-container {{
+      max-width: 1680px;
+      margin: 0 auto;
+      padding: 0.65rem 1.25rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }}
+
+    .alert-icon-wrap {{
+      width: 32px;
+      height: 32px;
+      border-radius: 6px;
+      background: rgba(220, 38, 38, 0.15);
+      color: var(--status-danger);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }}
+
+    .alert-body {{
+      flex: 1;
+      min-width: 260px;
+      display: flex;
+      flex-direction: column;
+      gap: 0.2rem;
+    }}
+
+    .alert-heading {{
+      font-size: 0.86rem;
+      font-weight: 600;
+      color: var(--status-danger);
+    }}
+
+    .alert-steps {{
+      font-size: 0.78rem;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }}
+
+    .alert-step {{
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+    }}
+
+    .alert-step-divider {{
+      color: var(--text-dim);
+      font-size: 0.72rem;
+    }}
+
+    .btn-alert-action {{
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      font-size: 0.76rem;
+      font-weight: 600;
+      background: var(--status-danger);
+      border: 1px solid var(--status-danger);
+      color: #ffffff;
+      padding: 0.32rem 0.7rem;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background-color 100ms var(--ease), transform 80ms var(--ease-press);
+    }}
+
+    .btn-alert-action:hover {{
+      background: #b91c1c;
+      border-color: #b91c1c;
+    }}
+
     /* Collapsible Telemetry & Diagnostics Drawer */
     .telemetry-drawer {{
       border-top: 1px solid var(--border-subtle);
@@ -698,75 +828,101 @@ class DashboardHandler(BaseHTTPRequestHandler):
       to {{ opacity: 1; transform: translateY(0); }}
     }}
 
-    /* Row 2: Status Narrative & Diagnostics Ledger */
-    .header-meta-row {{
+    .telemetry-content {{
+      max-width: 1680px;
+      margin: 0 auto;
+      padding: 0.85rem 1.25rem;
       display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 0.35rem 1.5rem 0.42rem;
-      font-size: 0.73rem;
-      color: var(--text-muted);
-      gap: 1.25rem;
+      flex-direction: column;
+      gap: 0.75rem;
     }}
 
-    .header-detail-wrap {{
-      flex: 1;
-      min-width: 0;
+    .telemetry-grid {{
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 0.65rem;
+    }}
+
+    .tele-card {{
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: 6px;
+      padding: 0.55rem 0.75rem;
       display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }}
+
+    .tele-card-wide {{
+      grid-column: span 2;
+    }}
+
+    @media (max-width: 768px) {{
+      .tele-card-wide {{
+        grid-column: span 1;
+      }}
+    }}
+
+    .tele-card-label {{
+      font-size: 0.68rem;
+      font-weight: 500;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }}
+
+    .tele-card-val-row {{
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+    }}
+
+    .tele-card-val {{
+      font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+      font-size: 0.76rem;
+      font-weight: 500;
+      color: var(--text);
+      font-variant-numeric: tabular-nums;
+    }}
+
+    .tele-path-val {{
+      max-width: 420px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }}
+
+    .btn-tele-link {{
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      font-size: 0.7rem;
+      font-weight: 500;
+      color: var(--accent);
+      text-decoration: none;
+      padding: 0.15rem 0.45rem;
+      border-radius: 3px;
+      background: var(--accent-soft);
+      transition: background-color 100ms var(--ease);
+    }}
+
+    .btn-tele-link:hover {{
+      text-decoration: underline;
+    }}
+
+    .telemetry-footer {{
+      padding-top: 0.35rem;
+      border-top: 1px solid var(--border-subtle);
+      display: flex;
+      justify-content: space-between;
       align-items: center;
     }}
 
     .strip-detail {{
       font-size: 0.74rem;
       color: var(--text-muted);
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
       line-height: 1.35;
-    }}
-
-    .header-telemetry-ledger {{
-      display: flex;
-      align-items: center;
-      gap: 0.65rem;
-      flex-shrink: 0;
-    }}
-
-    .tele-item {{
-      display: inline-flex;
-      align-items: center;
-      gap: 0.35rem;
-      white-space: nowrap;
-      color: var(--text-dim);
-      background: var(--bg-surface);
-      border: 1px solid var(--border-subtle);
-      padding: 0.12rem 0.45rem;
-      border-radius: 4px;
-    }}
-
-    .tele-label {{
-      font-weight: 500;
-      color: var(--text-dim);
-    }}
-
-    .tele-val {{
-      font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
-      font-size: 0.71rem;
-      color: var(--text-muted);
-      font-variant-numeric: tabular-nums;
-    }}
-
-    .tele-archive {{
-      display: inline-flex;
-      align-items: center;
-      gap: 0.35rem;
-    }}
-
-    .tele-archive .tele-val {{
-      max-width: 260px;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
     }}
 
     .btn-copy {{
@@ -776,19 +932,12 @@ class DashboardHandler(BaseHTTPRequestHandler):
       color: var(--text-dim);
       display: inline-flex;
       align-items: center;
-      justify-content: center;
-      width: 20px;
-      height: 18px;
-      border-radius: 3px;
+      gap: 0.3rem;
+      padding: 0.2rem 0.45rem;
+      border-radius: 4px;
       cursor: pointer;
+      font-size: 0.7rem;
       transition: background-color 100ms var(--ease), border-color 100ms var(--ease), color 100ms var(--ease), transform 80ms var(--ease-press);
-      line-height: 1;
-    }}
-
-    .btn-copy::before {{
-      content: "";
-      position: absolute;
-      inset: -6px;
     }}
 
     .btn-copy:hover {{
@@ -808,90 +957,35 @@ class DashboardHandler(BaseHTTPRequestHandler):
       transition: width 0.7s linear;
     }}
 
-    /* State modifier styles for unified header */
-    .app-header.state-ready {{
-      border-bottom-color: var(--border);
-    }}
-    .app-header.state-ready .strip-beacon {{
-      background: var(--status-ready);
-    }}
-
-    .app-header.state-scanning {{
-      border-bottom-color: rgba(37, 99, 235, 0.4);
-    }}
-    .app-header.state-scanning .header-primary-row {{
-      background: rgba(37, 99, 235, 0.03);
-    }}
-    .app-header.state-scanning .strip-beacon {{
-      background: var(--accent);
-    }}
-
-    .app-header.state-collation {{
-      border-bottom-color: rgba(217, 119, 6, 0.4);
-    }}
-    .app-header.state-collation .header-primary-row {{
-      background: rgba(217, 119, 6, 0.035);
-    }}
-    .app-header.state-collation .strip-beacon {{
-      background: var(--status-active);
-    }}
-
-    .app-header.state-processing {{
-      border-bottom-color: rgba(99, 102, 241, 0.4);
-    }}
-    .app-header.state-processing .header-primary-row {{
-      background: rgba(99, 102, 241, 0.03);
-    }}
-    .app-header.state-processing .strip-beacon {{
-      background: #6366f1;
-    }}
-
-    .app-header.state-filed {{
-      border-bottom-color: rgba(22, 163, 74, 0.4);
-    }}
-    .app-header.state-filed .header-primary-row {{
-      background: rgba(22, 163, 74, 0.03);
-    }}
-    .app-header.state-filed .strip-beacon {{
-      background: var(--status-ready);
-    }}
-
-    .app-header.state-warning {{
-      border-bottom-color: rgba(220, 38, 38, 0.4);
-    }}
-    .app-header.state-warning .header-primary-row {{
-      background: rgba(220, 38, 38, 0.03);
-    }}
-    .app-header.state-warning .strip-beacon {{
-      background: var(--status-danger);
-    }}
-
-    .app-header.state-standby {{
-      border-bottom-color: var(--border);
-    }}
-    .app-header.state-standby .strip-beacon {{
-      background: var(--status-standby);
-    }}
+    /* State modifier styles for header */
+    .app-header.state-ready .strip-beacon {{ background: var(--status-ready); }}
+    .app-header.state-scanning .strip-beacon {{ background: var(--accent); }}
+    .app-header.state-collation .strip-beacon {{ background: var(--status-active); }}
+    .app-header.state-processing .strip-beacon {{ background: #6366f1; }}
+    .app-header.state-filed .strip-beacon {{ background: var(--status-ready); }}
+    .app-header.state-warning .strip-beacon {{ background: var(--status-danger); }}
+    .app-header.state-standby .strip-beacon {{ background: var(--status-standby); }}
 
     /* Main Workbench */
     main.workbench {{
-      max-width: 1560px;
+      max-width: 1680px;
       width: 100%;
       margin: 0 auto;
-      padding: 1.25rem 1.5rem;
+      padding: 1rem 1.25rem 1.5rem;
       flex: 1;
       display: flex;
       flex-direction: column;
       gap: 1rem;
+      min-height: 0;
     }}
 
     /* Master-Detail Split Grid */
     .split-layout {{
       display: grid;
-      grid-template-columns: 480px 1fr;
+      grid-template-columns: clamp(340px, 28vw, 420px) minmax(0, 1fr);
       gap: 1.25rem;
       flex: 1;
-      min-height: calc(100vh - 85px);
+      min-height: calc(100vh - 100px);
     }}
 
     /* Left Pane: Ledger */
@@ -903,6 +997,7 @@ class DashboardHandler(BaseHTTPRequestHandler):
       flex-direction: column;
       overflow: hidden;
       box-shadow: var(--shadow-sm);
+      min-width: 0;
     }}
 
     .ledger-header {{
@@ -1020,12 +1115,25 @@ class DashboardHandler(BaseHTTPRequestHandler):
       pointer-events: none;
     }}
 
-    /* Category Chips */
+    /* Category Chips with Horizontal Scroll Gradient */
+    .category-bar-wrap {{
+      position: relative;
+      overflow: hidden;
+    }}
+
     .category-bar {{
       display: flex;
       gap: 0.35rem;
       overflow-x: auto;
-      padding-bottom: 0.1rem;
+      padding-bottom: 0.2rem;
+      scrollbar-width: none;
+      -webkit-overflow-scrolling: touch;
+      mask-image: linear-gradient(to right, black 88%, transparent 100%);
+      -webkit-mask-image: linear-gradient(to right, black 88%, transparent 100%);
+    }}
+
+    .category-bar::-webkit-scrollbar {{
+      display: none;
     }}
 
     .category-chip {{
@@ -1038,6 +1146,7 @@ class DashboardHandler(BaseHTTPRequestHandler):
       color: var(--text-muted);
       white-space: nowrap;
       transition: background-color 100ms var(--ease), border-color 100ms var(--ease), color 100ms var(--ease), transform 80ms var(--ease-press);
+      flex-shrink: 0;
     }}
 
     .category-chip:hover {{
@@ -1056,28 +1165,31 @@ class DashboardHandler(BaseHTTPRequestHandler):
     .doc-list {{
       flex: 1;
       overflow-y: auto;
-      divide-y: 1px solid var(--border-subtle);
     }}
 
     .doc-item {{
-      padding: 0.75rem 1rem;
+      padding: 0.75rem 0.95rem;
       border-bottom: 1px solid var(--border-subtle);
       display: flex;
       align-items: flex-start;
-      gap: 0.75rem;
+      gap: 0.65rem;
       cursor: pointer;
       background: var(--bg-surface);
-      transition: background-color 90ms var(--ease-out);
+      position: relative;
+      transition: background-color 90ms var(--ease-out), transform 80ms var(--ease-press);
     }}
 
     .doc-item:hover {{
       background: var(--bg-hover);
     }}
 
+    .doc-item:active {{
+      transform: scale(0.985);
+    }}
+
     .doc-item.selected {{
       background: var(--bg-selected);
-      border-left: 3px solid var(--accent);
-      padding-left: calc(1rem - 3px);
+      box-shadow: inset 3px 0 0 var(--accent);
     }}
 
     .doc-icon-wrap {{
@@ -1095,7 +1207,7 @@ class DashboardHandler(BaseHTTPRequestHandler):
       min-width: 0;
       display: flex;
       flex-direction: column;
-      gap: 0.2rem;
+      gap: 0.3rem;
     }}
 
     .doc-title-row {{
@@ -1103,49 +1215,134 @@ class DashboardHandler(BaseHTTPRequestHandler):
       justify-content: space-between;
       align-items: baseline;
       gap: 0.5rem;
+      min-width: 0;
     }}
 
     .doc-title {{
-      font-size: 0.84rem;
+      font-size: 0.86rem;
       font-weight: 600;
+      letter-spacing: -0.01em;
       color: var(--text);
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
+      flex: 1;
+      min-width: 0;
     }}
 
     .doc-size {{
       font-size: 0.7rem;
+      font-weight: 500;
       color: var(--text-dim);
+      font-variant-numeric: tabular-nums;
       flex-shrink: 0;
+      white-space: nowrap;
     }}
 
     .doc-meta-row {{
       display: flex;
       align-items: center;
+      gap: 0.45rem;
       flex-wrap: wrap;
-      gap: 0.4rem 0.65rem;
       font-size: 0.72rem;
       color: var(--text-muted);
+      min-width: 0;
     }}
 
     .meta-tag {{
       display: inline-flex;
       align-items: center;
       gap: 0.25rem;
+      white-space: nowrap;
     }}
 
+    /* Semantic Category Tag Badges */
     .category-tag {{
-      font-weight: 500;
+      font-size: 0.68rem;
+      font-weight: 600;
+      padding: 0.1rem 0.45rem;
+      border-radius: 4px;
+      white-space: nowrap;
+      flex-shrink: 0;
+      letter-spacing: 0.01em;
+      transition: background-color 100ms var(--ease);
+    }}
+
+    .cat-inbox {{
       background: var(--bg-subtle);
       border: 1px solid var(--border-subtle);
-      padding: 0.05rem 0.35rem;
-      border-radius: 3px;
       color: var(--text-muted);
+    }}
+
+    .cat-legal {{
+      background: rgba(217, 119, 6, 0.1);
+      border: 1px solid rgba(217, 119, 6, 0.25);
+      color: #b45309;
+    }}
+    [data-theme="dark"] .cat-legal {{
+      background: rgba(245, 158, 11, 0.12);
+      border-color: rgba(245, 158, 11, 0.3);
+      color: #fbbf24;
+    }}
+
+    .cat-finance {{
+      background: rgba(16, 185, 129, 0.1);
+      border: 1px solid rgba(16, 185, 129, 0.25);
+      color: #047857;
+    }}
+    [data-theme="dark"] .cat-finance {{
+      background: rgba(52, 211, 153, 0.12);
+      border-color: rgba(52, 211, 153, 0.3);
+      color: #34d399;
+    }}
+
+    .cat-auto {{
+      background: rgba(139, 92, 246, 0.1);
+      border: 1px solid rgba(139, 92, 246, 0.25);
+      color: #6d28d9;
+    }}
+    [data-theme="dark"] .cat-auto {{
+      background: rgba(167, 139, 250, 0.12);
+      border-color: rgba(167, 139, 250, 0.3);
+      color: #a78bfa;
+    }}
+
+    .cat-medical {{
+      background: rgba(14, 165, 233, 0.1);
+      border: 1px solid rgba(14, 165, 233, 0.25);
+      color: #0369a1;
+    }}
+    [data-theme="dark"] .cat-medical {{
+      background: rgba(56, 189, 248, 0.12);
+      border-color: rgba(56, 189, 248, 0.3);
+      color: #38bdf8;
+    }}
+
+    .cat-bills {{
+      background: rgba(249, 115, 22, 0.1);
+      border: 1px solid rgba(249, 115, 22, 0.25);
+      color: #c2410c;
+    }}
+    [data-theme="dark"] .cat-bills {{
+      background: rgba(251, 146, 60, 0.12);
+      border-color: rgba(251, 146, 60, 0.3);
+      color: #fb923c;
+    }}
+
+    .cat-taxes {{
+      background: rgba(225, 29, 72, 0.1);
+      border: 1px solid rgba(225, 29, 72, 0.25);
+      color: #be123c;
+    }}
+    [data-theme="dark"] .cat-taxes {{
+      background: rgba(251, 113, 133, 0.12);
+      border-color: rgba(251, 113, 133, 0.3);
+      color: #fb7185;
     }}
 
     .doc-actions {{
       margin-left: 0.25rem;
+      flex-shrink: 0;
     }}
 
     .btn-row-action {{
@@ -1153,12 +1350,13 @@ class DashboardHandler(BaseHTTPRequestHandler):
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      width: 28px;
-      height: 28px;
+      width: 26px;
+      height: 26px;
       border: none;
       background: transparent;
       border-radius: 4px;
       color: var(--text-dim);
+      flex-shrink: 0;
       transition: background-color 100ms var(--ease), color 100ms var(--ease), transform 80ms var(--ease-press);
     }}
 
@@ -1182,27 +1380,30 @@ class DashboardHandler(BaseHTTPRequestHandler):
       flex-direction: column;
       overflow: hidden;
       box-shadow: var(--shadow-sm);
+      min-width: 0;
     }}
 
     .inspector-header {{
-      padding: 0.75rem 1.15rem;
+      padding: 0.65rem 1rem;
       border-bottom: 1px solid var(--border);
       background: var(--bg-surface);
       display: flex;
       justify-content: space-between;
       align-items: center;
-      gap: 1rem;
+      gap: 0.75rem;
+      min-width: 0;
     }}
 
     .inspector-info {{
       display: flex;
       flex-direction: column;
-      gap: 0.2rem;
+      gap: 0.25rem;
       min-width: 0;
+      flex: 1;
     }}
 
     .inspector-title {{
-      font-size: 0.9rem;
+      font-size: 0.92rem;
       font-weight: 600;
       color: var(--text);
       white-space: nowrap;
@@ -1213,28 +1414,29 @@ class DashboardHandler(BaseHTTPRequestHandler):
     .inspector-meta {{
       display: flex;
       align-items: center;
-      gap: 0.6rem;
-      font-size: 0.74rem;
+      gap: 0.5rem;
+      font-size: 0.73rem;
       color: var(--text-muted);
+      flex-wrap: wrap;
     }}
 
     .inspector-actions {{
       display: flex;
       align-items: center;
-      gap: 0.5rem;
+      gap: 0.45rem;
       flex-shrink: 0;
     }}
 
     .btn-action {{
       display: inline-flex;
       align-items: center;
-      gap: 0.4rem;
+      gap: 0.35rem;
       font-size: 0.76rem;
       font-weight: 500;
       color: var(--text-muted);
       background: var(--bg-surface);
       border: 1px solid var(--border);
-      padding: 0.35rem 0.65rem 0.35rem 0.52rem;
+      padding: 0.32rem 0.65rem;
       border-radius: 5px;
       text-decoration: none;
       transition: background-color 100ms var(--ease), border-color 100ms var(--ease), color 100ms var(--ease), transform 80ms var(--ease-press);
@@ -1256,7 +1458,7 @@ class DashboardHandler(BaseHTTPRequestHandler):
       flex: 1;
       width: 100%;
       height: 100%;
-      min-height: 540px;
+      min-height: 560px;
       border: none;
       background: var(--bg-subtle);
     }}
@@ -1319,12 +1521,6 @@ class DashboardHandler(BaseHTTPRequestHandler):
       opacity: 1;
     }}
 
-    @media (max-width: 1200px) {{
-      .tele-archive .tele-val {{
-        max-width: 160px;
-      }}
-    }}
-
     /* Accessible Confirmation Modal */
     .modal-backdrop {{
       position: fixed;
@@ -1349,7 +1545,7 @@ class DashboardHandler(BaseHTTPRequestHandler):
       background: var(--bg-surface);
       border: 1px solid var(--border);
       border-radius: 10px;
-      box-shadow: var(--shadow-md);
+      box-shadow: var(--shadow-lg);
       max-width: 440px;
       width: 100%;
       padding: 1.4rem;
@@ -1398,25 +1594,25 @@ class DashboardHandler(BaseHTTPRequestHandler):
     .modal-filename {{
       font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
       font-size: 0.74rem;
+      color: var(--text);
       background: var(--bg-subtle);
       border: 1px solid var(--border-subtle);
       padding: 0.35rem 0.6rem;
       border-radius: 4px;
-      color: var(--text);
-      word-break: break-all;
       margin-bottom: 1.1rem;
+      word-break: break-all;
     }}
 
     .modal-actions {{
       display: flex;
       justify-content: flex-end;
-      gap: 0.6rem;
+      gap: 0.55rem;
     }}
 
     .btn-modal {{
-      padding: 0.4rem 0.85rem;
-      font-size: 0.8rem;
+      font-size: 0.78rem;
       font-weight: 500;
+      padding: 0.38rem 0.85rem;
       border-radius: 5px;
       cursor: pointer;
       transition: background-color 100ms var(--ease), border-color 100ms var(--ease), transform 80ms var(--ease-press);
@@ -1460,19 +1656,6 @@ class DashboardHandler(BaseHTTPRequestHandler):
       .header-divider {{
         display: none;
       }}
-      .header-meta-row {{
-        padding: 0.35rem 1rem 0.45rem;
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 0.35rem;
-      }}
-      .strip-detail {{
-        white-space: normal;
-      }}
-      .header-telemetry-ledger {{
-        flex-wrap: wrap;
-        gap: 0.5rem 0.75rem;
-      }}
       .split-layout {{
         grid-template-columns: 1fr;
       }}
@@ -1494,7 +1677,7 @@ class DashboardHandler(BaseHTTPRequestHandler):
       }}
     }}
 
-    /* Mobile Viewports (<680px): Clean 2-Row Header with Full-Width Action Strip */
+    /* Mobile Viewports (<680px) */
     @media (max-width: 680px) {{
       .header-primary-row {{
         flex-wrap: wrap;
@@ -1526,6 +1709,9 @@ class DashboardHandler(BaseHTTPRequestHandler):
       .strip-actions {{
         width: 100%;
         justify-content: space-between;
+      }}
+      #btn-trigger-sort span {{
+        display: none;
       }}
     }}
 
@@ -1589,10 +1775,17 @@ class DashboardHandler(BaseHTTPRequestHandler):
       </div>
 
       <div class="header-global-actions">
+        <button class="btn-strip btn-strip-accent" id="btn-trigger-sort" onclick="triggerSortScans()" title="Sort and organize unfiled scans with Gemini AI">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+          </svg>
+          <span>Organize</span>
+        </button>
+
         <div class="header-divider" aria-hidden="true"></div>
 
         <div class="header-actions">
-          <button class="btn-icon" id="tele-toggle-btn" onclick="toggleTelemetry()" title="Toggle System Telemetry (Scanner IP, RAM, Uptime, Archive)" aria-label="System Telemetry">
+          <button class="btn-icon" id="tele-toggle-btn" onclick="toggleTelemetry()" title="Toggle System Diagnostics HUD (Scanner IP, RAM, Uptime, Archive)" aria-label="System Diagnostics">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <circle cx="12" cy="12" r="10"/>
               <line x1="12" y1="16" x2="12" y2="12"/>
@@ -1625,44 +1818,85 @@ class DashboardHandler(BaseHTTPRequestHandler):
 
     <!-- Collapsible Telemetry & Diagnostics Drawer -->
     <div id="telemetry-drawer" class="telemetry-drawer" style="display:none;">
-      <div class="header-meta-row">
-        <div class="header-detail-wrap">
-          <div id="strip-detail" class="strip-detail">Brother DS-940DW ready · Insert document into feeder to scan</div>
+      <div class="telemetry-content">
+        <div class="telemetry-grid">
+          <div class="tele-card">
+            <span class="tele-card-label">Scanner Network Endpoint</span>
+            <div class="tele-card-val-row">
+              <span id="diag-scanner" class="tele-card-val">{self.settings.scanner_ip}:8080</span>
+              <a id="diag-scanner-link" href="http://{self.settings.scanner_ip}:8080/" target="_blank" rel="noopener" class="btn-tele-link" title="Open Brother Web Admin">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                <span>Web Admin</span>
+              </a>
+            </div>
+          </div>
+          <div class="tele-card">
+            <span class="tele-card-label">Daemon Engine State</span>
+            <span id="diag-state" class="tele-card-val">Connecting</span>
+          </div>
+          <div class="tele-card">
+            <span class="tele-card-label">Process Uptime</span>
+            <span id="diag-uptime" class="tele-card-val">--</span>
+          </div>
+          <div class="tele-card">
+            <span class="tele-card-label">Resident Memory (RSS)</span>
+            <span id="diag-ram" class="tele-card-val">-- MB</span>
+          </div>
+          <div class="tele-card tele-card-wide">
+            <span class="tele-card-label">Local Archive Destination</span>
+            <div class="tele-card-val-row">
+              <span id="diag-path" class="tele-card-val tele-path-val">{self.settings.output}</span>
+              <button class="btn-copy" onclick="copyPath()" title="Copy folder path" aria-label="Copy folder path">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                </svg>
+                <span>Copy Path</span>
+              </button>
+            </div>
+          </div>
         </div>
-
-        <div class="header-telemetry-ledger" aria-label="System Diagnostics">
-          <span class="tele-item" title="Scanner Network Endpoint">
-            <span class="tele-label">Scanner:</span>
-            <span id="diag-scanner" class="tele-val">{self.settings.scanner_ip}:8080</span>
-          </span>
-          <span class="tele-item" title="Daemon Engine State">
-            <span class="tele-label">State:</span>
-            <span id="diag-state" class="tele-val">Connecting</span>
-          </span>
-          <span class="tele-item" title="Process Uptime">
-            <span class="tele-label">Uptime:</span>
-            <span id="diag-uptime" class="tele-val">--</span>
-          </span>
-          <span class="tele-item" title="Resident Memory (RSS)">
-            <span class="tele-label">RAM:</span>
-            <span id="diag-ram" class="tele-val">-- MB</span>
-          </span>
-          <span class="tele-item tele-archive" title="Local Archive Destination">
-            <span class="tele-label">Archive:</span>
-            <span id="diag-path" class="tele-val">{self.settings.output}</span>
-            <button class="btn-copy" onclick="copyPath()" title="Copy folder path" aria-label="Copy folder path">
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
-                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
-              </svg>
-            </button>
-          </span>
+        <div class="telemetry-footer">
+          <span id="strip-detail" class="strip-detail">Brother DS-940DW ready · Insert document into feeder to scan</span>
         </div>
       </div>
     </div>
 
     <div id="strip-progress-bar" class="strip-progress-bar"></div>
   </header>
+
+  <!-- Hardware Alert Banner (for Paper Jams, Feed Errors, Blocked Path) -->
+  <div id="hardware-alert-banner" class="alert-banner" style="display:none;" role="alert">
+    <div class="alert-container">
+      <div class="alert-icon-wrap" aria-hidden="true">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+          <line x1="12" y1="9" x2="12" y2="13"/>
+          <line x1="12" y1="17" x2="12.01" y2="17"/>
+        </svg>
+      </div>
+      <div class="alert-body">
+        <div class="alert-heading" id="alert-heading">Paper Feed Error / Jam Detected</div>
+        <div class="alert-steps" id="alert-steps">
+          <span class="alert-step"><b>1.</b> Gently pull paper out of scanner path</span>
+          <span class="alert-step-divider">→</span>
+          <span class="alert-step"><b>2.</b> Press <b>Power</b> once to clear flashing red <b>(!)</b></span>
+          <span class="alert-step-divider">→</span>
+          <span class="alert-step"><b>3.</b> Re-insert sheet straight into slot</span>
+        </div>
+      </div>
+      <div class="alert-actions">
+        <button class="btn-alert-action" onclick="refreshAll()" title="Re-check scanner status">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="23 4 23 10 17 10"/>
+            <polyline points="1 20 1 14 7 14"/>
+            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+          </svg>
+          <span>Check Hardware</span>
+        </button>
+      </div>
+    </div>
+  </div>
 
   <main class="workbench">
     <!-- Master-Detail Split Grid -->
@@ -1688,9 +1922,11 @@ class DashboardHandler(BaseHTTPRequestHandler):
             <kbd class="search-kbd">/</kbd>
           </div>
 
-          <nav class="category-bar" id="category-filters" aria-label="Filter by category">
-            <button class="category-chip active" onclick="setCategoryFilter('all', this)">All</button>
-          </nav>
+          <div class="category-bar-wrap">
+            <nav class="category-bar" id="category-filters" aria-label="Filter by category">
+              <button class="category-chip active" onclick="setCategoryFilter('all', this)">All</button>
+            </nav>
+          </div>
         </div>
 
         <div class="doc-list" id="doc-list" role="listbox" aria-label="Scanned documents">
@@ -1706,7 +1942,7 @@ class DashboardHandler(BaseHTTPRequestHandler):
           <div class="inspector-info">
             <div class="inspector-title" id="inspector-filename">Select a document</div>
             <div class="inspector-meta" id="inspector-meta">
-              <span id="meta-category" class="meta-tag category-tag" style="display:none;"></span>
+              <span id="meta-category" class="meta-tag category-tag cat-inbox" style="display:none;"></span>
               <span id="meta-doc-date" class="meta-tag" style="display:none;"></span>
               <span id="meta-scan-date" class="meta-tag" style="display:none;"></span>
               <span id="meta-size" class="meta-tag" style="display:none;"></span>
@@ -1728,12 +1964,14 @@ class DashboardHandler(BaseHTTPRequestHandler):
                 <polyline points="15 3 21 3 21 9"/>
                 <line x1="10" y1="14" x2="21" y2="3"/>
               </svg>
+              <span>Open</span>
             </a>
             <button class="btn-action btn-danger" id="btn-delete-doc" onclick="deleteActiveDoc()" title="Delete document" style="display:none;">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <polyline points="3 6 5 6 21 6"/>
                 <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
               </svg>
+              <span>Delete</span>
             </button>
             <button class="btn-action btn-close-mobile" onclick="closeMobileInspector()" title="Close viewer">
               <span>Close</span>
@@ -1788,7 +2026,7 @@ class DashboardHandler(BaseHTTPRequestHandler):
       const t = document.getElementById('toast');
       t.textContent = msg;
       t.classList.add('show');
-      setTimeout(() => t.classList.remove('show'), 2000);
+      setTimeout(() => t.classList.remove('show'), 2200);
     }}
 
     function copyPath() {{
@@ -1826,12 +2064,25 @@ class DashboardHandler(BaseHTTPRequestHandler):
       }}
     }}
 
+    /* Category Semantic Color Helpers */
+    function getCategoryClass(cat) {{
+      if (!cat) return 'cat-inbox';
+      const c = cat.toLowerCase();
+      if (c.includes('legal') || c.includes('citation')) return 'cat-legal';
+      if (c.includes('finance') || c.includes('bank')) return 'cat-finance';
+      if (c.includes('auto') || c.includes('vehicle')) return 'cat-auto';
+      if (c.includes('medical') || c.includes('health')) return 'cat-medical';
+      if (c.includes('bill')) return 'cat-bills';
+      if (c.includes('tax')) return 'cat-taxes';
+      return 'cat-inbox';
+    }}
+
     /* Document Title Parser */
     function parseDisplayTitle(filename) {{
       const base = filename.endsWith('.pdf') ? filename.slice(0, -4) : filename;
 
       // Unfiled brother scanner convention: brother-YYYYMMDD-HHMMSS-hash
-      const unfiledMatch = base.match(/^brother-(\\d{{4}})(\\d{{2}})(\\d{{2}})-(\\d{{2}})(\\d{{2}})(\\d{{2}})-[a-f0-9]+$/);
+      const unfiledMatch = base.match(/^brother-([0-9]{{4}})([0-9]{{2}})([0-9]{{2}})-([0-9]{{2}})([0-9]{{2}})([0-9]{{2}})-[a-f0-9]+$/);
       if (unfiledMatch) {{
         const y = parseInt(unfiledMatch[1]);
         const m = parseInt(unfiledMatch[2]) - 1;
@@ -1848,7 +2099,7 @@ class DashboardHandler(BaseHTTPRequestHandler):
         return `Unfiled Scan (${{month}} ${{d}}, ${{hour}}:${{minStr}} ${{ampm}})`;
       }}
 
-      const dateMatch = base.match(/^\\d{{4}}-\\d{{2}}-\\d{{2}}_(.*)$/);
+      const dateMatch = base.match(/^[0-9]{{4}}-[0-9]{{2}}-[0-9]{{2}}_(.*)$/);
       if (dateMatch) {{
         return dateMatch[1].replace(/_/g, ' · ').replace(/-/g, ' ');
       }}
@@ -1891,6 +2142,34 @@ class DashboardHandler(BaseHTTPRequestHandler):
       const drawer = document.getElementById('telemetry-drawer');
       const isOpen = drawer && drawer.style.display !== 'none';
       setTelemetryDrawerOpen(!isOpen);
+    }}
+
+    /* AI Sort Trigger */
+    async function triggerSortScans() {{
+      const btn = document.getElementById('btn-trigger-sort');
+      if (btn) {{
+        btn.disabled = true;
+        btn.innerHTML = '<span class="sort-spinner"></span> <span>Organizing...</span>';
+      }}
+      try {{
+        const res = await fetch('/api/sort', {{ method: 'POST' }});
+        const data = await res.json();
+        if (data.status === 'ok') {{
+          const count = data.moved_count || 0;
+          showToast(`Organized ${{count}} document${{count === 1 ? '' : 's'}}`);
+          await loadScans();
+          await updateStatus();
+        }} else {{
+          showToast('Sort failed: ' + (data.message || 'Error'));
+        }}
+      }} catch (e) {{
+        showToast('Sort error: ' + e);
+      }} finally {{
+        if (btn) {{
+          btn.disabled = false;
+          btn.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg> <span>Organize</span>';
+        }}
+      }}
     }}
 
     /* Category Filtering */
@@ -1984,11 +2263,13 @@ class DashboardHandler(BaseHTTPRequestHandler):
       filenameEl.textContent = parseDisplayTitle(doc.filename);
       filenameEl.title = doc.filename;
 
-      catEl.textContent = doc.category || 'Inbox';
+      const cat = doc.category || 'Inbox';
+      catEl.textContent = cat;
+      catEl.className = 'meta-tag category-tag ' + getCategoryClass(cat);
       catEl.style.display = 'inline-block';
 
       docDateEl.textContent = 'Doc Date: ' + (doc.doc_date || 'Not detected');
-      docDateEl.style.display = 'inline-block';
+      docDateEl.style.display = doc.doc_date ? 'inline-block' : 'none';
 
       scanDateEl.textContent = 'Scanned: ' + (doc.scan_date || 'Recent');
       scanDateEl.style.display = 'inline-block';
@@ -2055,6 +2336,9 @@ class DashboardHandler(BaseHTTPRequestHandler):
         const isSelected = activeDoc && activeDoc.relative_path === s.relative_path;
         const escRel = s.relative_path.replace(/'/g, "\\'");
         const escName = s.filename.replace(/'/g, "\\'");
+        const cat = s.category || 'Inbox';
+        const catClass = getCategoryClass(cat);
+        const docDateStr = s.doc_date ? `📅 ${{s.doc_date}}` : '';
 
         return `
           <div class="doc-item ${{isSelected ? 'selected' : ''}}" 
@@ -2075,9 +2359,9 @@ class DashboardHandler(BaseHTTPRequestHandler):
                 <span class="doc-size">${{s.size_kb}} KB</span>
               </div>
               <div class="doc-meta-row">
-                <span class="category-tag">${{s.category || 'Inbox'}}</span>
-                <span class="meta-tag">Doc Date: ${{s.doc_date || 'Not detected'}}</span>
-                <span class="meta-tag">Scanned: ${{s.scan_date || 'Recent'}}</span>
+                <span class="category-tag ${{catClass}}">${{cat}}</span>
+                ${{docDateStr ? `<span class="meta-tag" title="Document Date">Doc Date: ${{s.doc_date}}</span>` : ''}}
+                <span class="meta-tag" title="Scan Timestamp">Scanned: ${{s.scan_date || 'Recent'}}</span>
               </div>
             </div>
             <div class="doc-actions" onclick="event.stopPropagation()">
@@ -2198,18 +2482,22 @@ class DashboardHandler(BaseHTTPRequestHandler):
         const countdownNum = document.getElementById('strip-countdown-num');
         const stripActions = document.getElementById('strip-actions');
         const progressBar = document.getElementById('strip-progress-bar');
+        const alertBanner = document.getElementById('hardware-alert-banner');
 
         const state = data.state || 'unknown';
         const scannerIp = data.scanner_ip || 'network';
 
         const diagScanner = document.getElementById('diag-scanner');
         if (diagScanner) diagScanner.textContent = `${{scannerIp}}:8080`;
+        const diagScannerLink = document.getElementById('diag-scanner-link');
+        if (diagScannerLink) diagScannerLink.href = `http://${{scannerIp}}:8080/`;
 
         if (dot) dot.className = 'status-dot';
         strip.className = 'app-header';
         progressBar.style.width = '0%';
         countdownWrap.style.display = 'none';
         if (stripActions) stripActions.innerHTML = '';
+        if (alertBanner) alertBanner.style.display = 'none';
 
         let isActiveState = false;
 
@@ -2340,6 +2628,9 @@ class DashboardHandler(BaseHTTPRequestHandler):
           stripDetail.textContent = '1. Gently pull paper from rollers · 2. Press Power once to clear red (!) error · 3. Re-insert';
           if (stripActions) {{
             stripActions.innerHTML = '<button class="btn-strip btn-strip-primary" onclick="refreshAll()">Check Hardware</button>';
+          }}
+          if (alertBanner) {{
+            alertBanner.style.display = 'block';
           }}
         }} else {{
           if (dot) dot.classList.add('offline');
