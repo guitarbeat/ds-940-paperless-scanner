@@ -839,18 +839,21 @@ class DashboardHandler(BaseHTTPRequestHandler):
 
     .telemetry-grid {{
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 0.65rem;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 0.75rem;
     }}
 
     .tele-card {{
       background: var(--bg-surface);
       border: 1px solid var(--border-subtle);
       border-radius: 6px;
-      padding: 0.55rem 0.75rem;
+      padding: 0.65rem 0.85rem;
       display: flex;
       flex-direction: column;
-      gap: 0.25rem;
+      gap: 0.35rem;
+      min-width: 0;
+      overflow: hidden;
+      box-shadow: var(--shadow-sm);
     }}
 
     .tele-card-wide {{
@@ -863,31 +866,49 @@ class DashboardHandler(BaseHTTPRequestHandler):
       }}
     }}
 
-    .tele-card-label {{
-      font-size: 0.68rem;
-      font-weight: 500;
-      color: var(--text-dim);
-      text-transform: uppercase;
-      letter-spacing: 0.03em;
-    }}
-
-    .tele-card-val-row {{
+    .tele-card-header {{
       display: flex;
       align-items: center;
       justify-content: space-between;
       gap: 0.5rem;
+      min-width: 0;
+    }}
+
+    .tele-card-label {{
+      font-size: 0.68rem;
+      font-weight: 600;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      min-width: 0;
     }}
 
     .tele-card-val {{
       font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
-      font-size: 0.76rem;
+      font-size: 0.78rem;
       font-weight: 500;
       color: var(--text);
       font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      min-width: 0;
+    }}
+
+    .tele-endpoint-link {{
+      color: var(--accent);
+      text-decoration: none;
+      transition: color 100ms var(--ease);
+    }}
+
+    .tele-endpoint-link:hover {{
+      text-decoration: underline;
     }}
 
     .tele-path-val {{
-      max-width: 420px;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
@@ -896,23 +917,26 @@ class DashboardHandler(BaseHTTPRequestHandler):
     .btn-tele-link {{
       display: inline-flex;
       align-items: center;
-      gap: 0.3rem;
-      font-size: 0.7rem;
-      font-weight: 500;
+      gap: 0.25rem;
+      font-size: 0.68rem;
+      font-weight: 600;
       color: var(--accent);
       text-decoration: none;
-      padding: 0.15rem 0.45rem;
-      border-radius: 3px;
+      padding: 0.12rem 0.45rem;
+      border-radius: 4px;
       background: var(--accent-soft);
-      transition: background-color 100ms var(--ease);
+      white-space: nowrap;
+      flex-shrink: 0;
+      transition: background-color 100ms var(--ease), color 100ms var(--ease);
     }}
 
     .btn-tele-link:hover {{
-      text-decoration: underline;
+      background: var(--accent);
+      color: #ffffff;
     }}
 
     .telemetry-footer {{
-      padding-top: 0.35rem;
+      padding-top: 0.45rem;
       border-top: 1px solid var(--border-subtle);
       display: flex;
       justify-content: space-between;
@@ -927,16 +951,19 @@ class DashboardHandler(BaseHTTPRequestHandler):
 
     .btn-copy {{
       position: relative;
-      background: none;
+      background: var(--bg-surface);
       border: 1px solid var(--border);
-      color: var(--text-dim);
+      color: var(--text-muted);
       display: inline-flex;
       align-items: center;
       gap: 0.3rem;
-      padding: 0.2rem 0.45rem;
+      padding: 0.15rem 0.45rem;
       border-radius: 4px;
       cursor: pointer;
-      font-size: 0.7rem;
+      font-size: 0.68rem;
+      font-weight: 500;
+      white-space: nowrap;
+      flex-shrink: 0;
       transition: background-color 100ms var(--ease), border-color 100ms var(--ease), color 100ms var(--ease), transform 80ms var(--ease-press);
     }}
 
@@ -1821,31 +1848,35 @@ class DashboardHandler(BaseHTTPRequestHandler):
       <div class="telemetry-content">
         <div class="telemetry-grid">
           <div class="tele-card">
-            <span class="tele-card-label">Scanner Network Endpoint</span>
-            <div class="tele-card-val-row">
-              <span id="diag-scanner" class="tele-card-val">{self.settings.scanner_ip}:8080</span>
+            <div class="tele-card-header">
+              <span class="tele-card-label">Scanner Network Endpoint</span>
               <a id="diag-scanner-link" href="http://{self.settings.scanner_ip}:8080/" target="_blank" rel="noopener" class="btn-tele-link" title="Open Brother Web Admin">
-                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
-                <span>Web Admin</span>
+                <span>Web Admin ↗</span>
               </a>
             </div>
+            <a id="diag-scanner" class="tele-card-val tele-endpoint-link" href="http://{self.settings.scanner_ip}:8080/" target="_blank" rel="noopener" title="Open Brother Web Admin">{self.settings.scanner_ip}:8080</a>
           </div>
           <div class="tele-card">
-            <span class="tele-card-label">Daemon Engine State</span>
+            <div class="tele-card-header">
+              <span class="tele-card-label">Daemon Engine State</span>
+            </div>
             <span id="diag-state" class="tele-card-val">Connecting</span>
           </div>
           <div class="tele-card">
-            <span class="tele-card-label">Process Uptime</span>
+            <div class="tele-card-header">
+              <span class="tele-card-label">Process Uptime</span>
+            </div>
             <span id="diag-uptime" class="tele-card-val">--</span>
           </div>
           <div class="tele-card">
-            <span class="tele-card-label">Resident Memory (RSS)</span>
+            <div class="tele-card-header">
+              <span class="tele-card-label">Resident Memory (RSS)</span>
+            </div>
             <span id="diag-ram" class="tele-card-val">-- MB</span>
           </div>
           <div class="tele-card tele-card-wide">
-            <span class="tele-card-label">Local Archive Destination</span>
-            <div class="tele-card-val-row">
-              <span id="diag-path" class="tele-card-val tele-path-val">{self.settings.output}</span>
+            <div class="tele-card-header">
+              <span class="tele-card-label">Local Archive Destination</span>
               <button class="btn-copy" onclick="copyPath()" title="Copy folder path" aria-label="Copy folder path">
                 <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
@@ -1854,6 +1885,7 @@ class DashboardHandler(BaseHTTPRequestHandler):
                 <span>Copy Path</span>
               </button>
             </div>
+            <span id="diag-path" class="tele-card-val tele-path-val">{self.settings.output}</span>
           </div>
         </div>
         <div class="telemetry-footer">
@@ -2488,7 +2520,10 @@ class DashboardHandler(BaseHTTPRequestHandler):
         const scannerIp = data.scanner_ip || 'network';
 
         const diagScanner = document.getElementById('diag-scanner');
-        if (diagScanner) diagScanner.textContent = `${{scannerIp}}:8080`;
+        if (diagScanner) {{
+          diagScanner.textContent = `${{scannerIp}}:8080`;
+          diagScanner.href = `http://${{scannerIp}}:8080/`;
+        }}
         const diagScannerLink = document.getElementById('diag-scanner-link');
         if (diagScannerLink) diagScannerLink.href = `http://${{scannerIp}}:8080/`;
 
