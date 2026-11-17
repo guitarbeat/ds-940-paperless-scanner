@@ -104,6 +104,7 @@ def get_recent_scans(output_dir: Path, limit: int = 100) -> list[dict]:
 
 class DashboardHandler(BaseHTTPRequestHandler):
     settings: Settings
+    session: Any = None
     start_time: float = time.time()
 
     def log_message(self, format, *args):
@@ -150,8 +151,25 @@ class DashboardHandler(BaseHTTPRequestHandler):
             self.trigger_sort()
         elif parsed.path == "/api/delete":
             self.handle_delete()
+        elif parsed.path == "/api/session/wake":
+            self.handle_session_action("wake")
+        elif parsed.path == "/api/session/extend":
+            self.handle_session_action("extend")
+        elif parsed.path == "/api/session/pause":
+            self.handle_session_action("pause")
         else:
             self.send_error(404, "Not Found")
+
+    def handle_session_action(self, action: str):
+        try:
+            from .session import SessionManager
+            idle_timeout = getattr(self.settings, "idle_timeout", 180.0)
+            mgr = self.session or SessionManager(self.settings.work, idle_timeout=idle_timeout)
+            result = mgr.write_command(action, duration=300.0)
+            self.send_json(result)
+        except Exception as err:
+            LOG.exception("Session action error (%s): %s", action, err)
+            self.send_json({"status": "error", "message": str(err)}, status=500)
 
     def handle_delete(self):
         try:
@@ -235,6 +253,13 @@ class DashboardHandler(BaseHTTPRequestHandler):
         hours, remainder = divmod(uptime_sec, 3600)
         minutes, seconds = divmod(remainder, 60)
 
+        session_active = raw.get("session_active", True)
+        idle_rem = raw.get("idle_remaining")
+        idle_tot = raw.get("idle_timeout", getattr(self.settings, "idle_timeout", 180.0))
+        if self.session is not None:
+            session_active = self.session.is_active()
+            idle_rem = round(self.session.get_remaining(), 1)
+
         data = {
             "state": state,
             "scanner_ip": self.settings.scanner_ip,
@@ -252,6 +277,9 @@ class DashboardHandler(BaseHTTPRequestHandler):
             "raw_pages": raw.get("raw_pages") if isinstance(raw, dict) else None,
             "discarded_blank_pages": raw.get("discarded_blank_pages") if isinstance(raw, dict) else None,
             "completed_at": raw.get("completed_at") if isinstance(raw, dict) else None,
+            "session_active": session_active,
+            "idle_remaining": idle_rem,
+            "idle_timeout": idle_tot,
             "last_scan": last_scan,
         }
         self.send_json(data)
@@ -560,6 +588,48 @@ class DashboardHandler(BaseHTTPRequestHandler):
       font-weight: 600;
       font-variant-numeric: tabular-nums;
       color: var(--text);
+    }}
+
+    .strip-actions {{
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-left: 1rem;
+      flex-shrink: 0;
+    }}
+
+    .btn-strip {{
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      font-size: 0.76rem;
+      font-weight: 500;
+      color: var(--text-muted);
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      padding: 0.25rem 0.65rem;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 100ms var(--ease);
+    }}
+
+    .btn-strip:hover {{
+      background: var(--bg-hover);
+      color: var(--text);
+      border-color: var(--border-focus);
+    }}
+
+    .btn-strip-primary {{
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #ffffff;
+      font-weight: 600;
+    }}
+
+    .btn-strip-primary:hover {{
+      background: var(--accent-hover);
+      border-color: var(--accent-hover);
+      color: #ffffff;
     }}
 
     .strip-progress-bar {{
@@ -1158,6 +1228,7 @@ class DashboardHandler(BaseHTTPRequestHandler):
       <div id="strip-countdown-wrap" class="strip-countdown-wrap">
         <span id="strip-countdown-num" class="strip-countdown-num">8.0s</span>
       </div>
+      <div id="strip-actions" class="strip-actions"></div>
       <div id="strip-progress-bar" class="strip-progress-bar"></div>
     </div>
 
@@ -1574,6 +1645,27 @@ class DashboardHandler(BaseHTTPRequestHandler):
       }}
     }}
 
+    async function sessionAction(action) {{
+      try {{
+        const res = await fetch(`/api/session/${{action}}`, {{ method: 'POST' }});
+        const data = await res.json();
+        if (data.status === 'ok') {{
+          if (action === 'wake') {{
+            showToast('Scanning session activated (5m)');
+          }} else if (action === 'extend') {{
+            showToast('Session extended (+5m)');
+          }} else if (action === 'pause') {{
+            showToast('Scanner set to sleep');
+          }}
+          await updateStatus();
+        }} else {{
+          showToast('Session update failed: ' + (data.message || 'Error'));
+        }}
+      }} catch (e) {{
+        showToast('Session action error: ' + e);
+      }}
+    }}
+
     let pollTimer = null;
     let currentPollInterval = 2500;
     let lastFiledDestination = null;
@@ -1600,6 +1692,7 @@ class DashboardHandler(BaseHTTPRequestHandler):
         const stripDetail = document.getElementById('strip-detail');
         const countdownWrap = document.getElementById('strip-countdown-wrap');
         const countdownNum = document.getElementById('strip-countdown-num');
+        const stripActions = document.getElementById('strip-actions');
         const progressBar = document.getElementById('strip-progress-bar');
 
         const state = data.state || 'unknown';
@@ -1609,6 +1702,7 @@ class DashboardHandler(BaseHTTPRequestHandler):
         strip.className = 'status-strip';
         progressBar.style.width = '0%';
         countdownWrap.style.display = 'none';
+        if (stripActions) stripActions.innerHTML = '';
 
         let isActiveState = false;
 
@@ -1620,7 +1714,31 @@ class DashboardHandler(BaseHTTPRequestHandler):
           strip.classList.add('state-ready');
           stripTitle.textContent = 'Ready for paper';
           stripBadge.textContent = 'Duplex 300 DPI';
-          stripDetail.textContent = `Brother DS-940DW ready at ${{scannerIp}} · Insert document into feeder to scan`;
+
+          const idleRem = data.idle_remaining;
+          if (idleRem !== undefined && idleRem !== null && idleRem > 0) {{
+            const m = Math.floor(idleRem / 60);
+            const s = Math.floor(idleRem % 60);
+            const timeStr = m > 0 ? `${{m}}m ${{s}}s` : `${{s}}s`;
+            stripDetail.textContent = `Brother DS-940DW ready at ${{scannerIp}} · Sleeping in ${{timeStr}} to save battery`;
+            if (stripActions) {{
+              stripActions.innerHTML = '<button class="btn-strip" onclick="sessionAction(\\'extend\\')">+5m</button><button class="btn-strip" onclick="sessionAction(\\'pause\\')">Sleep Now</button>';
+            }}
+          }} else {{
+            stripDetail.textContent = `Brother DS-940DW ready at ${{scannerIp}} · Insert document into feeder to scan`;
+          }}
+        }} else if (state === 'battery_saver_dormant') {{
+          dot.classList.add('offline');
+          label.textContent = 'Standby (Sleeping)';
+          diagState.textContent = 'Battery Saver Standby';
+
+          strip.classList.add('state-standby');
+          stripTitle.textContent = 'Battery Saver Standby';
+          stripBadge.textContent = 'Sleeping';
+          stripDetail.textContent = 'Scanner is sleeping to conserve battery · Press Power on scanner or click Wake to scan';
+          if (stripActions) {{
+            stripActions.innerHTML = '<button class="btn-strip btn-strip-primary" onclick="sessionAction(\\'wake\\')">Wake Session</button>';
+          }}
         }} else if (state === 'scanning') {{
           isActiveState = true;
           const sheet = data.sheet || 1;
@@ -1699,7 +1817,10 @@ class DashboardHandler(BaseHTTPRequestHandler):
           strip.classList.add('state-standby');
           stripTitle.textContent = 'Standby (Sleeping)';
           stripBadge.textContent = 'Wi-Fi Sleep';
-          stripDetail.textContent = `Scanner is sleeping at ${{scannerIp}} · Automatically wakes when paper is inserted`;
+          stripDetail.textContent = `Scanner is sleeping at ${{scannerIp}} · Press Power on scanner or click Wake to scan`;
+          if (stripActions) {{
+            stripActions.innerHTML = '<button class="btn-strip btn-strip-primary" onclick="sessionAction(\\'wake\\')">Wake Session</button>';
+          }}
         }} else if (state === 'paper_blocked' || state === 'paper_jammed') {{
           dot.classList.add('offline');
           label.textContent = 'Feeder Jammed';
@@ -1786,11 +1907,12 @@ class DashboardHandler(BaseHTTPRequestHandler):
         self.wfile.write(body)
 
 
-def run_web_server(settings: Settings, stop_event: threading.Event | None = None):
+def run_web_server(settings: Settings, stop_event: threading.Event | None = None, session=None):
     class CustomServer(ThreadingHTTPServer):
         allow_reuse_address = True
 
     DashboardHandler.settings = settings
+    DashboardHandler.session = session
     DashboardHandler.start_time = time.time()
 
     server = CustomServer((settings.web_bind_ip, settings.web_port), DashboardHandler)

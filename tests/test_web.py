@@ -139,6 +139,43 @@ class WebDashboardTests(unittest.TestCase):
             self.assertEqual(data["status"], "ok")
         self.assertFalse((self.output / "test_doc.pdf").exists())
 
+    def test_session_lifecycle_endpoints(self):
+        # 1. Test status includes session fields
+        status_url = f"http://127.0.0.1:{self.port}/api/status"
+        with urllib.request.urlopen(status_url, timeout=3.0) as resp:
+            data = json.loads(resp.read().decode("utf-8"))
+            self.assertIn("session_active", data)
+            self.assertIn("idle_remaining", data)
+            self.assertIn("idle_timeout", data)
+
+        # 2. Test pause endpoint
+        pause_url = f"http://127.0.0.1:{self.port}/api/session/pause"
+        req = urllib.request.Request(pause_url, data=b"{}", headers={"Content-Type": "application/json"}, method="POST")
+        with urllib.request.urlopen(req, timeout=3.0) as resp:
+            self.assertEqual(resp.status, 200)
+            data = json.loads(resp.read().decode("utf-8"))
+            self.assertEqual(data["status"], "ok")
+            self.assertFalse(data["session_active"])
+
+        # 3. Test wake endpoint
+        wake_url = f"http://127.0.0.1:{self.port}/api/session/wake"
+        req = urllib.request.Request(wake_url, data=b"{}", headers={"Content-Type": "application/json"}, method="POST")
+        with urllib.request.urlopen(req, timeout=3.0) as resp:
+            self.assertEqual(resp.status, 200)
+            data = json.loads(resp.read().decode("utf-8"))
+            self.assertEqual(data["status"], "ok")
+            self.assertTrue(data["session_active"])
+            self.assertGreater(data["idle_remaining"], 0)
+
+        # 4. Test extend endpoint
+        extend_url = f"http://127.0.0.1:{self.port}/api/session/extend"
+        req = urllib.request.Request(extend_url, data=b"{}", headers={"Content-Type": "application/json"}, method="POST")
+        with urllib.request.urlopen(req, timeout=3.0) as resp:
+            self.assertEqual(resp.status, 200)
+            data = json.loads(resp.read().decode("utf-8"))
+            self.assertEqual(data["status"], "ok")
+            self.assertTrue(data["session_active"])
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -22,6 +22,7 @@ class Settings:
     web_port: int = 9400
     web_bind_ip: str = "0.0.0.0"
     remove_blank_threshold: float = 0.05
+    idle_timeout: float = 180.0
 
     @classmethod
     def from_environment(cls):
@@ -50,6 +51,7 @@ class Settings:
         web_port = int(os.environ.get("WEB_PORT", "9400").strip())
         web_bind_ip = os.environ.get("WEB_BIND_IP", "0.0.0.0").strip()
         remove_blank_threshold = float(os.environ.get("REMOVE_BLANK_THRESHOLD", "0.05").strip())
+        idle_timeout = float(os.environ.get("SCANNER_IDLE_TIMEOUT", "180.0").strip())
 
         return cls(
             scanner_ip=scanner_ip,
@@ -62,6 +64,7 @@ class Settings:
             web_port=web_port,
             web_bind_ip=web_bind_ip,
             remove_blank_threshold=remove_blank_threshold,
+            idle_timeout=idle_timeout,
         )
 
     def configure_driver(self):

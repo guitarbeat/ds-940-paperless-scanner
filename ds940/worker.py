@@ -18,6 +18,7 @@ from .escl import (
     ScannerBusyError,
     ScannerOfflineError,
 )
+from .session import SessionManager
 from .spool import ScanSpool, atomic_json, build_pdf, filter_blank_pages
 from .web import run_web_server
 
@@ -176,7 +177,10 @@ def retry_state_escl(error: Exception) -> tuple[str, int]:
     return "retry_after_error", 10
 
 
-def serve(settings: Settings, stop: Event):
+def serve(settings: Settings, stop: Event, session: SessionManager | None = None):
+    if session is None:
+        session = SessionManager(settings.work, idle_timeout=settings.idle_timeout)
+
     def status(state, **details):
         atomic_json(
             settings.work / "auto-status.json",
@@ -184,6 +188,9 @@ def serve(settings: Settings, stop: Event):
                 "updated": time.time(),
                 "state": state,
                 "paper_size": settings.paper_size,
+                "session_active": session.is_active(),
+                "idle_remaining": round(session.get_remaining(), 1),
+                "idle_timeout": settings.idle_timeout,
                 **details,
             },
         )
@@ -201,7 +208,7 @@ def serve(settings: Settings, stop: Event):
     )
     scanner = EsclScanner(settings.scanner_ip)
     try:
-        run_web_server(settings, stop)
+        run_web_server(settings, stop, session=session)
     except Exception as err:
         LOG.warning("Could not start dashboard web server: %s", err)
 
@@ -216,6 +223,43 @@ def serve(settings: Settings, stop: Event):
             if time.monotonic() >= next_recovery:
                 spool.recover()
                 next_recovery = time.monotonic() + 30
+
+            idle_rem = session.get_remaining()
+            if idle_rem <= 0.0:
+                if previous_state != "battery_saver_dormant":
+                    LOG.info(
+                        "Idle timeout reached (%ds). Entering battery-saver dormant standby.",
+                        int(settings.idle_timeout),
+                    )
+                previous_state = "battery_saver_dormant"
+                status(previous_state)
+
+                # Passive heartbeat: sleep 10s between checks
+                deadline = time.monotonic() + 10.0
+                while not stop.is_set() and (rem := deadline - time.monotonic()) > 0:
+                    if session.is_active():
+                        break
+                    if stop.wait(min(1.0, rem)):
+                        break
+
+                if session.is_active():
+                    LOG.info("Session re-activated via web command.")
+                    continue
+
+                # Gentle heartbeat check: check if scanner is online (e.g. user pressed physical power switch)
+                try:
+                    s = scanner.get_status(timeout=2.0)
+                    if s.is_idle or s.is_busy:
+                        LOG.info(
+                            "Scanner detected awake on Wi-Fi! Auto-activating %ds scanning session.",
+                            int(settings.idle_timeout),
+                        )
+                        session.touch()
+                        continue
+                except (ScannerOfflineError, ScannerBusyError, OSError):
+                    pass
+                continue
+
             try:
                 scanned_id = capture_if_ready_escl(
                     scanner,
@@ -228,10 +272,11 @@ def serve(settings: Settings, stop: Event):
                 )
                 if scanned_id:
                     LOG.info("Successfully scanned and published job: %s", scanned_id)
+                    session.touch()
                     stop.wait(3.5)
 
                 if previous_state != "waiting_for_paper":
-                    LOG.info("Ready for paper at %s (duplex, %d dpi)", settings.scanner_ip, DPI)
+                    LOG.info("Ready for paper at %s (duplex, %d dpi, %ds session)", settings.scanner_ip, DPI, int(idle_rem))
                 previous_state = "waiting_for_paper"
                 status(previous_state)
                 stop.wait(2)
