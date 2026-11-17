@@ -1675,6 +1675,17 @@ class DashboardHandler(BaseHTTPRequestHandler):
       .footer-path {{
         max-width: 200px;
       }}
+      .inspector-header {{
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.5rem;
+        padding: 0.75rem 0.85rem;
+      }}
+      .inspector-actions {{
+        justify-content: flex-start;
+        flex-wrap: wrap;
+        gap: 0.4rem;
+      }}
     }}
 
     @media (max-width: 440px) {{
