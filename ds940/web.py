@@ -403,21 +403,29 @@ class DashboardHandler(BaseHTTPRequestHandler):
     header.app-header {{
       background: var(--bg-surface);
       border-bottom: 1px solid var(--border);
-      padding: 0.65rem 1.5rem;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
       position: sticky;
       top: 0;
       z-index: 100;
+      display: flex;
+      flex-direction: column;
+      padding: 0;
       overflow: hidden;
       transition: border-bottom-color 180ms var(--ease), background-color 180ms var(--ease);
     }}
 
-    .header-left {{
+    .header-primary-row {{
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.65rem 1.5rem 0.5rem;
+      gap: 1rem;
+      background: var(--bg-surface);
+    }}
+
+    .header-brand-status {{
       display: flex;
       align-items: center;
-      gap: 1.25rem;
+      gap: 0.85rem;
       flex: 1;
       min-width: 0;
     }}
@@ -444,20 +452,20 @@ class DashboardHandler(BaseHTTPRequestHandler):
       font-weight: 600;
       letter-spacing: -0.015em;
       color: var(--text);
+      white-space: nowrap;
     }}
 
     .header-divider {{
       width: 1px;
-      height: 22px;
+      height: 20px;
       background: var(--border);
       flex-shrink: 0;
     }}
 
-    .strip-main {{
+    .header-status-indicator {{
       display: flex;
       align-items: center;
-      gap: 0.75rem;
-      flex: 1;
+      gap: 0.6rem;
       min-width: 0;
     }}
 
@@ -474,50 +482,29 @@ class DashboardHandler(BaseHTTPRequestHandler):
       display: none;
     }}
 
-    .strip-text-wrap {{
-      display: flex;
-      flex-direction: column;
-      gap: 0.1rem;
-      min-width: 0;
-    }}
-
-    .strip-headline-row {{
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      flex-wrap: wrap;
-    }}
-
     .strip-title {{
       font-size: 0.92rem;
       font-weight: 600;
       letter-spacing: -0.015em;
       color: var(--text);
       line-height: 1.2;
+      white-space: nowrap;
     }}
 
     .strip-badge {{
       font-size: 0.68rem;
       font-weight: 600;
-      padding: 0.1rem 0.4rem;
+      padding: 0.12rem 0.45rem;
       border-radius: 3px;
       background: var(--bg-subtle);
       border: 1px solid var(--border);
       color: var(--text-muted);
       letter-spacing: 0.02em;
       text-transform: uppercase;
-    }}
-
-    .strip-detail {{
-      font-size: 0.76rem;
-      color: var(--text-muted);
       white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      max-width: 600px;
     }}
 
-    .header-right {{
+    .header-primary-actions {{
       display: flex;
       align-items: center;
       gap: 0.65rem;
@@ -587,8 +574,8 @@ class DashboardHandler(BaseHTTPRequestHandler):
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      width: 30px;
-      height: 30px;
+      width: 28px;
+      height: 28px;
       border-radius: 4px;
       background: var(--bg-surface);
       border: 1px solid var(--border);
@@ -597,6 +584,95 @@ class DashboardHandler(BaseHTTPRequestHandler):
     }}
 
     .btn-icon:hover {{
+      background: var(--bg-hover);
+      color: var(--text);
+      border-color: var(--border-focus);
+    }}
+
+    /* Row 2: Status Narrative & Diagnostics Ledger */
+    .header-meta-row {{
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.35rem 1.5rem 0.42rem;
+      border-top: 1px solid var(--border-subtle);
+      background: var(--bg-subtle);
+      font-size: 0.73rem;
+      color: var(--text-muted);
+      gap: 1.25rem;
+    }}
+
+    .header-detail-wrap {{
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      align-items: center;
+    }}
+
+    .strip-detail {{
+      font-size: 0.74rem;
+      color: var(--text-muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      line-height: 1.35;
+    }}
+
+    .header-telemetry-ledger {{
+      display: flex;
+      align-items: center;
+      gap: 0.85rem;
+      flex-shrink: 0;
+    }}
+
+    .tele-item {{
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      white-space: nowrap;
+      color: var(--text-dim);
+    }}
+
+    .tele-label {{
+      font-weight: 500;
+      color: var(--text-dim);
+    }}
+
+    .tele-val {{
+      font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+      font-size: 0.71rem;
+      color: var(--text-muted);
+      font-variant-numeric: tabular-nums;
+    }}
+
+    .tele-archive {{
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+    }}
+
+    .tele-archive .tele-val {{
+      max-width: 260px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }}
+
+    .btn-copy {{
+      background: none;
+      border: 1px solid var(--border);
+      color: var(--text-dim);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0.1rem 0.25rem;
+      border-radius: 3px;
+      cursor: pointer;
+      transition: all 100ms var(--ease);
+      line-height: 1;
+    }}
+
+    .btn-copy:hover {{
       background: var(--bg-hover);
       color: var(--text);
       border-color: var(--border-focus);
@@ -622,6 +698,8 @@ class DashboardHandler(BaseHTTPRequestHandler):
 
     .app-header.state-scanning {{
       border-bottom-color: rgba(37, 99, 235, 0.4);
+    }}
+    .app-header.state-scanning .header-primary-row {{
       background: rgba(37, 99, 235, 0.03);
     }}
     .app-header.state-scanning .strip-beacon {{
@@ -630,6 +708,8 @@ class DashboardHandler(BaseHTTPRequestHandler):
 
     .app-header.state-collation {{
       border-bottom-color: rgba(217, 119, 6, 0.4);
+    }}
+    .app-header.state-collation .header-primary-row {{
       background: rgba(217, 119, 6, 0.035);
     }}
     .app-header.state-collation .strip-beacon {{
@@ -638,6 +718,8 @@ class DashboardHandler(BaseHTTPRequestHandler):
 
     .app-header.state-processing {{
       border-bottom-color: rgba(99, 102, 241, 0.4);
+    }}
+    .app-header.state-processing .header-primary-row {{
       background: rgba(99, 102, 241, 0.03);
     }}
     .app-header.state-processing .strip-beacon {{
@@ -646,6 +728,8 @@ class DashboardHandler(BaseHTTPRequestHandler):
 
     .app-header.state-filed {{
       border-bottom-color: rgba(22, 163, 74, 0.4);
+    }}
+    .app-header.state-filed .header-primary-row {{
       background: rgba(22, 163, 74, 0.03);
     }}
     .app-header.state-filed .strip-beacon {{
@@ -654,6 +738,8 @@ class DashboardHandler(BaseHTTPRequestHandler):
 
     .app-header.state-warning {{
       border-bottom-color: rgba(220, 38, 38, 0.4);
+    }}
+    .app-header.state-warning .header-primary-row {{
       background: rgba(220, 38, 38, 0.03);
     }}
     .app-header.state-warning .strip-beacon {{
@@ -662,7 +748,6 @@ class DashboardHandler(BaseHTTPRequestHandler):
 
     .app-header.state-standby {{
       border-bottom-color: var(--border);
-      background: var(--bg-surface);
     }}
     .app-header.state-standby .strip-beacon {{
       background: var(--status-standby);
@@ -1047,71 +1132,6 @@ class DashboardHandler(BaseHTTPRequestHandler):
       line-height: 1.4;
     }}
 
-    /* Header Diagnostics Telemetry */
-    .header-telemetry {{
-      display: flex;
-      align-items: center;
-      gap: 0.65rem;
-      font-size: 0.72rem;
-      color: var(--text-muted);
-      border-left: 1px solid var(--border);
-      padding-left: 0.75rem;
-    }}
-
-    .telemetry-item {{
-      display: inline-flex;
-      align-items: center;
-      gap: 0.3rem;
-      color: var(--text-dim);
-      font-variant-numeric: tabular-nums;
-    }}
-
-    .telemetry-item svg {{
-      color: var(--text-dim);
-      flex-shrink: 0;
-    }}
-
-    .telemetry-val {{
-      color: var(--text-muted);
-      font-weight: 500;
-    }}
-
-    .telemetry-path {{
-      display: inline-flex;
-      align-items: center;
-      gap: 0.25rem;
-      max-width: 220px;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-      background: var(--bg-subtle);
-      border: 1px solid var(--border-subtle);
-      padding: 0.12rem 0.45rem;
-      border-radius: 4px;
-    }}
-
-    .telemetry-path span {{
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }}
-
-    .btn-copy {{
-      background: none;
-      border: none;
-      color: var(--text-dim);
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      padding: 0 1px;
-      cursor: pointer;
-      transition: color 100ms ease;
-    }}
-
-    .btn-copy:hover {{
-      color: var(--text);
-    }}
-
     /* Toast */
     .toast {{
       position: fixed;
@@ -1138,18 +1158,29 @@ class DashboardHandler(BaseHTTPRequestHandler):
     }}
 
     @media (max-width: 1200px) {{
-      .telemetry-path {{
-        display: none;
+      .tele-archive .tele-val {{
+        max-width: 160px;
       }}
     }}
 
     /* Mobile Drawer & Modal View */
     @media (max-width: 960px) {{
-      .header-telemetry {{
-        display: none;
+      .header-primary-row {{
+        padding: 0.6rem 1rem 0.45rem;
+        gap: 0.75rem;
+      }}
+      .header-meta-row {{
+        padding: 0.35rem 1rem 0.45rem;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.35rem;
       }}
       .strip-detail {{
-        display: none;
+        white-space: normal;
+      }}
+      .header-telemetry-ledger {{
+        flex-wrap: wrap;
+        gap: 0.5rem 0.75rem;
       }}
       .header-divider {{
         display: none;
@@ -1184,92 +1215,100 @@ class DashboardHandler(BaseHTTPRequestHandler):
 </head>
 <body>
   <header class="app-header state-ready" id="live-status-strip" role="region" aria-live="polite">
-    <div class="header-left">
-      <div class="brand-wrap">
-        <div class="brand-logo" aria-hidden="true">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="2" y="4" width="20" height="16" rx="2"/>
-            <path d="M6 12h12"/>
-            <path d="M6 8h12"/>
-          </svg>
+    <!-- Row 1: Primary Brand, Hardware State & Immediate Actions -->
+    <div class="header-primary-row">
+      <div class="header-brand-status">
+        <div class="brand-wrap">
+          <div class="brand-logo" aria-hidden="true">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="2" y="4" width="20" height="16" rx="2"/>
+              <path d="M6 12h12"/>
+              <path d="M6 8h12"/>
+            </svg>
+          </div>
+          <h1 class="brand-title">Brother DS-940DW</h1>
         </div>
-        <h1 class="brand-title">Brother DS-940DW</h1>
+
+        <div class="header-divider" aria-hidden="true"></div>
+
+        <div class="header-status-indicator">
+          <span id="strip-beacon" class="strip-beacon"></span>
+          <span id="status-dot" style="display:none;"></span>
+          <span id="status-label" style="display:none;"></span>
+          <h2 id="strip-title" class="strip-title">Ready for paper</h2>
+          <span id="strip-badge" class="strip-badge">Duplex 300 DPI</span>
+        </div>
       </div>
 
-      <div class="header-divider" aria-hidden="true"></div>
+      <div class="header-primary-actions">
+        <div id="strip-countdown-wrap" class="strip-countdown-wrap">
+          <span id="strip-countdown-num" class="strip-countdown-num">8.0s</span>
+        </div>
+        <div id="strip-actions" class="strip-actions"></div>
 
-      <div class="strip-main">
-        <span id="strip-beacon" class="strip-beacon"></span>
-        <span id="status-dot" style="display:none;"></span>
-        <span id="status-label" style="display:none;"></span>
-        <span id="diag-scanner" style="display:none;">{self.settings.scanner_ip}:8080</span>
-        <span id="diag-state" style="display:none;">Connecting</span>
-        <div class="strip-text-wrap">
-          <div class="strip-headline-row">
-            <h2 id="strip-title" class="strip-title">Ready for paper</h2>
-            <span id="strip-badge" class="strip-badge">Duplex 300 DPI</span>
-          </div>
-          <div id="strip-detail" class="strip-detail">Brother DS-940DW ready · Insert document into feeder to scan</div>
+        <div class="header-divider" aria-hidden="true"></div>
+
+        <div class="header-actions">
+          <button class="btn-icon" id="theme-toggle" onclick="toggleTheme()" title="Switch color theme" aria-label="Switch color theme">
+            <svg id="theme-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="5"/>
+              <line x1="12" y1="1" x2="12" y2="3"/>
+              <line x1="12" y1="21" x2="12" y2="23"/>
+              <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+              <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+              <line x1="1" y1="12" x2="3" y2="12"/>
+              <line x1="21" y1="12" x2="23" y2="12"/>
+              <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+              <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+            </svg>
+          </button>
+          <button class="btn-icon" onclick="refreshAll()" title="Refresh documents and status" aria-label="Refresh">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="23 4 23 10 17 10"/>
+              <polyline points="1 20 1 14 7 14"/>
+              <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+            </svg>
+          </button>
         </div>
       </div>
     </div>
 
-    <div class="header-right">
-      <div id="strip-countdown-wrap" class="strip-countdown-wrap">
-        <span id="strip-countdown-num" class="strip-countdown-num">8.0s</span>
+    <!-- Row 2: Status Narrative Context & Full Diagnostics Telemetry Ledger -->
+    <div class="header-meta-row">
+      <div class="header-detail-wrap">
+        <div id="strip-detail" class="strip-detail">Brother DS-940DW ready · Insert document into feeder to scan</div>
       </div>
-      <div id="strip-actions" class="strip-actions"></div>
 
-      <div class="header-telemetry" aria-label="System Diagnostics">
-        <span class="telemetry-item" title="Daemon Uptime">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="10"/>
-            <polyline points="12 6 12 12 16 14"/>
-          </svg>
-          <span id="diag-uptime" class="telemetry-val">--</span>
+      <div class="header-telemetry-ledger" aria-label="System Diagnostics">
+        <span class="tele-item" title="Scanner Network Endpoint">
+          <span class="tele-label">Scanner:</span>
+          <span id="diag-scanner" class="tele-val">{self.settings.scanner_ip}:8080</span>
         </span>
-        <span class="telemetry-item" title="Resident Memory">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="2" y="2" width="20" height="8" rx="2"/>
-            <rect x="2" y="14" width="20" height="8" rx="2"/>
-            <line x1="6" y1="6" x2="6.01" y2="6"/>
-            <line x1="6" y1="18" x2="6.01" y2="18"/>
-          </svg>
-          <span id="diag-ram" class="telemetry-val">-- MB</span>
+        <span class="tele-item" title="Daemon Engine State">
+          <span class="tele-label">State:</span>
+          <span id="diag-state" class="tele-val">Connecting</span>
         </span>
-        <div class="telemetry-item telemetry-path" title="Archive Folder">
-          <span id="diag-path">{self.settings.output}</span>
+        <span class="tele-item" title="Process Uptime">
+          <span class="tele-label">Uptime:</span>
+          <span id="diag-uptime" class="tele-val">--</span>
+        </span>
+        <span class="tele-item" title="Resident Memory (RSS)">
+          <span class="tele-label">RAM:</span>
+          <span id="diag-ram" class="tele-val">-- MB</span>
+        </span>
+        <span class="tele-item tele-archive" title="Local Archive Destination">
+          <span class="tele-label">Archive:</span>
+          <span id="diag-path" class="tele-val">{self.settings.output}</span>
           <button class="btn-copy" onclick="copyPath()" title="Copy folder path" aria-label="Copy folder path">
             <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
               <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
             </svg>
           </button>
-        </div>
-      </div>
-      <div class="header-actions">
-        <button class="btn-icon" id="theme-toggle" onclick="toggleTheme()" title="Switch color theme" aria-label="Switch color theme">
-          <svg id="theme-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="12" cy="12" r="5"/>
-            <line x1="12" y1="1" x2="12" y2="3"/>
-            <line x1="12" y1="21" x2="12" y2="23"/>
-            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
-            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
-            <line x1="1" y1="12" x2="3" y2="12"/>
-            <line x1="21" y1="12" x2="23" y2="12"/>
-            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
-            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
-          </svg>
-        </button>
-        <button class="btn-icon" onclick="refreshAll()" title="Refresh documents and status" aria-label="Refresh">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="23 4 23 10 17 10"/>
-            <polyline points="1 20 1 14 7 14"/>
-            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
-          </svg>
-        </button>
+        </span>
       </div>
     </div>
+
     <div id="strip-progress-bar" class="strip-progress-bar"></div>
   </header>
 
@@ -1706,6 +1745,9 @@ class DashboardHandler(BaseHTTPRequestHandler):
         const state = data.state || 'unknown';
         const scannerIp = data.scanner_ip || 'network';
 
+        const diagScanner = document.getElementById('diag-scanner');
+        if (diagScanner) diagScanner.textContent = `${{scannerIp}}:8080`;
+
         if (dot) dot.className = 'status-dot';
         strip.className = 'app-header';
         progressBar.style.width = '0%';
@@ -1736,9 +1778,9 @@ class DashboardHandler(BaseHTTPRequestHandler):
             stripDetail.textContent = `Brother DS-940DW ready at ${{scannerIp}} · Insert document into feeder to scan`;
           }}
         }} else if (state === 'battery_saver_dormant') {{
-          dot.classList.add('offline');
-          label.textContent = 'Standby (Sleeping)';
-          diagState.textContent = 'Battery Saver Standby';
+          if (dot) dot.classList.add('offline');
+          if (label) label.textContent = 'Standby (Sleeping)';
+          if (diagState) diagState.textContent = 'Battery Saver Standby';
 
           strip.classList.add('state-standby');
           stripTitle.textContent = 'Battery Saver Standby';
@@ -1750,9 +1792,9 @@ class DashboardHandler(BaseHTTPRequestHandler):
         }} else if (state === 'scanning') {{
           isActiveState = true;
           const sheet = data.sheet || 1;
-          dot.classList.add('active');
-          label.textContent = `Scanning Sheet ${{sheet}}...`;
-          diagState.textContent = `Scanning Duplex (Sheet ${{sheet}})`;
+          if (dot) dot.classList.add('active');
+          if (label) label.textContent = `Scanning Sheet ${{sheet}}...`;
+          if (diagState) diagState.textContent = `Scanning Duplex (Sheet ${{sheet}})`;
 
           strip.classList.add('state-scanning');
           stripTitle.textContent = `Scanning Sheet ${{sheet}}...`;
@@ -1764,9 +1806,9 @@ class DashboardHandler(BaseHTTPRequestHandler):
           const pages = data.pages_so_far || (sheet * 2);
           const remaining = (data.timeout_remaining !== undefined && data.timeout_remaining !== null) ? data.timeout_remaining : 8.0;
 
-          dot.classList.add('active');
-          label.textContent = `Batch (${{remaining}}s)`;
-          diagState.textContent = `Collation (${{remaining}}s)`;
+          if (dot) dot.classList.add('active');
+          if (label) label.textContent = `Batch (${{remaining}}s)`;
+          if (diagState) diagState.textContent = `Collation (${{remaining}}s)`;
 
           strip.classList.add('state-collation');
           stripTitle.textContent = `Insert Sheet ${{sheet + 1}} to Append`;
@@ -1779,9 +1821,9 @@ class DashboardHandler(BaseHTTPRequestHandler):
           progressBar.style.width = `${{pct}}%`;
         }} else if (state === 'assembling_pdf') {{
           isActiveState = true;
-          dot.classList.add('active');
-          label.textContent = 'Compiling PDF...';
-          diagState.textContent = 'Compiling PDF';
+          if (dot) dot.classList.add('active');
+          if (label) label.textContent = 'Compiling PDF...';
+          if (diagState) diagState.textContent = 'Compiling PDF';
 
           strip.classList.add('state-processing');
           stripTitle.textContent = 'Compiling PDF Document...';
@@ -1789,9 +1831,9 @@ class DashboardHandler(BaseHTTPRequestHandler):
           stripDetail.textContent = 'Pruning blank sides with ink detection and assembling searchable PDF pages';
         }} else if (state === 'filing_document') {{
           isActiveState = true;
-          dot.classList.add('active');
-          label.textContent = 'Filing Document...';
-          diagState.textContent = 'Filing Document';
+          if (dot) dot.classList.add('active');
+          if (label) label.textContent = 'Filing Document...';
+          if (diagState) diagState.textContent = 'Filing Document';
 
           strip.classList.add('state-processing');
           stripTitle.textContent = 'Filing Document...';
@@ -1804,9 +1846,9 @@ class DashboardHandler(BaseHTTPRequestHandler):
           const cat = data.category || 'Inbox';
           const pages = data.pages ? `${{data.pages}} page${{data.pages > 1 ? 's' : ''}}` : '';
 
-          dot.classList.add('online');
-          label.textContent = `Filed: ${{filename}}`;
-          diagState.textContent = `Filed (${{filename}})`;
+          if (dot) dot.classList.add('online');
+          if (label) label.textContent = `Filed: ${{filename}}`;
+          if (diagState) diagState.textContent = `Filed (${{filename}})`;
 
           strip.classList.add('state-filed');
           stripTitle.textContent = `Filed: ${{filename}}`;
@@ -1818,9 +1860,9 @@ class DashboardHandler(BaseHTTPRequestHandler):
             loadScans();
           }}
         }} else if (state === 'scanner_offline') {{
-          dot.classList.add('offline');
-          label.textContent = 'Standby (Sleep)';
-          diagState.textContent = 'Standby (Sleep)';
+          if (dot) dot.classList.add('offline');
+          if (label) label.textContent = 'Standby (Sleep)';
+          if (diagState) diagState.textContent = 'Standby (Sleep)';
 
           strip.classList.add('state-standby');
           stripTitle.textContent = 'Standby (Sleeping)';
@@ -1830,19 +1872,19 @@ class DashboardHandler(BaseHTTPRequestHandler):
             stripActions.innerHTML = '<button class="btn-strip btn-strip-primary" onclick="sessionAction(\\'wake\\')">Wake Session</button>';
           }}
         }} else if (state === 'paper_blocked' || state === 'paper_jammed') {{
-          dot.classList.add('offline');
-          label.textContent = 'Feeder Jammed';
-          diagState.textContent = 'Paper Jammed';
+          if (dot) dot.classList.add('offline');
+          if (label) label.textContent = 'Feeder Jammed';
+          if (diagState) diagState.textContent = 'Paper Jammed';
 
           strip.classList.add('state-warning');
           stripTitle.textContent = 'Feeder Jammed';
           stripBadge.textContent = 'Action Required';
           stripDetail.textContent = 'Paper is jammed in the scanner path · Please open cover and clear paper path';
         }} else {{
-          dot.classList.add('offline');
+          if (dot) dot.classList.add('offline');
           const cleanState = state.replace(/_/g, ' ');
-          label.textContent = cleanState;
-          diagState.textContent = state;
+          if (label) label.textContent = cleanState;
+          if (diagState) diagState.textContent = state;
 
           strip.classList.add('state-standby');
           stripTitle.textContent = cleanState;
@@ -1850,8 +1892,10 @@ class DashboardHandler(BaseHTTPRequestHandler):
           stripDetail.textContent = `Current hardware state: ${{state}}`;
         }}
 
-        document.getElementById('diag-uptime').textContent = data.uptime || '--';
-        document.getElementById('diag-ram').textContent = (data.memory_mb || '0.0') + ' MB';
+        const diagUptime = document.getElementById('diag-uptime');
+        if (diagUptime) diagUptime.textContent = data.uptime || '--';
+        const diagRam = document.getElementById('diag-ram');
+        if (diagRam) diagRam.textContent = (data.memory_mb || '0.0') + ' MB';
 
         setPollingInterval(isActiveState ? 750 : 2500);
       }} catch (e) {{
