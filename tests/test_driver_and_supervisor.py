@@ -20,8 +20,12 @@ class SettingsTests(unittest.TestCase):
 
     def test_unknown_size_is_rejected(self):
         with patch.dict(os.environ, {"SCANNER_IP": "192.0.2.42", "SCAN_PAPER_SIZE": "long"}, clear=True):
-            with self.assertRaisesRegex(ValueError, "must be a4, auto, or legal"):
+            with self.assertRaisesRegex(ValueError, "must be a4, auto, legal, or letter"):
                 Settings.from_environment()
+
+    def test_letter_paper_size_accepted(self):
+        with patch.dict(os.environ, {"SCANNER_IP": "192.0.2.42", "SCAN_PAPER_SIZE": "letter"}, clear=True):
+            self.assertEqual(Settings.from_environment().paper_size, "letter")
 
 
 class DriverTests(unittest.TestCase):

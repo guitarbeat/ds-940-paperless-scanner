@@ -42,15 +42,18 @@ class ScannerStatus:
 
     @property
     def is_paper_loaded(self) -> bool:
-        return self.adf_state == "ScannerAdfLoaded"
+        return self.adf_state in ("ScannerAdfLoaded", "ScannerAdfLoad")
 
     @property
     def is_paper_empty(self) -> bool:
-        return self.adf_state == "ScannerAdfEmpty"
+        return self.adf_state in ("ScannerAdfEmpty",)
 
     @property
     def is_jammed(self) -> bool:
-        return self.adf_state == "ScannerAdfJammed"
+        return (
+            "jam" in self.adf_state.lower()
+            or self.adf_state in ("ScannerAdfJammed", "ScannerAdfJam", "ScannerAdfError")
+        )
 
     @property
     def is_busy(self) -> bool:

@@ -54,7 +54,9 @@ def get_recent_scans(output_dir: Path, limit: int = 100) -> list[dict]:
             pass
 
     files = []
-    for root, _, filenames in os.walk(output_dir):
+    for root, dirs, filenames in os.walk(output_dir):
+        # Prevent traversal into hidden directories (e.g. .staging, .trash, .git)
+        dirs[:] = [d for d in dirs if not d.startswith(".")]
         for fname in filenames:
             if fname.lower().endswith(".pdf") and not fname.startswith("."):
                 full_path = Path(root) / fname
@@ -193,9 +195,17 @@ class DashboardHandler(BaseHTTPRequestHandler):
             self.send_json({"status": "error", "message": str(err)}, status=400)
 
     def trigger_sort(self):
-        from ..scripts.sort_scans import sort_scans
         try:
-            results = sort_scans(self.settings.output, dry_run=False, api_key=self.settings.gemini_api_key or None)
+            import importlib.util
+            script_path = Path(__file__).resolve().parent.parent / "scripts" / "sort_scans.py"
+            if not script_path.exists():
+                raise FileNotFoundError(f"Sort script not found at {script_path}")
+            spec = importlib.util.spec_from_file_location("ds940_sort_scans", script_path)
+            if not spec or not spec.loader:
+                raise ImportError(f"Could not load spec for {script_path}")
+            mod = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(mod)
+            results = mod.sort_scans(self.settings.output, dry_run=False, api_key=self.settings.gemini_api_key or None)
             self.send_json({"status": "ok", "moved_count": len(results), "items": results})
         except Exception as err:
             LOG.exception("Sort error: %s", err)
@@ -262,7 +272,7 @@ class DashboardHandler(BaseHTTPRequestHandler):
 
         data = {
             "state": state,
-            "scanner_ip": self.settings.scanner_ip,
+            "scanner_ip": raw.get("scanner_ip", self.settings.scanner_ip),
             "output_dir": str(self.settings.output),
             "uptime": f"{hours}h {minutes}m {seconds}s",
             "uptime_seconds": uptime_sec,
@@ -1821,7 +1831,7 @@ class DashboardHandler(BaseHTTPRequestHandler):
       const base = filename.endsWith('.pdf') ? filename.slice(0, -4) : filename;
 
       // Unfiled brother scanner convention: brother-YYYYMMDD-HHMMSS-hash
-      const unfiledMatch = base.match(/^brother-(\d{{4}})(\d{{2}})(\d{{2}})-(\d{{2}})(\d{{2}})(\d{{2}})-[a-f0-9]+$/);
+      const unfiledMatch = base.match(/^brother-(\\d{{4}})(\\d{{2}})(\\d{{2}})-(\\d{{2}})(\\d{{2}})(\\d{{2}})-[a-f0-9]+$/);
       if (unfiledMatch) {{
         const y = parseInt(unfiledMatch[1]);
         const m = parseInt(unfiledMatch[2]) - 1;
@@ -1838,7 +1848,7 @@ class DashboardHandler(BaseHTTPRequestHandler):
         return `Unfiled Scan (${{month}} ${{d}}, ${{hour}}:${{minStr}} ${{ampm}})`;
       }}
 
-      const dateMatch = base.match(/^\d{{4}}-\d{{2}}-\d{{2}}_(.*)$/);
+      const dateMatch = base.match(/^\\d{{4}}-\\d{{2}}-\\d{{2}}_(.*)$/);
       if (dateMatch) {{
         return dateMatch[1].replace(/_/g, ' · ').replace(/-/g, ' ');
       }}
@@ -1921,12 +1931,12 @@ class DashboardHandler(BaseHTTPRequestHandler):
       const query = document.getElementById('search-box').value.toLowerCase().trim();
       let filtered = allScans;
       if (currentCategory !== 'all') {{
-        filtered = filtered.filter(s => s.category.toLowerCase().includes(currentCategory.toLowerCase()));
+        filtered = filtered.filter(s => (s.category || 'Inbox').toLowerCase() === currentCategory.toLowerCase());
       }}
       if (query) {{
         filtered = filtered.filter(s => 
           s.filename.toLowerCase().includes(query) || 
-          s.category.toLowerCase().includes(query) ||
+          (s.category && s.category.toLowerCase().includes(query)) ||
           (s.doc_date && s.doc_date.toLowerCase().includes(query)) ||
           (s.scan_date && s.scan_date.toLowerCase().includes(query))
         );
@@ -1966,7 +1976,7 @@ class DashboardHandler(BaseHTTPRequestHandler):
         return;
       }}
 
-      const fileUrl = '/files/' + encodeURIComponent(doc.relative_path);
+      const fileUrl = '/files/' + doc.relative_path.split('/').map(encodeURIComponent).join('/');
       frame.src = fileUrl;
       frame.style.display = 'block';
       zero.style.display = 'none';
@@ -2042,7 +2052,7 @@ class DashboardHandler(BaseHTTPRequestHandler):
 
       listContainer.innerHTML = filtered.map((s, idx) => {{
         const headline = parseDisplayTitle(s.filename);
-        const isSelected = activeDoc && activeDoc.filename === s.filename;
+        const isSelected = activeDoc && activeDoc.relative_path === s.relative_path;
         const escRel = s.relative_path.replace(/'/g, "\\'");
         const escName = s.filename.replace(/'/g, "\\'");
 
@@ -2051,8 +2061,8 @@ class DashboardHandler(BaseHTTPRequestHandler):
                tabindex="0" 
                role="option" 
                aria-selected="${{isSelected ? 'true' : 'false'}}"
-               onclick="selectDocument(allScans.find(x => x.filename === '${{escName}}'), ${{idx}})"
-               onkeydown="if(event.key === 'Enter' || event.key === ' ') {{ selectDocument(allScans.find(x => x.filename === '${{escName}}'), ${{idx}}); event.preventDefault(); }}">
+               onclick="selectDocument(allScans.find(x => x.relative_path === '${{escRel}}'), ${{idx}})"
+               onkeydown="if(event.key === 'Enter' || event.key === ' ') {{ selectDocument(allScans.find(x => x.relative_path === '${{escRel}}'), ${{idx}}); event.preventDefault(); }}">
             <div class="doc-icon-wrap" aria-hidden="true">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
                 <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
@@ -2125,9 +2135,10 @@ class DashboardHandler(BaseHTTPRequestHandler):
         const data = await res.json();
         if (data.status === 'ok') {{
           showToast('Deleted ' + filename);
-          if (activeDoc && activeDoc.filename === filename) {{
+          if (activeDoc && (activeDoc.relative_path === relPath || activeDoc.filename === filename)) {{
             activeDoc = null;
             selectedIndex = -1;
+            selectDocument(null, -1);
           }}
           await loadScans();
         }} else {{

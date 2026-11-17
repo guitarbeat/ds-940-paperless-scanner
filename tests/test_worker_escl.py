@@ -57,6 +57,13 @@ class WorkerEsclTests(unittest.TestCase):
             capture_if_ready_escl(self.scanner, self.spool, "a4", self.on_scan)
         self.assertEqual(list(self.consume.iterdir()), [])
 
+    def test_brother_hardware_jam_raises(self):
+        # Real hardware returns ScannerAdfJam
+        self.scanner.get_status.return_value = ScannerStatus(state="Idle", adf_state="ScannerAdfJam")
+        with self.assertRaises(PaperJammedError):
+            capture_if_ready_escl(self.scanner, self.spool, "a4", self.on_scan)
+        self.assertEqual(list(self.consume.iterdir()), [])
+
     def test_loaded_feeder_scans_and_delivers_duplex_pdf(self):
         self.scanner.get_status.return_value = ScannerStatus(state="Idle", adf_state="ScannerAdfLoaded")
         self.scanner.start_scan_job.return_value = "http://192.168.0.25:8080/eSCL/ScanJobs/1"

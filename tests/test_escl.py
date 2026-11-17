@@ -84,6 +84,20 @@ class EsclScannerTests(unittest.TestCase):
         self.assertFalse(status.is_idle)
 
     @patch("urllib.request.urlopen")
+    def test_status_brother_hardware_jam(self, mock_urlopen):
+        # Real Brother DS-940DW hardware reports 'ScannerAdfJam' instead of 'ScannerAdfJammed'
+        hardware_jam = b"""<?xml version="1.0" encoding="UTF-8"?>
+<scan:ScannerStatus xmlns:scan="http://schemas.hp.com/imaging/escl/2011/05/03" xmlns:pwg="http://www.pwg.org/schemas/2010/12/sm">
+    <pwg:Version>2.63</pwg:Version>
+    <pwg:State>Idle</pwg:State>
+    <scan:AdfState>ScannerAdfJam</scan:AdfState>
+</scan:ScannerStatus>"""
+        mock_urlopen.return_value = FakeResponse(hardware_jam)
+        status = self.scanner.get_status()
+        self.assertTrue(status.is_jammed)
+        self.assertFalse(status.is_paper_loaded)
+
+    @patch("urllib.request.urlopen")
     def test_status_offline_raises(self, mock_urlopen):
         mock_urlopen.side_effect = urllib.error.URLError("Connection refused")
         with self.assertRaises(ScannerOfflineError):

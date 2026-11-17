@@ -188,6 +188,7 @@ def serve(settings: Settings, stop: Event, session: SessionManager | None = None
             {
                 "updated": time.time(),
                 "state": state,
+                "scanner_ip": settings.scanner_ip,
                 "paper_size": settings.paper_size,
                 "session_active": session.is_active(),
                 "idle_remaining": round(session.get_remaining(), 1),

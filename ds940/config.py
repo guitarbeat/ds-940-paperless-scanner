@@ -10,7 +10,7 @@ from pathlib import Path
 DPI = 300
 
 
-@dataclass(frozen=True)
+@dataclass
 class Settings:
     scanner_ip: str
     work: Path
@@ -39,8 +39,8 @@ class Settings:
             scanner_ip = address
 
         paper_size = os.environ.get("SCAN_PAPER_SIZE", "a4").strip().lower()
-        if paper_size not in {"a4", "auto", "legal"}:
-            raise ValueError("SCAN_PAPER_SIZE must be a4, auto, or legal")
+        if paper_size not in {"a4", "auto", "legal", "letter"}:
+            raise ValueError("SCAN_PAPER_SIZE must be a4, auto, legal, or letter")
 
         default_work = Path("./work")
         default_output = Path.home() / "Documents" / "brother-scans"

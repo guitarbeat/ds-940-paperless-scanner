@@ -5,6 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 import json
 import logging
+import os
 from pathlib import Path
 import re
 import time
@@ -172,8 +173,9 @@ def classify_with_gemini(
     ledger: TaxonomyLedger | None = None,
     timeout: float = 10.0,
 ) -> DocumentClassification:
-    """Call Gemini 2.5 Flash API with adaptive taxonomy guidance."""
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={api_key}"
+    """Call Gemini Flash API with adaptive taxonomy guidance."""
+    model = os.environ.get("GEMINI_MODEL", "gemini-2.0-flash").strip()
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={api_key}"
 
     # Build list of existing categories
     existing_desc = []

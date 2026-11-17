@@ -6,6 +6,7 @@ from dataclasses import dataclass
 import json
 import logging
 from pathlib import Path
+import shutil
 import subprocess
 
 LOG = logging.getLogger(__name__)
@@ -37,11 +38,17 @@ class OCRResult:
 
 def find_ocr_binary() -> Path | None:
     """Locate the compiled ds940-ocr binary."""
-    # Check bin/ in repository root
+    # 1. Check bin/ in repository root
     repo_root = Path(__file__).resolve().parent.parent
     candidate = repo_root / "bin" / "ds940-ocr"
     if candidate.is_file() and os_executable(candidate):
         return candidate
+    # 2. Check system PATH
+    which_bin = shutil.which("ds940-ocr")
+    if which_bin:
+        path = Path(which_bin)
+        if path.is_file() and os_executable(path):
+            return path
     return None
 
 
