@@ -525,6 +525,20 @@ class DashboardHandler(BaseHTTPRequestHandler):
       white-space: nowrap;
     }}
 
+    .strip-sleep-pill {{
+      font-size: 0.72rem;
+      font-weight: 500;
+      color: var(--text-muted);
+      background: var(--bg-subtle);
+      border: 1px solid var(--border-subtle);
+      padding: 0.12rem 0.5rem;
+      border-radius: 4px;
+      white-space: nowrap;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+    }}
+
     .header-primary-actions {{
       display: flex;
       align-items: center;
@@ -536,13 +550,39 @@ class DashboardHandler(BaseHTTPRequestHandler):
       display: none;
       align-items: center;
       gap: 0.35rem;
+      background: rgba(217, 119, 6, 0.1);
+      border: 1px solid rgba(217, 119, 6, 0.3);
+      padding: 0.15rem 0.5rem;
+      border-radius: 4px;
+      font-size: 0.72rem;
+      color: var(--status-active);
+    }}
+
+    .countdown-pulse-dot {{
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--status-active);
+      animation: pulse 1s infinite;
+    }}
+
+    .countdown-label {{
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      font-size: 0.65rem;
+    }}
+
+    @keyframes pulse {{
+      0%, 100% {{ opacity: 1; }}
+      50% {{ opacity: 0.3; }}
     }}
 
     .strip-countdown-num {{
       font-size: 0.9rem;
       font-weight: 600;
       font-variant-numeric: tabular-nums;
-      color: var(--text);
+      color: var(--status-active);
     }}
 
     .strip-actions {{
@@ -610,14 +650,30 @@ class DashboardHandler(BaseHTTPRequestHandler):
       border-color: var(--border-focus);
     }}
 
+    .btn-icon.active {{
+      background: var(--bg-selected);
+      border-color: var(--border-focus);
+      color: var(--accent);
+    }}
+
+    /* Collapsible Telemetry & Diagnostics Drawer */
+    .telemetry-drawer {{
+      border-top: 1px solid var(--border-subtle);
+      background: var(--bg-subtle);
+      animation: drawerSlideDown 140ms var(--ease-out);
+    }}
+
+    @keyframes drawerSlideDown {{
+      from {{ opacity: 0; transform: translateY(-4px); }}
+      to {{ opacity: 1; transform: translateY(0); }}
+    }}
+
     /* Row 2: Status Narrative & Diagnostics Ledger */
     .header-meta-row {{
       display: flex;
       justify-content: space-between;
       align-items: center;
       padding: 0.35rem 1.5rem 0.42rem;
-      border-top: 1px solid var(--border-subtle);
-      background: var(--bg-subtle);
       font-size: 0.73rem;
       color: var(--text-muted);
       gap: 1.25rem;
@@ -642,16 +698,20 @@ class DashboardHandler(BaseHTTPRequestHandler):
     .header-telemetry-ledger {{
       display: flex;
       align-items: center;
-      gap: 0.85rem;
+      gap: 0.65rem;
       flex-shrink: 0;
     }}
 
     .tele-item {{
       display: inline-flex;
       align-items: center;
-      gap: 0.3rem;
+      gap: 0.35rem;
       white-space: nowrap;
       color: var(--text-dim);
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      padding: 0.12rem 0.45rem;
+      border-radius: 4px;
     }}
 
     .tele-label {{
@@ -669,7 +729,7 @@ class DashboardHandler(BaseHTTPRequestHandler):
     .tele-archive {{
       display: inline-flex;
       align-items: center;
-      gap: 0.3rem;
+      gap: 0.35rem;
     }}
 
     .tele-archive .tele-val {{
@@ -711,9 +771,10 @@ class DashboardHandler(BaseHTTPRequestHandler):
       position: absolute;
       bottom: 0;
       left: 0;
-      height: 2px;
+      height: 3px;
       width: 0%;
       background: var(--status-active);
+      box-shadow: 0 0 6px rgba(217, 119, 6, 0.4);
       transition: width 0.7s linear;
     }}
 
@@ -851,6 +912,23 @@ class DashboardHandler(BaseHTTPRequestHandler):
       border-radius: 4px;
     }}
 
+    .ledger-shortcuts {{
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+      font-size: 0.68rem;
+      color: var(--text-dim);
+    }}
+
+    .ledger-shortcuts kbd {{
+      background: var(--bg-subtle);
+      border: 1px solid var(--border-subtle);
+      padding: 0.05rem 0.25rem;
+      border-radius: 3px;
+      font-size: 0.62rem;
+      color: var(--text-muted);
+    }}
+
     .search-row {{
       position: relative;
       display: flex;
@@ -862,7 +940,7 @@ class DashboardHandler(BaseHTTPRequestHandler):
       background: var(--bg-page);
       border: 1px solid var(--border);
       border-radius: 6px;
-      padding: 0.45rem 2rem 0.45rem 2.1rem;
+      padding: 0.45rem 3.4rem 0.45rem 2.1rem;
       font-size: 0.8rem;
       color: var(--text);
       transition: background-color 120ms var(--ease), border-color 120ms var(--ease), box-shadow 120ms var(--ease);
@@ -881,6 +959,23 @@ class DashboardHandler(BaseHTTPRequestHandler):
       height: 14px;
       color: var(--text-dim);
       pointer-events: none;
+    }}
+
+    .search-clear-btn {{
+      position: absolute;
+      right: 1.85rem;
+      background: none;
+      border: none;
+      color: var(--text-dim);
+      font-size: 0.75rem;
+      cursor: pointer;
+      padding: 0.15rem 0.35rem;
+      line-height: 1;
+      border-radius: 3px;
+    }}
+
+    .search-clear-btn:hover {{
+      color: var(--text);
     }}
 
     .search-kbd {{
@@ -1200,8 +1295,131 @@ class DashboardHandler(BaseHTTPRequestHandler):
       }}
     }}
 
+    /* Accessible Confirmation Modal */
+    .modal-backdrop {{
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 17, 21, 0.55);
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      padding: 1rem;
+      animation: fadeIn 150ms var(--ease-out);
+    }}
+
+    @keyframes fadeIn {{
+      from {{ opacity: 0; }}
+      to {{ opacity: 1; }}
+    }}
+
+    .modal-card {{
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      box-shadow: var(--shadow-md);
+      max-width: 440px;
+      width: 100%;
+      padding: 1.4rem;
+      display: flex;
+      gap: 1.1rem;
+      align-items: flex-start;
+      animation: modalSlideIn 180ms var(--ease-out);
+    }}
+
+    @keyframes modalSlideIn {{
+      from {{ transform: scale(0.96) translateY(6px); opacity: 0; }}
+      to {{ transform: scale(1) translateY(0); opacity: 1; }}
+    }}
+
+    .modal-icon-wrap {{
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: rgba(220, 38, 38, 0.1);
+      color: var(--status-danger);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }}
+
+    .modal-content {{
+      flex: 1;
+      min-width: 0;
+    }}
+
+    .modal-title {{
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--text);
+      margin: 0 0 0.35rem;
+    }}
+
+    .modal-desc {{
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      line-height: 1.4;
+      margin: 0 0 0.65rem;
+    }}
+
+    .modal-filename {{
+      font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+      font-size: 0.74rem;
+      background: var(--bg-subtle);
+      border: 1px solid var(--border-subtle);
+      padding: 0.35rem 0.6rem;
+      border-radius: 4px;
+      color: var(--text);
+      word-break: break-all;
+      margin-bottom: 1.1rem;
+    }}
+
+    .modal-actions {{
+      display: flex;
+      justify-content: flex-end;
+      gap: 0.6rem;
+    }}
+
+    .btn-modal {{
+      padding: 0.4rem 0.85rem;
+      font-size: 0.8rem;
+      font-weight: 500;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background-color 100ms var(--ease), border-color 100ms var(--ease), transform 80ms var(--ease-press);
+    }}
+
+    .btn-modal-cancel {{
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+    }}
+
+    .btn-modal-cancel:hover {{
+      background: var(--bg-hover);
+      color: var(--text);
+    }}
+
+    .btn-modal-danger {{
+      background: var(--status-danger);
+      border: 1px solid var(--status-danger);
+      color: #ffffff;
+      font-weight: 600;
+    }}
+
+    .btn-modal-danger:hover {{
+      background: #b91c1c;
+      border-color: #b91c1c;
+    }}
+
     /* Mobile Drawer & Modal View */
     @media (max-width: 960px) {{
+      .btn-row-action {{
+        opacity: 1;
+      }}
       .header-primary-row {{
         padding: 0.6rem 1rem 0.45rem;
         gap: 0.75rem;
@@ -1247,6 +1465,13 @@ class DashboardHandler(BaseHTTPRequestHandler):
       .btn-close-mobile {{
         display: none !important;
       }}
+      .btn-row-action {{
+        opacity: 0;
+      }}
+      .doc-item:hover .btn-row-action,
+      .doc-item:focus-within .btn-row-action {{
+        opacity: 1;
+      }}
     }}
   </style>
 </head>
@@ -1274,11 +1499,14 @@ class DashboardHandler(BaseHTTPRequestHandler):
           <span id="status-label" style="display:none;"></span>
           <h2 id="strip-title" class="strip-title">Ready for paper</h2>
           <span id="strip-badge" class="strip-badge">Duplex 300 DPI</span>
+          <span id="strip-sleep-pill" class="strip-sleep-pill" style="display:none;"></span>
         </div>
       </div>
 
       <div class="header-primary-actions">
         <div id="strip-countdown-wrap" class="strip-countdown-wrap">
+          <span class="countdown-pulse-dot"></span>
+          <span class="countdown-label">Batch:</span>
           <span id="strip-countdown-num" class="strip-countdown-num">8.0s</span>
         </div>
         <div id="strip-actions" class="strip-actions"></div>
@@ -1286,6 +1514,13 @@ class DashboardHandler(BaseHTTPRequestHandler):
         <div class="header-divider" aria-hidden="true"></div>
 
         <div class="header-actions">
+          <button class="btn-icon" id="tele-toggle-btn" onclick="toggleTelemetry()" title="Toggle System Telemetry (Scanner IP, RAM, Uptime, Archive)" aria-label="System Telemetry">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"/>
+              <line x1="12" y1="16" x2="12" y2="12"/>
+              <line x1="12" y1="8" x2="12.01" y2="8"/>
+            </svg>
+          </button>
           <button class="btn-icon" id="theme-toggle" onclick="toggleTheme()" title="Switch color theme" aria-label="Switch color theme">
             <svg id="theme-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <circle cx="12" cy="12" r="5"/>
@@ -1310,39 +1545,41 @@ class DashboardHandler(BaseHTTPRequestHandler):
       </div>
     </div>
 
-    <!-- Row 2: Status Narrative Context & Full Diagnostics Telemetry Ledger -->
-    <div class="header-meta-row">
-      <div class="header-detail-wrap">
-        <div id="strip-detail" class="strip-detail">Brother DS-940DW ready · Insert document into feeder to scan</div>
-      </div>
+    <!-- Collapsible Telemetry & Diagnostics Drawer -->
+    <div id="telemetry-drawer" class="telemetry-drawer" style="display:none;">
+      <div class="header-meta-row">
+        <div class="header-detail-wrap">
+          <div id="strip-detail" class="strip-detail">Brother DS-940DW ready · Insert document into feeder to scan</div>
+        </div>
 
-      <div class="header-telemetry-ledger" aria-label="System Diagnostics">
-        <span class="tele-item" title="Scanner Network Endpoint">
-          <span class="tele-label">Scanner:</span>
-          <span id="diag-scanner" class="tele-val">{self.settings.scanner_ip}:8080</span>
-        </span>
-        <span class="tele-item" title="Daemon Engine State">
-          <span class="tele-label">State:</span>
-          <span id="diag-state" class="tele-val">Connecting</span>
-        </span>
-        <span class="tele-item" title="Process Uptime">
-          <span class="tele-label">Uptime:</span>
-          <span id="diag-uptime" class="tele-val">--</span>
-        </span>
-        <span class="tele-item" title="Resident Memory (RSS)">
-          <span class="tele-label">RAM:</span>
-          <span id="diag-ram" class="tele-val">-- MB</span>
-        </span>
-        <span class="tele-item tele-archive" title="Local Archive Destination">
-          <span class="tele-label">Archive:</span>
-          <span id="diag-path" class="tele-val">{self.settings.output}</span>
-          <button class="btn-copy" onclick="copyPath()" title="Copy folder path" aria-label="Copy folder path">
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
-              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
-            </svg>
-          </button>
-        </span>
+        <div class="header-telemetry-ledger" aria-label="System Diagnostics">
+          <span class="tele-item" title="Scanner Network Endpoint">
+            <span class="tele-label">Scanner:</span>
+            <span id="diag-scanner" class="tele-val">{self.settings.scanner_ip}:8080</span>
+          </span>
+          <span class="tele-item" title="Daemon Engine State">
+            <span class="tele-label">State:</span>
+            <span id="diag-state" class="tele-val">Connecting</span>
+          </span>
+          <span class="tele-item" title="Process Uptime">
+            <span class="tele-label">Uptime:</span>
+            <span id="diag-uptime" class="tele-val">--</span>
+          </span>
+          <span class="tele-item" title="Resident Memory (RSS)">
+            <span class="tele-label">RAM:</span>
+            <span id="diag-ram" class="tele-val">-- MB</span>
+          </span>
+          <span class="tele-item tele-archive" title="Local Archive Destination">
+            <span class="tele-label">Archive:</span>
+            <span id="diag-path" class="tele-val">{self.settings.output}</span>
+            <button class="btn-copy" onclick="copyPath()" title="Copy folder path" aria-label="Copy folder path">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+              </svg>
+            </button>
+          </span>
+        </div>
       </div>
     </div>
 
@@ -1360,6 +1597,7 @@ class DashboardHandler(BaseHTTPRequestHandler):
               <h2 id="ledger-heading" class="ledger-title">Recent Scans</h2>
               <span class="ledger-count" id="scan-count">0</span>
             </div>
+            <div class="ledger-shortcuts"><kbd>↑</kbd><kbd>↓</kbd> <span>nav</span> · <kbd>/</kbd> <span>search</span></div>
           </div>
 
           <div class="search-row">
@@ -1367,7 +1605,8 @@ class DashboardHandler(BaseHTTPRequestHandler):
               <circle cx="11" cy="11" r="8"/>
               <line x1="21" y1="21" x2="16.65" y2="16.65"/>
             </svg>
-            <input type="search" id="search-box" class="search-input" placeholder="Search archive..." oninput="filterScans()" aria-label="Search archive">
+            <input type="search" id="search-box" class="search-input" placeholder="Search archive..." oninput="onSearchInput()" aria-label="Search archive">
+            <button class="search-clear-btn" id="search-clear" onclick="clearSearch()" style="display:none;" title="Clear search" aria-label="Clear search">✕</button>
             <kbd class="search-kbd">/</kbd>
           </div>
 
@@ -1440,6 +1679,27 @@ class DashboardHandler(BaseHTTPRequestHandler):
 
   <div id="toast" class="toast" role="alert">Notification</div>
 
+  <!-- Accessible Deletion Confirmation Modal -->
+  <div id="confirm-modal" class="modal-backdrop" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <div class="modal-card">
+      <div class="modal-icon-wrap" aria-hidden="true">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="3 6 5 6 21 6"/>
+          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+        </svg>
+      </div>
+      <div class="modal-content">
+        <h3 id="modal-title" class="modal-title">Delete Document?</h3>
+        <p class="modal-desc">This action cannot be undone. The PDF will be permanently removed from your archive:</p>
+        <div id="modal-filename" class="modal-filename">document.pdf</div>
+        <div class="modal-actions">
+          <button class="btn-modal btn-modal-cancel" id="modal-cancel-btn" onclick="closeConfirmModal()">Cancel</button>
+          <button class="btn-modal btn-modal-danger" id="modal-confirm-btn" onclick="executePendingDelete()">Delete Document</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <script>
     let allScans = [];
     let currentCategory = 'all';
@@ -1491,11 +1751,68 @@ class DashboardHandler(BaseHTTPRequestHandler):
     /* Document Title Parser */
     function parseDisplayTitle(filename) {{
       const base = filename.endsWith('.pdf') ? filename.slice(0, -4) : filename;
-      const dateMatch = base.match(/^\\d{{4}}-\\d{{2}}-\\d{{2}}_(.*)$/);
+
+      // Unfiled brother scanner convention: brother-YYYYMMDD-HHMMSS-hash
+      const unfiledMatch = base.match(/^brother-(\d{{4}})(\d{{2}})(\d{{2}})-(\d{{2}})(\d{{2}})(\d{{2}})-[a-f0-9]+$/);
+      if (unfiledMatch) {{
+        const y = parseInt(unfiledMatch[1]);
+        const m = parseInt(unfiledMatch[2]) - 1;
+        const d = parseInt(unfiledMatch[3]);
+        const hh = parseInt(unfiledMatch[4]);
+        const mm = parseInt(unfiledMatch[5]);
+        const date = new Date(y, m, d, hh, mm);
+        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        const month = months[date.getMonth()] || 'Scan';
+        let hour = date.getHours();
+        const ampm = hour >= 12 ? 'PM' : 'AM';
+        hour = hour % 12 || 12;
+        const minStr = String(date.getMinutes()).padStart(2, '0');
+        return `Unfiled Scan (${{month}} ${{d}}, ${{hour}}:${{minStr}} ${{ampm}})`;
+      }}
+
+      const dateMatch = base.match(/^\d{{4}}-\d{{2}}-\d{{2}}_(.*)$/);
       if (dateMatch) {{
         return dateMatch[1].replace(/_/g, ' · ').replace(/-/g, ' ');
       }}
       return base.replace(/_/g, ' · ').replace(/-/g, ' ');
+    }}
+
+    /* Search Input & Clear */
+    function onSearchInput() {{
+      const val = document.getElementById('search-box').value;
+      const clearBtn = document.getElementById('search-clear');
+      if (clearBtn) clearBtn.style.display = val ? 'block' : 'none';
+      filterScans();
+    }}
+
+    function clearSearch() {{
+      const box = document.getElementById('search-box');
+      box.value = '';
+      const clearBtn = document.getElementById('search-clear');
+      if (clearBtn) clearBtn.style.display = 'none';
+      filterScans();
+      box.focus();
+    }}
+
+    /* Telemetry Drawer Management */
+    function initTelemetryDrawer() {{
+      const open = localStorage.getItem('ds940-telemetry-open') === 'true';
+      setTelemetryDrawerOpen(open);
+    }}
+
+    function setTelemetryDrawerOpen(open) {{
+      const drawer = document.getElementById('telemetry-drawer');
+      const btn = document.getElementById('tele-toggle-btn');
+      if (!drawer) return;
+      drawer.style.display = open ? 'block' : 'none';
+      if (btn) btn.classList.toggle('active', open);
+      localStorage.setItem('ds940-telemetry-open', open ? 'true' : 'false');
+    }}
+
+    function toggleTelemetry() {{
+      const drawer = document.getElementById('telemetry-drawer');
+      const isOpen = drawer && drawer.style.display !== 'none';
+      setTelemetryDrawerOpen(!isOpen);
     }}
 
     /* Category Filtering */
@@ -1638,14 +1955,17 @@ class DashboardHandler(BaseHTTPRequestHandler):
       document.getElementById('scan-count').textContent = filtered.length;
 
       if (filtered.length === 0) {{
+        const query = document.getElementById('search-box').value.trim();
+        const escQuery = query.replace(/"/g, '&quot;');
         listContainer.innerHTML = `
           <div class="zero-state">
             <svg class="zero-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
               <circle cx="11" cy="11" r="8"/>
               <line x1="21" y1="21" x2="16.65" y2="16.65"/>
             </svg>
-            <div class="zero-title">No matching documents</div>
-            <div class="zero-desc">Adjust your search query or feed a new document into the scanner.</div>
+            <div class="zero-title">${{query ? `No documents matching "${{escQuery}}"` : 'No documents in this view'}}</div>
+            <div class="zero-desc">${{query ? 'Check your spelling or clear your search to see all documents.' : 'Feed a new document into the Brother scanner to populate this archive.'}}</div>
+            ${{query ? '<button class="btn-action" onclick="clearSearch()" style="margin-top:0.75rem;">Clear search</button>' : ''}}
           </div>
         `;
         selectDocument(null, -1);
@@ -1705,8 +2025,29 @@ class DashboardHandler(BaseHTTPRequestHandler):
       confirmDelete(activeDoc.relative_path, activeDoc.filename);
     }}
 
-    async function confirmDelete(relPath, filename) {{
-      if (!confirm('Permanently delete ' + filename + '?')) return;
+    let pendingDelete = null;
+
+    function confirmDelete(relPath, filename) {{
+      pendingDelete = {{ relPath, filename }};
+      const modal = document.getElementById('confirm-modal');
+      const nameEl = document.getElementById('modal-filename');
+      const cancelBtn = document.getElementById('modal-cancel-btn');
+      if (nameEl) nameEl.textContent = filename;
+      if (modal) modal.style.display = 'flex';
+      if (cancelBtn) cancelBtn.focus();
+    }}
+
+    function closeConfirmModal() {{
+      const modal = document.getElementById('confirm-modal');
+      if (modal) modal.style.display = 'none';
+      pendingDelete = null;
+    }}
+
+    async function executePendingDelete() {{
+      if (!pendingDelete) return;
+      const {{ relPath, filename }} = pendingDelete;
+      closeConfirmModal();
+
       try {{
         const res = await fetch('/api/delete', {{
           method: 'POST',
@@ -1773,6 +2114,7 @@ class DashboardHandler(BaseHTTPRequestHandler):
         const strip = document.getElementById('live-status-strip');
         const stripTitle = document.getElementById('strip-title');
         const stripBadge = document.getElementById('strip-badge');
+        const stripSleepPill = document.getElementById('strip-sleep-pill');
         const stripDetail = document.getElementById('strip-detail');
         const countdownWrap = document.getElementById('strip-countdown-wrap');
         const countdownNum = document.getElementById('strip-countdown-num');
@@ -1789,6 +2131,7 @@ class DashboardHandler(BaseHTTPRequestHandler):
         strip.className = 'app-header';
         progressBar.style.width = '0%';
         countdownWrap.style.display = 'none';
+        if (stripSleepPill) stripSleepPill.style.display = 'none';
         if (stripActions) stripActions.innerHTML = '';
 
         let isActiveState = false;
@@ -1807,11 +2150,16 @@ class DashboardHandler(BaseHTTPRequestHandler):
             const m = Math.floor(idleRem / 60);
             const s = Math.floor(idleRem % 60);
             const timeStr = m > 0 ? `${{m}}m ${{s}}s` : `${{s}}s`;
+            if (stripSleepPill) {{
+              stripSleepPill.textContent = `Sleeping in ${{timeStr}}`;
+              stripSleepPill.style.display = 'inline-flex';
+            }}
             stripDetail.textContent = `Brother DS-940DW ready at ${{scannerIp}} · Sleeping in ${{timeStr}} to save battery`;
             if (stripActions) {{
               stripActions.innerHTML = '<button class="btn-strip" onclick="sessionAction(\\'extend\\')">+5m</button><button class="btn-strip" onclick="sessionAction(\\'pause\\')">Sleep Now</button>';
             }}
           }} else {{
+            if (stripSleepPill) stripSleepPill.style.display = 'none';
             stripDetail.textContent = `Brother DS-940DW ready at ${{scannerIp}} · Insert document into feeder to scan`;
           }}
         }} else if (state === 'battery_saver_dormant') {{
@@ -1960,13 +2308,29 @@ class DashboardHandler(BaseHTTPRequestHandler):
     /* Keyboard navigation */
     document.addEventListener('keydown', e => {{
       const isInput = document.activeElement.tagName === 'INPUT';
-      
+      const modal = document.getElementById('confirm-modal');
+      const isModalOpen = modal && modal.style.display !== 'none';
+
       if (e.key === 'Escape') {{
+        if (isModalOpen) {{
+          closeConfirmModal();
+          return;
+        }}
         closeMobileInspector();
-        if (isInput) document.activeElement.blur();
+        if (isInput) {{
+          document.activeElement.blur();
+        }}
+      }} else if (e.key === 'Enter' && isModalOpen) {{
+        e.preventDefault();
+        executePendingDelete();
+      }} else if (isModalOpen) {{
+        return;
       }} else if (e.key === '/' && !isInput) {{
         e.preventDefault();
         document.getElementById('search-box').focus();
+      }} else if (e.key.toLowerCase() === 'i' && !isInput) {{
+        e.preventDefault();
+        toggleTelemetry();
       }} else if ((e.key === 'ArrowDown' || e.key === 'ArrowUp') && !isInput) {{
         e.preventDefault();
         const filtered = getFilteredScans();
@@ -1981,6 +2345,7 @@ class DashboardHandler(BaseHTTPRequestHandler):
     }});
 
     initTheme();
+    initTelemetryDrawer();
     updateStatus();
     loadScans();
     setPollingInterval(2500);
