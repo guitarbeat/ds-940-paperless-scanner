@@ -686,7 +686,7 @@ class DashboardHandler(BaseHTTPRequestHandler):
       grid-template-columns: 480px 1fr;
       gap: 1.25rem;
       flex: 1;
-      min-height: calc(100vh - 210px);
+      min-height: calc(100vh - 85px);
     }}
 
     /* Left Pane: Ledger */
@@ -1047,40 +1047,53 @@ class DashboardHandler(BaseHTTPRequestHandler):
       line-height: 1.4;
     }}
 
-    /* Technical Diagnostics Footer */
-    footer.diagnostics {{
-      background: var(--bg-surface);
-      border-top: 1px solid var(--border);
-      padding: 0.6rem 1.5rem;
+    /* Header Diagnostics Telemetry */
+    .header-telemetry {{
+      display: flex;
+      align-items: center;
+      gap: 0.65rem;
       font-size: 0.72rem;
-      color: var(--text-dim);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 0.5rem 1.5rem;
+      color: var(--text-muted);
+      border-left: 1px solid var(--border);
+      padding-left: 0.75rem;
     }}
 
-    .diag-group {{
-      display: flex;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 0.5rem 1rem;
-    }}
-
-    .diag-item {{
+    .telemetry-item {{
       display: inline-flex;
       align-items: center;
       gap: 0.3rem;
-    }}
-
-    .diag-label {{
       color: var(--text-dim);
+      font-variant-numeric: tabular-nums;
     }}
 
-    .diag-val {{
+    .telemetry-item svg {{
+      color: var(--text-dim);
+      flex-shrink: 0;
+    }}
+
+    .telemetry-val {{
       color: var(--text-muted);
       font-weight: 500;
+    }}
+
+    .telemetry-path {{
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      max-width: 220px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      background: var(--bg-subtle);
+      border: 1px solid var(--border-subtle);
+      padding: 0.12rem 0.45rem;
+      border-radius: 4px;
+    }}
+
+    .telemetry-path span {{
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }}
 
     .btn-copy {{
@@ -1089,11 +1102,15 @@ class DashboardHandler(BaseHTTPRequestHandler):
       color: var(--text-dim);
       display: inline-flex;
       align-items: center;
-      padding: 0 2px;
-      margin-left: 2px;
+      justify-content: center;
+      padding: 0 1px;
+      cursor: pointer;
+      transition: color 100ms ease;
     }}
 
-    .btn-copy:hover {{ color: var(--text); }}
+    .btn-copy:hover {{
+      color: var(--text);
+    }}
 
     /* Toast */
     .toast {{
@@ -1120,8 +1137,17 @@ class DashboardHandler(BaseHTTPRequestHandler):
       opacity: 1;
     }}
 
+    @media (max-width: 1200px) {{
+      .telemetry-path {{
+        display: none;
+      }}
+    }}
+
     /* Mobile Drawer & Modal View */
     @media (max-width: 960px) {{
+      .header-telemetry {{
+        display: none;
+      }}
       .strip-detail {{
         display: none;
       }}
@@ -1176,6 +1202,8 @@ class DashboardHandler(BaseHTTPRequestHandler):
         <span id="strip-beacon" class="strip-beacon"></span>
         <span id="status-dot" style="display:none;"></span>
         <span id="status-label" style="display:none;"></span>
+        <span id="diag-scanner" style="display:none;">{self.settings.scanner_ip}:8080</span>
+        <span id="diag-state" style="display:none;">Connecting</span>
         <div class="strip-text-wrap">
           <div class="strip-headline-row">
             <h2 id="strip-title" class="strip-title">Ready for paper</h2>
@@ -1191,6 +1219,34 @@ class DashboardHandler(BaseHTTPRequestHandler):
         <span id="strip-countdown-num" class="strip-countdown-num">8.0s</span>
       </div>
       <div id="strip-actions" class="strip-actions"></div>
+
+      <div class="header-telemetry" aria-label="System Diagnostics">
+        <span class="telemetry-item" title="Daemon Uptime">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"/>
+            <polyline points="12 6 12 12 16 14"/>
+          </svg>
+          <span id="diag-uptime" class="telemetry-val">--</span>
+        </span>
+        <span class="telemetry-item" title="Resident Memory">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="2" y="2" width="20" height="8" rx="2"/>
+            <rect x="2" y="14" width="20" height="8" rx="2"/>
+            <line x1="6" y1="6" x2="6.01" y2="6"/>
+            <line x1="6" y1="18" x2="6.01" y2="18"/>
+          </svg>
+          <span id="diag-ram" class="telemetry-val">-- MB</span>
+        </span>
+        <div class="telemetry-item telemetry-path" title="Archive Folder">
+          <span id="diag-path">{self.settings.output}</span>
+          <button class="btn-copy" onclick="copyPath()" title="Copy folder path" aria-label="Copy folder path">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+            </svg>
+          </button>
+        </div>
+      </div>
       <div class="header-actions">
         <button class="btn-icon" id="theme-toggle" onclick="toggleTheme()" title="Switch color theme" aria-label="Switch color theme">
           <svg id="theme-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -1305,40 +1361,6 @@ class DashboardHandler(BaseHTTPRequestHandler):
       </section>
     </div>
   </main>
-
-  <!-- Diagnostics Footer -->
-  <footer class="diagnostics">
-    <div class="diag-group">
-      <div class="diag-item">
-        <span class="diag-label">Scanner:</span>
-        <span class="diag-val" id="diag-scanner">{self.settings.scanner_ip}:8080</span>
-      </div>
-      <div class="diag-item">
-        <span class="diag-label">State:</span>
-        <span class="diag-val" id="diag-state">Connecting</span>
-      </div>
-      <div class="diag-item">
-        <span class="diag-label">Uptime:</span>
-        <span class="diag-val" id="diag-uptime">--</span>
-      </div>
-      <div class="diag-item">
-        <span class="diag-label">RAM:</span>
-        <span class="diag-val" id="diag-ram">-- MB</span>
-      </div>
-    </div>
-    <div class="diag-group">
-      <div class="diag-item">
-        <span class="diag-label">Archive:</span>
-        <span class="diag-val" id="diag-path">{self.settings.output}</span>
-        <button class="btn-copy" onclick="copyPath()" title="Copy folder path" aria-label="Copy folder path">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
-            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
-          </svg>
-        </button>
-      </div>
-    </div>
-  </footer>
 
   <div id="toast" class="toast" role="alert">Notification</div>
 
