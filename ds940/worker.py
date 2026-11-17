@@ -11,6 +11,7 @@ from threading import Event
 import time
 
 from .config import DPI, Settings
+from .discovery import discover_scanner_ip
 from .escl import (
     EsclError,
     EsclScanner,
@@ -206,6 +207,11 @@ def serve(settings: Settings, stop: Event, session: SessionManager | None = None
         enable_ai_filing=settings.enable_ai_filing,
         remove_blank_threshold=settings.remove_blank_threshold,
     )
+    discovered = discover_scanner_ip(settings.scanner_ip)
+    if discovered and discovered != settings.scanner_ip:
+        LOG.info("Auto-discovered scanner at %s (configured was %s)", discovered, settings.scanner_ip)
+        settings.scanner_ip = discovered
+
     scanner = EsclScanner(settings.scanner_ip)
     try:
         run_web_server(settings, stop, session=session)
@@ -257,7 +263,13 @@ def serve(settings: Settings, stop: Event, session: SessionManager | None = None
                         session.touch()
                         continue
                 except (ScannerOfflineError, ScannerBusyError, OSError):
-                    pass
+                    discovered = discover_scanner_ip()
+                    if discovered and discovered != scanner.host:
+                        LOG.info("Discovered scanner moved to %s during dormant heartbeat.", discovered)
+                        settings.scanner_ip = discovered
+                        scanner = EsclScanner(discovered)
+                        session.touch()
+                        continue
                 continue
 
             try:
@@ -281,6 +293,14 @@ def serve(settings: Settings, stop: Event, session: SessionManager | None = None
                 status(previous_state)
                 stop.wait(2)
             except (OSError, RuntimeError, ValueError, KeyError, EsclError) as error:
+                if isinstance(error, (ScannerOfflineError, OSError)):
+                    discovered = discover_scanner_ip()
+                    if discovered and discovered != scanner.host:
+                        LOG.info("Scanner dynamic IP change detected: %s -> %s. Reconnecting.", scanner.host, discovered)
+                        settings.scanner_ip = discovered
+                        scanner = EsclScanner(discovered)
+                        continue
+
                 state, delay = retry_state_escl(error)
                 if state != previous_state or state == "retry_after_error":
                     LOG.warning("%s. Retrying in %d seconds (%s).", error, delay, state)
