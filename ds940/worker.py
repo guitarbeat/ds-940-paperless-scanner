@@ -106,6 +106,9 @@ def capture_if_ready_escl(
                 break
 
         # Blank page filtering (empirical ink coverage threshold)
+        if on_status:
+            on_status("assembling_pdf", sheet=sheet_count, pages_so_far=len(all_pages))
+
         blank_threshold = getattr(spool, "remove_blank_threshold", 0.05)
         pages_to_build, discarded_blanks = filter_blank_pages(all_pages, threshold=blank_threshold)
         if discarded_blanks:
@@ -125,7 +128,36 @@ def capture_if_ready_escl(
             sheets=sheet_count,
         )
         atomic_json(manifest_path, manifest, durable=True)
+
+        if on_status:
+            on_status(
+                "filing_document",
+                sheet=sheet_count,
+                pages=len(pages_to_build),
+                raw_pages=len(all_pages),
+                discarded_blank_pages=len(discarded_blanks),
+            )
+
         spool.publish(folder)
+
+        last_scan_info = {}
+        try:
+            last_file = spool.work / "last-scan.json"
+            if last_file.exists():
+                last_scan_info = json.loads(last_file.read_text(encoding="utf-8"))
+        except Exception:
+            pass
+
+        if on_status:
+            dest = last_scan_info.get("destination") or f"{folder.name}.pdf"
+            on_status(
+                "filed",
+                sheet=sheet_count,
+                pages=len(pages_to_build),
+                destination=dest,
+                category=last_scan_info.get("category", "Inbox"),
+                completed_at=time.time(),
+            )
     except Exception as error:
         if manifest.get("phase") != "ready":
             manifest.update(phase="error", error=str(error))
@@ -196,12 +228,13 @@ def serve(settings: Settings, stop: Event):
                 )
                 if scanned_id:
                     LOG.info("Successfully scanned and published job: %s", scanned_id)
+                    stop.wait(3.5)
 
                 if previous_state != "waiting_for_paper":
                     LOG.info("Ready for paper at %s (duplex, %d dpi)", settings.scanner_ip, DPI)
                 previous_state = "waiting_for_paper"
                 status(previous_state)
-                stop.wait(3)
+                stop.wait(2)
             except (OSError, RuntimeError, ValueError, KeyError, EsclError) as error:
                 state, delay = retry_state_escl(error)
                 if state != previous_state or state == "retry_after_error":

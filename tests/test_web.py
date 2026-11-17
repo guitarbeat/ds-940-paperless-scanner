@@ -62,6 +62,31 @@ class WebDashboardTests(unittest.TestCase):
             self.assertIn("memory_mb", data)
             self.assertIn("uptime", data)
 
+    def test_status_endpoint_extended_states(self):
+        (self.work / "auto-status.json").write_text(
+            json.dumps({
+                "state": "filed",
+                "destination": "Medical/2026-11-17_Labcorp_Invoice.pdf",
+                "category": "Medical & Health",
+                "pages": 2,
+                "raw_pages": 4,
+                "discarded_blank_pages": 2,
+                "completed_at": 1794900000.0,
+                "updated": time.time(),
+            }),
+            encoding="utf-8",
+        )
+        url = f"http://127.0.0.1:{self.port}/api/status"
+        with urllib.request.urlopen(url, timeout=3.0) as resp:
+            self.assertEqual(resp.status, 200)
+            data = json.loads(resp.read().decode("utf-8"))
+            self.assertEqual(data["state"], "filed")
+            self.assertEqual(data["destination"], "Medical/2026-11-17_Labcorp_Invoice.pdf")
+            self.assertEqual(data["category"], "Medical & Health")
+            self.assertEqual(data["pages"], 2)
+            self.assertEqual(data["raw_pages"], 4)
+            self.assertEqual(data["discarded_blank_pages"], 2)
+
     def test_scans_endpoint(self):
         url = f"http://127.0.0.1:{self.port}/api/scans"
         with urllib.request.urlopen(url, timeout=3.0) as resp:
@@ -88,6 +113,8 @@ class WebDashboardTests(unittest.TestCase):
             html = resp.read().decode("utf-8")
             self.assertIn("Brother DS-940DW", html)
             self.assertIn("Recent Scans", html)
+            self.assertIn("live-status-strip", html)
+            self.assertIn("strip-title", html)
             self.assertIn("Doc Date", html)
             self.assertIn("Scanned", html)
 

@@ -246,6 +246,12 @@ class DashboardHandler(BaseHTTPRequestHandler):
             "timeout_remaining": raw.get("timeout_remaining") if isinstance(raw, dict) else None,
             "sheet": raw.get("sheet") if isinstance(raw, dict) else None,
             "pages_so_far": raw.get("pages_so_far") if isinstance(raw, dict) else None,
+            "destination": raw.get("destination") if isinstance(raw, dict) else None,
+            "category": raw.get("category") if isinstance(raw, dict) else None,
+            "pages": raw.get("pages") if isinstance(raw, dict) else None,
+            "raw_pages": raw.get("raw_pages") if isinstance(raw, dict) else None,
+            "discarded_blank_pages": raw.get("discarded_blank_pages") if isinstance(raw, dict) else None,
+            "completed_at": raw.get("completed_at") if isinstance(raw, dict) else None,
             "last_scan": last_scan,
         }
         self.send_json(data)
@@ -469,45 +475,157 @@ class DashboardHandler(BaseHTTPRequestHandler):
       gap: 1rem;
     }}
 
-    /* Collation Banner */
-    .collation-banner {{
-      display: none;
-      background: rgba(217, 119, 6, 0.09);
-      border: 1px solid rgba(217, 119, 6, 0.28);
+    /* Live Hardware Status Strip */
+    .status-strip {{
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
       border-radius: 6px;
-      padding: 0.75rem 1rem;
+      padding: 0.85rem 1.25rem;
+      display: flex;
       align-items: center;
       justify-content: space-between;
       position: relative;
       overflow: hidden;
+      transition: border-color 180ms var(--ease), background-color 180ms var(--ease);
     }}
 
-    .collation-banner.visible {{ display: flex; }}
-
-    .collation-info {{
+    .strip-main {{
       display: flex;
       align-items: center;
-      gap: 0.6rem;
-      font-size: 0.82rem;
-      font-weight: 500;
-      color: #b45309;
+      gap: 0.9rem;
+      flex: 1;
+      min-width: 0;
     }}
 
-    [data-theme="dark"] .collation-info {{ color: #fbbf24; }}
+    .strip-beacon {{
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--status-ready);
+      flex-shrink: 0;
+      transition: background-color 180ms ease;
+    }}
 
-    .collation-time {{
-      font-size: 0.78rem;
+    .strip-text-wrap {{
+      display: flex;
+      flex-direction: column;
+      gap: 0.15rem;
+      min-width: 0;
+    }}
+
+    .strip-headline-row {{
+      display: flex;
+      align-items: center;
+      gap: 0.65rem;
+      flex-wrap: wrap;
+    }}
+
+    .strip-title {{
+      font-size: 1.05rem;
       font-weight: 600;
+      letter-spacing: -0.015em;
+      color: var(--text);
+      line-height: 1.25;
+    }}
+
+    .strip-badge {{
+      font-size: 0.72rem;
+      font-weight: 600;
+      padding: 0.15rem 0.45rem;
+      border-radius: 3px;
+      background: var(--bg-subtle);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
+    }}
+
+    .strip-detail {{
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }}
+
+    .strip-countdown-wrap {{
+      display: none;
+      align-items: center;
+      gap: 0.5rem;
+      margin-left: 1rem;
+    }}
+
+    .strip-countdown-num {{
+      font-size: 0.95rem;
+      font-weight: 600;
+      font-variant-numeric: tabular-nums;
       color: var(--text);
     }}
 
-    .collation-progress {{
+    .strip-progress-bar {{
       position: absolute;
       bottom: 0;
       left: 0;
       height: 2px;
+      width: 0%;
       background: var(--status-active);
-      transition: width 1s linear;
+      transition: width 0.7s linear;
+    }}
+
+    /* State modifier styles */
+    .status-strip.state-ready {{
+      border-color: var(--border);
+    }}
+    .status-strip.state-ready .strip-beacon {{
+      background: var(--status-ready);
+    }}
+
+    .status-strip.state-scanning {{
+      border-color: rgba(37, 99, 235, 0.35);
+      background: rgba(37, 99, 235, 0.035);
+    }}
+    .status-strip.state-scanning .strip-beacon {{
+      background: var(--accent);
+    }}
+
+    .status-strip.state-collation {{
+      border-color: rgba(217, 119, 6, 0.4);
+      background: rgba(217, 119, 6, 0.05);
+    }}
+    .status-strip.state-collation .strip-beacon {{
+      background: var(--status-active);
+    }}
+
+    .status-strip.state-processing {{
+      border-color: rgba(99, 102, 241, 0.35);
+      background: rgba(99, 102, 241, 0.04);
+    }}
+    .status-strip.state-processing .strip-beacon {{
+      background: #6366f1;
+    }}
+
+    .status-strip.state-filed {{
+      border-color: rgba(22, 163, 74, 0.4);
+      background: rgba(22, 163, 74, 0.05);
+    }}
+    .status-strip.state-filed .strip-beacon {{
+      background: var(--status-ready);
+    }}
+
+    .status-strip.state-warning {{
+      border-color: rgba(220, 38, 38, 0.4);
+      background: rgba(220, 38, 38, 0.04);
+    }}
+    .status-strip.state-warning .strip-beacon {{
+      background: var(--status-danger);
+    }}
+
+    .status-strip.state-standby {{
+      border-color: var(--border);
+      background: var(--bg-surface);
+    }}
+    .status-strip.state-standby .strip-beacon {{
+      background: var(--status-standby);
     }}
 
     /* Master-Detail Split Grid */
@@ -1025,18 +1143,22 @@ class DashboardHandler(BaseHTTPRequestHandler):
   </header>
 
   <main class="workbench">
-    <!-- Collation Banner -->
-    <div id="collation-banner" class="collation-banner" role="region" aria-label="Multi-sheet scan progress">
-      <div class="collation-info">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <circle cx="12" cy="12" r="10"/>
-          <line x1="12" y1="8" x2="12" y2="12"/>
-          <line x1="12" y1="16" x2="12.01" y2="16"/>
-        </svg>
-        <span id="collation-msg">Multi-sheet batch active. Insert next sheet to append...</span>
+    <!-- Live Hardware Status Strip -->
+    <div id="live-status-strip" class="status-strip state-ready" role="region" aria-live="polite">
+      <div class="strip-main">
+        <span id="strip-beacon" class="strip-beacon"></span>
+        <div class="strip-text-wrap">
+          <div class="strip-headline-row">
+            <h2 id="strip-title" class="strip-title">Ready for paper</h2>
+            <span id="strip-badge" class="strip-badge">Duplex 300 DPI</span>
+          </div>
+          <div id="strip-detail" class="strip-detail">Brother DS-940DW ready &bull; Insert document into feeder to scan</div>
+        </div>
       </div>
-      <span class="collation-time" id="collation-time">8s</span>
-      <div id="collation-bar" class="collation-progress" style="width: 100%;"></div>
+      <div id="strip-countdown-wrap" class="strip-countdown-wrap">
+        <span id="strip-countdown-num" class="strip-countdown-num">8.0s</span>
+      </div>
+      <div id="strip-progress-bar" class="strip-progress-bar"></div>
     </div>
 
     <!-- Master-Detail Split Grid -->
@@ -1452,6 +1574,17 @@ class DashboardHandler(BaseHTTPRequestHandler):
       }}
     }}
 
+    let pollTimer = null;
+    let currentPollInterval = 2500;
+    let lastFiledDestination = null;
+
+    function setPollingInterval(intervalMs) {{
+      if (intervalMs === currentPollInterval && pollTimer !== null) return;
+      currentPollInterval = intervalMs;
+      if (pollTimer) clearInterval(pollTimer);
+      pollTimer = setInterval(updateStatus, currentPollInterval);
+    }}
+
     async function updateStatus() {{
       try {{
         const res = await fetch('/api/status');
@@ -1460,41 +1593,140 @@ class DashboardHandler(BaseHTTPRequestHandler):
         const dot = document.getElementById('status-dot');
         const label = document.getElementById('status-label');
         const diagState = document.getElementById('diag-state');
-        const collationBanner = document.getElementById('collation-banner');
-        const collationBar = document.getElementById('collation-bar');
+        
+        const strip = document.getElementById('live-status-strip');
+        const stripTitle = document.getElementById('strip-title');
+        const stripBadge = document.getElementById('strip-badge');
+        const stripDetail = document.getElementById('strip-detail');
+        const countdownWrap = document.getElementById('strip-countdown-wrap');
+        const countdownNum = document.getElementById('strip-countdown-num');
+        const progressBar = document.getElementById('strip-progress-bar');
+
+        const state = data.state || 'unknown';
+        const scannerIp = data.scanner_ip || 'network';
 
         dot.className = 'status-dot';
-        if (data.state === 'waiting_for_paper') {{
+        strip.className = 'status-strip';
+        progressBar.style.width = '0%';
+        countdownWrap.style.display = 'none';
+
+        let isActiveState = false;
+
+        if (state === 'waiting_for_paper') {{
           dot.classList.add('online');
           label.textContent = 'Ready for paper';
           diagState.textContent = 'Ready (Idle)';
-          collationBanner.classList.remove('visible');
-        }} else if (data.state === 'scanning') {{
+
+          strip.classList.add('state-ready');
+          stripTitle.textContent = 'Ready for paper';
+          stripBadge.textContent = 'Duplex 300 DPI';
+          stripDetail.textContent = `Brother DS-940DW ready at ${{scannerIp}} &bull; Insert document into feeder to scan`;
+        }} else if (state === 'scanning') {{
+          isActiveState = true;
+          const sheet = data.sheet || 1;
           dot.classList.add('active');
-          label.textContent = 'Scanning...';
-          diagState.textContent = 'Scanning Duplex';
-          collationBanner.classList.remove('visible');
-        }} else if (data.state === 'waiting_for_next_sheet') {{
+          label.textContent = `Scanning Sheet ${{sheet}}...`;
+          diagState.textContent = `Scanning Duplex (Sheet ${{sheet}})`;
+
+          strip.classList.add('state-scanning');
+          stripTitle.textContent = `Scanning Sheet ${{sheet}}...`;
+          stripBadge.textContent = 'Duplex 300 DPI';
+          stripDetail.textContent = 'Drawing paper through feed rollers &bull; Capturing front and back pages in 24-bit color';
+        }} else if (state === 'waiting_for_next_sheet') {{
+          isActiveState = true;
+          const sheet = data.sheet || 1;
+          const pages = data.pages_so_far || (sheet * 2);
+          const remaining = (data.timeout_remaining !== undefined && data.timeout_remaining !== null) ? data.timeout_remaining : 8.0;
+
           dot.classList.add('active');
-          label.textContent = `Batch (${{data.timeout_remaining || ''}}s)`;
-          diagState.textContent = `Collation (${{data.timeout_remaining || ''}}s)`;
-          
-          collationBanner.classList.add('visible');
-          document.getElementById('collation-msg').textContent = `Sheet ${{data.sheet || 1}} captured (${{data.pages_so_far || 2}} pages). Insert sheet ${{ (data.sheet || 1) + 1 }} to append...`;
-          document.getElementById('collation-time').textContent = `${{data.timeout_remaining || 0}}s`;
-          const pct = Math.max(0, Math.min(100, ((data.timeout_remaining || 0) / 8.0) * 100));
-          collationBar.style.width = pct + '%';
+          label.textContent = `Batch (${{remaining}}s)`;
+          diagState.textContent = `Collation (${{remaining}}s)`;
+
+          strip.classList.add('state-collation');
+          stripTitle.textContent = `Insert Sheet ${{sheet + 1}} to Append`;
+          stripBadge.textContent = 'Batch Window';
+          stripDetail.textContent = `Sheet ${{sheet}} captured (${{pages}} pages total) &bull; Insert next sheet within ${{remaining}}s to append to this document`;
+
+          countdownWrap.style.display = 'flex';
+          countdownNum.textContent = `${{remaining}}s`;
+          const pct = Math.max(0, Math.min(100, (remaining / 8.0) * 100));
+          progressBar.style.width = `${{pct}}%`;
+        }} else if (state === 'assembling_pdf') {{
+          isActiveState = true;
+          dot.classList.add('active');
+          label.textContent = 'Compiling PDF...';
+          diagState.textContent = 'Compiling PDF';
+
+          strip.classList.add('state-processing');
+          stripTitle.textContent = 'Compiling PDF Document...';
+          stripBadge.textContent = 'Processing';
+          stripDetail.textContent = 'Pruning blank sides with ink detection and assembling searchable PDF pages';
+        }} else if (state === 'filing_document') {{
+          isActiveState = true;
+          dot.classList.add('active');
+          label.textContent = 'Filing Document...';
+          diagState.textContent = 'Filing Document';
+
+          strip.classList.add('state-processing');
+          stripTitle.textContent = 'Filing Document...';
+          stripBadge.textContent = 'Vision & Tags';
+          stripDetail.textContent = 'Running Apple Vision OCR, AI categorization, and writing native macOS Finder tags';
+        }} else if (state === 'filed') {{
+          isActiveState = true;
+          const dest = data.destination || 'Document.pdf';
+          const filename = dest.split('/').pop();
+          const cat = data.category || 'Inbox';
+          const pages = data.pages ? `${{data.pages}} page${{data.pages > 1 ? 's' : ''}}` : '';
+
+          dot.classList.add('online');
+          label.textContent = `Filed: ${{filename}}`;
+          diagState.textContent = `Filed (${{filename}})`;
+
+          strip.classList.add('state-filed');
+          stripTitle.textContent = `Filed: ${{filename}}`;
+          stripBadge.textContent = cat;
+          stripDetail.textContent = `Organized into ${{cat}}${{pages ? ' &bull; ' + pages : ''}} &bull; Ready for next document`;
+
+          if (lastFiledDestination !== dest) {{
+            lastFiledDestination = dest;
+            loadScans();
+          }}
+        }} else if (state === 'scanner_offline') {{
+          dot.classList.add('offline');
+          label.textContent = 'Standby (Sleep)';
+          diagState.textContent = 'Standby (Sleep)';
+
+          strip.classList.add('state-standby');
+          stripTitle.textContent = 'Standby (Sleeping)';
+          stripBadge.textContent = 'Wi-Fi Sleep';
+          stripDetail.textContent = `Scanner is sleeping at ${{scannerIp}} &bull; Automatically wakes when paper is inserted`;
+        }} else if (state === 'paper_blocked' || state === 'paper_jammed') {{
+          dot.classList.add('offline');
+          label.textContent = 'Feeder Jammed';
+          diagState.textContent = 'Paper Jammed';
+
+          strip.classList.add('state-warning');
+          stripTitle.textContent = 'Feeder Jammed';
+          stripBadge.textContent = 'Action Required';
+          stripDetail.textContent = 'Paper is jammed in the scanner path &bull; Please open cover and clear paper path';
         }} else {{
           dot.classList.add('offline');
-          label.textContent = data.state === 'scanner_offline' ? 'Offline (Sleep)' : data.state.replace(/_/g, ' ');
-          diagState.textContent = data.state === 'scanner_offline' ? 'Standby (Sleep)' : data.state;
-          collationBanner.classList.remove('visible');
+          const cleanState = state.replace(/_/g, ' ');
+          label.textContent = cleanState;
+          diagState.textContent = state;
+
+          strip.classList.add('state-standby');
+          stripTitle.textContent = cleanState;
+          stripBadge.textContent = 'Status';
+          stripDetail.textContent = `Current hardware state: ${{state}}`;
         }}
 
-        document.getElementById('diag-uptime').textContent = data.uptime;
-        document.getElementById('diag-ram').textContent = data.memory_mb + ' MB';
+        document.getElementById('diag-uptime').textContent = data.uptime || '--';
+        document.getElementById('diag-ram').textContent = (data.memory_mb || '0.0') + ' MB';
+
+        setPollingInterval(isActiveState ? 750 : 2500);
       }} catch (e) {{
-        console.error(e);
+        console.error('updateStatus error:', e);
       }}
     }}
 
@@ -1541,7 +1773,7 @@ class DashboardHandler(BaseHTTPRequestHandler):
     initTheme();
     updateStatus();
     loadScans();
-    setInterval(updateStatus, 3000);
+    setPollingInterval(2500);
     setInterval(loadScans, 10000);
   </script>
 </body>

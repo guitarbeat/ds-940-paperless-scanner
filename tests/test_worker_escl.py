@@ -125,6 +125,42 @@ class WorkerEsclTests(unittest.TestCase):
             reader = PdfReader(BytesIO(data))
             self.assertEqual(len(reader.pages), 4)
 
+    def test_lifecycle_status_callbacks(self):
+        self.scanner.get_status.return_value = ScannerStatus(state="Idle", adf_state="ScannerAdfLoaded")
+        self.scanner.start_scan_job.return_value = "http://192.168.0.25:8080/eSCL/ScanJobs/lifecycle"
+
+        def mock_fetch_pages(job_url, folder, start_page=1, **kwargs):
+            p1 = make_dummy_jpeg(folder / f"page-{start_page}.jpg", color=(255, 0, 0))
+            p2 = make_dummy_jpeg(folder / f"page-{start_page + 1}.jpg", color=(0, 255, 0))
+            return [p1, p2]
+
+        self.scanner.fetch_job_pages.side_effect = mock_fetch_pages
+
+        status_events = []
+        def record_status(state, **kwargs):
+            status_events.append((state, kwargs))
+
+        scan_id = capture_if_ready_escl(
+            self.scanner,
+            self.spool,
+            "a4",
+            on_status=record_status,
+            batch_timeout=0,
+        )
+        self.assertIsNotNone(scan_id)
+
+        states_called = [e[0] for e in status_events]
+        self.assertIn("scanning", states_called)
+        self.assertIn("assembling_pdf", states_called)
+        self.assertIn("filing_document", states_called)
+        self.assertIn("filed", states_called)
+
+        # Check filed payload
+        filed_event = [e for e in status_events if e[0] == "filed"][0]
+        self.assertEqual(filed_event[1]["sheet"], 1)
+        self.assertEqual(filed_event[1]["pages"], 2)
+        self.assertTrue(filed_event[1]["destination"].endswith(".pdf"))
+
     def test_retry_states(self):
         self.assertEqual(retry_state_escl(ScannerOfflineError("down")), ("scanner_offline", 15))
         self.assertEqual(retry_state_escl(ScannerBusyError("busy")), ("scanner_busy", 30))
