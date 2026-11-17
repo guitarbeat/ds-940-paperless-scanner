@@ -488,6 +488,7 @@ class DashboardHandler(BaseHTTPRequestHandler):
       align-items: center;
       gap: 0.6rem;
       min-width: 0;
+      overflow: hidden;
     }}
 
     .strip-beacon {{
@@ -527,11 +528,12 @@ class DashboardHandler(BaseHTTPRequestHandler):
 
     .strip-sleep-pill {{
       font-size: 0.72rem;
-      font-weight: 500;
+      font-weight: 600;
+      font-variant-numeric: tabular-nums;
       color: var(--text-muted);
-      background: var(--bg-subtle);
-      border: 1px solid var(--border-subtle);
-      padding: 0.12rem 0.5rem;
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      padding: 0.22rem 0.55rem;
       border-radius: 4px;
       white-space: nowrap;
       display: inline-flex;
@@ -1499,7 +1501,6 @@ class DashboardHandler(BaseHTTPRequestHandler):
           <span id="status-label" style="display:none;"></span>
           <h2 id="strip-title" class="strip-title">Ready for paper</h2>
           <span id="strip-badge" class="strip-badge">Duplex 300 DPI</span>
-          <span id="strip-sleep-pill" class="strip-sleep-pill" style="display:none;"></span>
         </div>
       </div>
 
@@ -2114,7 +2115,6 @@ class DashboardHandler(BaseHTTPRequestHandler):
         const strip = document.getElementById('live-status-strip');
         const stripTitle = document.getElementById('strip-title');
         const stripBadge = document.getElementById('strip-badge');
-        const stripSleepPill = document.getElementById('strip-sleep-pill');
         const stripDetail = document.getElementById('strip-detail');
         const countdownWrap = document.getElementById('strip-countdown-wrap');
         const countdownNum = document.getElementById('strip-countdown-num');
@@ -2131,7 +2131,6 @@ class DashboardHandler(BaseHTTPRequestHandler):
         strip.className = 'app-header';
         progressBar.style.width = '0%';
         countdownWrap.style.display = 'none';
-        if (stripSleepPill) stripSleepPill.style.display = 'none';
         if (stripActions) stripActions.innerHTML = '';
 
         let isActiveState = false;
@@ -2150,17 +2149,13 @@ class DashboardHandler(BaseHTTPRequestHandler):
             const m = Math.floor(idleRem / 60);
             const s = Math.floor(idleRem % 60);
             const timeStr = m > 0 ? `${{m}}m ${{s}}s` : `${{s}}s`;
-            if (stripSleepPill) {{
-              stripSleepPill.textContent = `Sleeping in ${{timeStr}}`;
-              stripSleepPill.style.display = 'inline-flex';
-            }}
             stripDetail.textContent = `Brother DS-940DW ready at ${{scannerIp}} · Sleeping in ${{timeStr}} to save battery`;
             if (stripActions) {{
-              stripActions.innerHTML = '<button class="btn-strip" onclick="sessionAction(\\'extend\\')">+5m</button><button class="btn-strip" onclick="sessionAction(\\'pause\\')">Sleep Now</button>';
+              stripActions.innerHTML = `<span class="strip-sleep-pill" title="Battery saver countdown">🌙 ${{timeStr}}</span><button class="btn-strip" onclick="sessionAction(\\'extend\\')">+5m</button><button class="btn-strip" onclick="sessionAction(\\'pause\\')">Sleep Now</button>`;
             }}
           }} else {{
-            if (stripSleepPill) stripSleepPill.style.display = 'none';
             stripDetail.textContent = `Brother DS-940DW ready at ${{scannerIp}} · Insert document into feeder to scan`;
+            if (stripActions) stripActions.innerHTML = '';
           }}
         }} else if (state === 'battery_saver_dormant') {{
           if (dot) dot.classList.add('offline');
