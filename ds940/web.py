@@ -1152,7 +1152,7 @@ class DashboardHandler(BaseHTTPRequestHandler):
             <h2 id="strip-title" class="strip-title">Ready for paper</h2>
             <span id="strip-badge" class="strip-badge">Duplex 300 DPI</span>
           </div>
-          <div id="strip-detail" class="strip-detail">Brother DS-940DW ready &bull; Insert document into feeder to scan</div>
+          <div id="strip-detail" class="strip-detail">Brother DS-940DW ready · Insert document into feeder to scan</div>
         </div>
       </div>
       <div id="strip-countdown-wrap" class="strip-countdown-wrap">
@@ -1620,7 +1620,7 @@ class DashboardHandler(BaseHTTPRequestHandler):
           strip.classList.add('state-ready');
           stripTitle.textContent = 'Ready for paper';
           stripBadge.textContent = 'Duplex 300 DPI';
-          stripDetail.textContent = `Brother DS-940DW ready at ${{scannerIp}} &bull; Insert document into feeder to scan`;
+          stripDetail.textContent = `Brother DS-940DW ready at ${{scannerIp}} · Insert document into feeder to scan`;
         }} else if (state === 'scanning') {{
           isActiveState = true;
           const sheet = data.sheet || 1;
@@ -1631,7 +1631,7 @@ class DashboardHandler(BaseHTTPRequestHandler):
           strip.classList.add('state-scanning');
           stripTitle.textContent = `Scanning Sheet ${{sheet}}...`;
           stripBadge.textContent = 'Duplex 300 DPI';
-          stripDetail.textContent = 'Drawing paper through feed rollers &bull; Capturing front and back pages in 24-bit color';
+          stripDetail.textContent = 'Drawing paper through feed rollers · Capturing front and back pages in 24-bit color';
         }} else if (state === 'waiting_for_next_sheet') {{
           isActiveState = true;
           const sheet = data.sheet || 1;
@@ -1645,7 +1645,7 @@ class DashboardHandler(BaseHTTPRequestHandler):
           strip.classList.add('state-collation');
           stripTitle.textContent = `Insert Sheet ${{sheet + 1}} to Append`;
           stripBadge.textContent = 'Batch Window';
-          stripDetail.textContent = `Sheet ${{sheet}} captured (${{pages}} pages total) &bull; Insert next sheet within ${{remaining}}s to append to this document`;
+          stripDetail.textContent = `Sheet ${{sheet}} captured (${{pages}} pages total) · Insert next sheet within ${{remaining}}s to append to this document`;
 
           countdownWrap.style.display = 'flex';
           countdownNum.textContent = `${{remaining}}s`;
@@ -1685,7 +1685,7 @@ class DashboardHandler(BaseHTTPRequestHandler):
           strip.classList.add('state-filed');
           stripTitle.textContent = `Filed: ${{filename}}`;
           stripBadge.textContent = cat;
-          stripDetail.textContent = `Organized into ${{cat}}${{pages ? ' &bull; ' + pages : ''}} &bull; Ready for next document`;
+          stripDetail.textContent = `Organized into ${{cat}}${{pages ? ' · ' + pages : ''}} · Ready for next document`;
 
           if (lastFiledDestination !== dest) {{
             lastFiledDestination = dest;
@@ -1699,7 +1699,7 @@ class DashboardHandler(BaseHTTPRequestHandler):
           strip.classList.add('state-standby');
           stripTitle.textContent = 'Standby (Sleeping)';
           stripBadge.textContent = 'Wi-Fi Sleep';
-          stripDetail.textContent = `Scanner is sleeping at ${{scannerIp}} &bull; Automatically wakes when paper is inserted`;
+          stripDetail.textContent = `Scanner is sleeping at ${{scannerIp}} · Automatically wakes when paper is inserted`;
         }} else if (state === 'paper_blocked' || state === 'paper_jammed') {{
           dot.classList.add('offline');
           label.textContent = 'Feeder Jammed';
@@ -1708,7 +1708,7 @@ class DashboardHandler(BaseHTTPRequestHandler):
           strip.classList.add('state-warning');
           stripTitle.textContent = 'Feeder Jammed';
           stripBadge.textContent = 'Action Required';
-          stripDetail.textContent = 'Paper is jammed in the scanner path &bull; Please open cover and clear paper path';
+          stripDetail.textContent = 'Paper is jammed in the scanner path · Please open cover and clear paper path';
         }} else {{
           dot.classList.add('offline');
           const cleanState = state.replace(/_/g, ' ');
