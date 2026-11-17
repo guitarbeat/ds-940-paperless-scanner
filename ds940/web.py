@@ -397,11 +397,20 @@ class DashboardHandler(BaseHTTPRequestHandler):
       color: var(--text);
       line-height: 1.45;
       min-height: 100vh;
-      display: flex;
-      flex-direction: column;
       font-variant-numeric: tabular-nums;
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
+    }}
+
+    /* Unified Single Page Container */
+    .page-container {{
+      max-width: 1680px;
+      margin: 0 auto;
+      padding: 1.25rem 1.5rem 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      min-height: 100vh;
     }}
 
     button, a, input {{
@@ -437,30 +446,24 @@ class DashboardHandler(BaseHTTPRequestHandler):
       outline-offset: 2px;
     }}
 
-    /* Unified Header & Hardware Status */
-    header.app-header {{
+    /* Page Masthead Card (In-Page, Not Sticky) */
+    .page-masthead {{
       background: var(--bg-surface);
-      border-bottom: 1px solid var(--border);
-      position: sticky;
-      top: 0;
-      z-index: 100;
-      display: flex;
-      flex-direction: column;
-      padding: 0;
-      transition: border-bottom-color 180ms var(--ease), background-color 180ms var(--ease);
-    }}
-
-    .header-primary-row {{
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.75rem 1.25rem;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 0.6rem 1.25rem;
-      gap: 0.75rem 1rem;
-      background: var(--bg-surface);
+      gap: 0.75rem 1.25rem;
       flex-wrap: wrap;
+      box-shadow: var(--shadow-sm);
+      position: relative;
+      overflow: hidden;
+      transition: border-color 180ms var(--ease), background-color 180ms var(--ease);
     }}
 
-    .header-brand-status {{
+    .masthead-brand-status {{
       display: flex;
       align-items: center;
       gap: 0.75rem;
@@ -494,14 +497,14 @@ class DashboardHandler(BaseHTTPRequestHandler):
       flex-shrink: 0;
     }}
 
-    .header-divider {{
+    .masthead-divider {{
       width: 1px;
       height: 20px;
       background: var(--border);
       flex-shrink: 0;
     }}
 
-    .header-status-indicator {{
+    .masthead-status-indicator {{
       display: flex;
       align-items: center;
       gap: 0.55rem;
@@ -692,7 +695,7 @@ class DashboardHandler(BaseHTTPRequestHandler):
       to {{ transform: rotate(360deg); }}
     }}
 
-    .header-actions {{
+    .masthead-actions {{
       display: flex;
       align-items: center;
       gap: 0.4rem;
@@ -723,16 +726,37 @@ class DashboardHandler(BaseHTTPRequestHandler):
       color: var(--accent);
     }}
 
+    .strip-progress-bar {{
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      height: 3px;
+      width: 0%;
+      background: var(--status-active);
+      box-shadow: 0 0 6px rgba(217, 119, 6, 0.4);
+      transition: width 0.7s linear;
+    }}
+
+    /* State modifier styles for masthead */
+    .page-masthead.state-ready .strip-beacon {{ background: var(--status-ready); }}
+    .page-masthead.state-scanning .strip-beacon {{ background: var(--accent); }}
+    .page-masthead.state-collation .strip-beacon {{ background: var(--status-active); }}
+    .page-masthead.state-processing .strip-beacon {{ background: #6366f1; }}
+    .page-masthead.state-filed .strip-beacon {{ background: var(--status-ready); }}
+    .page-masthead.state-warning .strip-beacon {{ background: var(--status-danger); }}
+    .page-masthead.state-standby .strip-beacon {{ background: var(--status-standby); }}
+
     /* Hardware Alert Banner */
     .alert-banner {{
       background: rgba(220, 38, 38, 0.08);
-      border-bottom: 1px solid rgba(220, 38, 38, 0.25);
+      border: 1px solid rgba(220, 38, 38, 0.25);
+      border-radius: 8px;
       animation: alertSlideDown 160ms var(--ease-out);
     }}
 
     [data-theme="dark"] .alert-banner {{
       background: rgba(239, 68, 68, 0.12);
-      border-bottom-color: rgba(239, 68, 68, 0.3);
+      border-color: rgba(239, 68, 68, 0.3);
     }}
 
     @keyframes alertSlideDown {{
@@ -741,9 +765,7 @@ class DashboardHandler(BaseHTTPRequestHandler):
     }}
 
     .alert-container {{
-      max-width: 1680px;
-      margin: 0 auto;
-      padding: 0.65rem 1.25rem;
+      padding: 0.75rem 1.15rem;
       display: flex;
       align-items: center;
       gap: 1rem;
@@ -816,189 +838,9 @@ class DashboardHandler(BaseHTTPRequestHandler):
       border-color: #b91c1c;
     }}
 
-    /* Collapsible Telemetry & Diagnostics Drawer */
-    .telemetry-drawer {{
-      border-top: 1px solid var(--border-subtle);
-      background: var(--bg-subtle);
-      animation: drawerSlideDown 140ms var(--ease-out);
-    }}
-
-    @keyframes drawerSlideDown {{
-      from {{ opacity: 0; transform: translateY(-4px); }}
-      to {{ opacity: 1; transform: translateY(0); }}
-    }}
-
-    .telemetry-content {{
-      max-width: 1680px;
-      margin: 0 auto;
-      padding: 0.85rem 1.25rem;
-      display: flex;
-      flex-direction: column;
-      gap: 0.75rem;
-    }}
-
-    .telemetry-grid {{
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-      gap: 0.75rem;
-    }}
-
-    .tele-card {{
-      background: var(--bg-surface);
-      border: 1px solid var(--border-subtle);
-      border-radius: 6px;
-      padding: 0.65rem 0.85rem;
-      display: flex;
-      flex-direction: column;
-      gap: 0.35rem;
-      min-width: 0;
-      overflow: hidden;
-      box-shadow: var(--shadow-sm);
-    }}
-
-    .tele-card-wide {{
-      grid-column: span 2;
-    }}
-
-    @media (max-width: 768px) {{
-      .tele-card-wide {{
-        grid-column: span 1;
-      }}
-    }}
-
-    .tele-card-header {{
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 0.5rem;
-      min-width: 0;
-    }}
-
-    .tele-card-label {{
-      font-size: 0.68rem;
-      font-weight: 600;
-      color: var(--text-dim);
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      min-width: 0;
-    }}
-
-    .tele-card-val {{
-      font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
-      font-size: 0.78rem;
-      font-weight: 500;
-      color: var(--text);
-      font-variant-numeric: tabular-nums;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      min-width: 0;
-    }}
-
-    .tele-endpoint-link {{
-      color: var(--accent);
-      text-decoration: none;
-      transition: color 100ms var(--ease);
-    }}
-
-    .tele-endpoint-link:hover {{
-      text-decoration: underline;
-    }}
-
-    .tele-path-val {{
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }}
-
-    .btn-tele-link {{
-      display: inline-flex;
-      align-items: center;
-      gap: 0.25rem;
-      font-size: 0.68rem;
-      font-weight: 600;
-      color: var(--accent);
-      text-decoration: none;
-      padding: 0.12rem 0.45rem;
-      border-radius: 4px;
-      background: var(--accent-soft);
-      white-space: nowrap;
-      flex-shrink: 0;
-      transition: background-color 100ms var(--ease), color 100ms var(--ease);
-    }}
-
-    .btn-tele-link:hover {{
-      background: var(--accent);
-      color: #ffffff;
-    }}
-
-    .telemetry-footer {{
-      padding-top: 0.45rem;
-      border-top: 1px solid var(--border-subtle);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }}
-
-    .strip-detail {{
-      font-size: 0.74rem;
-      color: var(--text-muted);
-      line-height: 1.35;
-    }}
-
-    .btn-copy {{
-      position: relative;
-      background: var(--bg-surface);
-      border: 1px solid var(--border);
-      color: var(--text-muted);
-      display: inline-flex;
-      align-items: center;
-      gap: 0.3rem;
-      padding: 0.15rem 0.45rem;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 0.68rem;
-      font-weight: 500;
-      white-space: nowrap;
-      flex-shrink: 0;
-      transition: background-color 100ms var(--ease), border-color 100ms var(--ease), color 100ms var(--ease), transform 80ms var(--ease-press);
-    }}
-
-    .btn-copy:hover {{
-      background: var(--bg-hover);
-      color: var(--text);
-      border-color: var(--border-focus);
-    }}
-
-    .strip-progress-bar {{
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      height: 3px;
-      width: 0%;
-      background: var(--status-active);
-      box-shadow: 0 0 6px rgba(217, 119, 6, 0.4);
-      transition: width 0.7s linear;
-    }}
-
-    /* State modifier styles for header */
-    .app-header.state-ready .strip-beacon {{ background: var(--status-ready); }}
-    .app-header.state-scanning .strip-beacon {{ background: var(--accent); }}
-    .app-header.state-collation .strip-beacon {{ background: var(--status-active); }}
-    .app-header.state-processing .strip-beacon {{ background: #6366f1; }}
-    .app-header.state-filed .strip-beacon {{ background: var(--status-ready); }}
-    .app-header.state-warning .strip-beacon {{ background: var(--status-danger); }}
-    .app-header.state-standby .strip-beacon {{ background: var(--status-standby); }}
-
     /* Main Workbench */
     main.workbench {{
-      max-width: 1680px;
       width: 100%;
-      margin: 0 auto;
-      padding: 1rem 1.25rem 1.5rem;
       flex: 1;
       display: flex;
       flex-direction: column;
@@ -1012,7 +854,7 @@ class DashboardHandler(BaseHTTPRequestHandler):
       grid-template-columns: clamp(340px, 28vw, 420px) minmax(0, 1fr);
       gap: 1.25rem;
       flex: 1;
-      min-height: calc(100vh - 100px);
+      min-height: calc(100vh - 220px);
     }}
 
     /* Left Pane: Ledger */
@@ -1523,6 +1365,100 @@ class DashboardHandler(BaseHTTPRequestHandler):
       line-height: 1.4;
     }}
 
+    /* Quiet Diagnostics Footer (Clean in-page statusbar) */
+    footer.diagnostics-footer {{
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.55rem 1rem;
+      font-size: 0.72rem;
+      color: var(--text-dim);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.5rem 1.25rem;
+      box-shadow: var(--shadow-sm);
+    }}
+
+    .footer-left {{
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }}
+
+    .footer-right {{
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-left: auto;
+    }}
+
+    .footer-item {{
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      white-space: nowrap;
+    }}
+
+    .footer-label {{
+      font-weight: 600;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      font-size: 0.65rem;
+      letter-spacing: 0.03em;
+    }}
+
+    .footer-val {{
+      font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+      color: var(--text);
+      font-weight: 500;
+      font-variant-numeric: tabular-nums;
+    }}
+
+    .footer-link {{
+      color: var(--accent);
+      text-decoration: none;
+    }}
+
+    .footer-link:hover {{
+      text-decoration: underline;
+    }}
+
+    .footer-sublink {{
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: 600;
+      margin-left: 0.1rem;
+    }}
+
+    .footer-path {{
+      max-width: 380px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }}
+
+    .btn-copy {{
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      padding: 0.12rem 0.35rem;
+      border-radius: 3px;
+      cursor: pointer;
+      font-size: 0.66rem;
+      transition: background-color 100ms var(--ease), border-color 100ms var(--ease);
+    }}
+
+    .btn-copy:hover {{
+      background: var(--bg-hover);
+      color: var(--text);
+    }}
+
     /* Toast */
     .toast {{
       position: fixed;
@@ -1548,7 +1484,7 @@ class DashboardHandler(BaseHTTPRequestHandler):
       opacity: 1;
     }}
 
-    /* Accessible Confirmation Modal */
+    /* Confirmation Modal */
     .modal-backdrop {{
       position: fixed;
       inset: 0;
@@ -1668,19 +1604,19 @@ class DashboardHandler(BaseHTTPRequestHandler):
       border-color: #b91c1c;
     }}
 
-    /* Responsive Breakpoints & Progressive Disclosure */
+    /* Responsive Breakpoints */
     @media (max-width: 960px) {{
+      .page-container {{
+        padding: 0.75rem 0.85rem;
+        gap: 0.75rem;
+      }}
       .btn-row-action {{
         opacity: 1;
-      }}
-      .header-primary-row {{
-        padding: 0.55rem 1rem 0.45rem;
-        gap: 0.75rem;
       }}
       .brand-title {{
         display: none;
       }}
-      .header-divider {{
+      .masthead-divider {{
         display: none;
       }}
       .split-layout {{
@@ -1704,21 +1640,17 @@ class DashboardHandler(BaseHTTPRequestHandler):
       }}
     }}
 
-    /* Mobile Viewports (<680px) */
     @media (max-width: 680px) {{
-      .header-primary-row {{
-        flex-wrap: wrap;
-        padding: 0.5rem 0.85rem 0.55rem;
-        gap: 0.45rem 0.65rem;
+      .page-masthead {{
+        padding: 0.65rem 0.85rem;
+        gap: 0.5rem;
       }}
-      .header-brand-status {{
+      .masthead-brand-status {{
         order: 1;
         flex: 1 1 auto;
-        min-width: 0;
       }}
       .header-global-actions {{
         order: 2;
-        flex-shrink: 0;
         margin-left: auto;
       }}
       .header-session-actions {{
@@ -1739,6 +1671,9 @@ class DashboardHandler(BaseHTTPRequestHandler):
       }}
       #btn-trigger-sort span {{
         display: none;
+      }}
+      .footer-path {{
+        max-width: 200px;
       }}
     }}
 
@@ -1766,10 +1701,10 @@ class DashboardHandler(BaseHTTPRequestHandler):
   </style>
 </head>
 <body>
-  <header class="app-header state-ready" id="live-status-strip" role="region" aria-live="polite">
-    <!-- Row 1: Primary Brand, Hardware State & Immediate Actions -->
-    <div class="header-primary-row">
-      <div class="header-brand-status">
+  <div class="page-container">
+    <!-- In-Page Masthead: Brand, Live Hardware State & Session Controls -->
+    <section class="page-masthead state-ready" id="live-status-strip" role="region" aria-live="polite">
+      <div class="masthead-brand-status">
         <div class="brand-wrap">
           <div class="brand-logo" aria-hidden="true">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -1781,9 +1716,9 @@ class DashboardHandler(BaseHTTPRequestHandler):
           <h1 class="brand-title">Brother DS-940DW</h1>
         </div>
 
-        <div class="header-divider" aria-hidden="true"></div>
+        <div class="masthead-divider" aria-hidden="true"></div>
 
-        <div class="header-status-indicator">
+        <div class="masthead-status-indicator">
           <span id="strip-beacon" class="strip-beacon"></span>
           <span id="status-dot" style="display:none;"></span>
           <span id="status-label" style="display:none;"></span>
@@ -1801,7 +1736,7 @@ class DashboardHandler(BaseHTTPRequestHandler):
         <div id="strip-actions" class="strip-actions"></div>
       </div>
 
-      <div class="header-global-actions">
+      <div class="header-global-actions" id="header-global-actions">
         <button class="btn-strip btn-strip-accent" id="btn-trigger-sort" onclick="triggerSortScans()" title="Sort and organize unfiled scans with Gemini AI">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
@@ -1809,16 +1744,9 @@ class DashboardHandler(BaseHTTPRequestHandler):
           <span>Organize</span>
         </button>
 
-        <div class="header-divider" aria-hidden="true"></div>
+        <div class="masthead-divider" aria-hidden="true"></div>
 
-        <div class="header-actions">
-          <button class="btn-icon" id="tele-toggle-btn" onclick="toggleTelemetry()" title="Toggle System Diagnostics HUD (Scanner IP, RAM, Uptime, Archive)" aria-label="System Diagnostics">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="12" cy="12" r="10"/>
-              <line x1="12" y1="16" x2="12" y2="12"/>
-              <line x1="12" y1="8" x2="12.01" y2="8"/>
-            </svg>
-          </button>
+        <div class="masthead-actions">
           <button class="btn-icon" id="theme-toggle" onclick="toggleTheme()" title="Switch color theme" aria-label="Switch color theme">
             <svg id="theme-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <circle cx="12" cy="12" r="5"/>
@@ -1839,195 +1767,183 @@ class DashboardHandler(BaseHTTPRequestHandler):
               <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
             </svg>
           </button>
+          <button id="tele-toggle-btn" style="display:none;"></button>
+        </div>
+      </div>
+
+      <div id="strip-progress-bar" class="strip-progress-bar"></div>
+    </section>
+
+    <!-- In-Page Hardware Alert Banner (for Paper Jams, Feed Errors) -->
+    <div id="hardware-alert-banner" class="alert-banner" style="display:none;" role="alert">
+      <div class="alert-container">
+        <div class="alert-icon-wrap" aria-hidden="true">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+            <line x1="12" y1="9" x2="12" y2="13"/>
+            <line x1="12" y1="17" x2="12.01" y2="17"/>
+          </svg>
+        </div>
+        <div class="alert-body">
+          <div class="alert-heading" id="alert-heading">Paper Feed Error / Jam Detected</div>
+          <div class="alert-steps" id="alert-steps">
+            <span class="alert-step"><b>1.</b> Gently pull paper out of scanner path</span>
+            <span class="alert-step-divider">→</span>
+            <span class="alert-step"><b>2.</b> Press <b>Power</b> once to clear flashing red <b>(!)</b></span>
+            <span class="alert-step-divider">→</span>
+            <span class="alert-step"><b>3.</b> Re-insert sheet straight into slot</span>
+          </div>
+        </div>
+        <div class="alert-actions">
+          <button class="btn-alert-action" onclick="refreshAll()" title="Re-check scanner status">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="23 4 23 10 17 10"/>
+              <polyline points="1 20 1 14 7 14"/>
+              <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+            </svg>
+            <span>Check Hardware</span>
+          </button>
         </div>
       </div>
     </div>
 
-    <!-- Collapsible Telemetry & Diagnostics Drawer -->
-    <div id="telemetry-drawer" class="telemetry-drawer" style="display:none;">
-      <div class="telemetry-content">
-        <div class="telemetry-grid">
-          <div class="tele-card">
-            <div class="tele-card-header">
-              <span class="tele-card-label">Scanner Network Endpoint</span>
-              <a id="diag-scanner-link" href="http://{self.settings.scanner_ip}:8080/" target="_blank" rel="noopener" class="btn-tele-link" title="Open Brother Web Admin">
-                <span>Web Admin ↗</span>
-              </a>
+    <!-- Main Workbench -->
+    <main class="workbench">
+      <div class="split-layout">
+        <!-- Master: Recent Scans Ledger -->
+        <section class="ledger-pane" aria-labelledby="ledger-heading">
+          <div class="ledger-header">
+            <div class="ledger-title-row">
+              <div class="ledger-title-wrap">
+                <h2 id="ledger-heading" class="ledger-title">Recent Scans</h2>
+                <span class="ledger-count" id="scan-count">0</span>
+              </div>
+              <div class="ledger-shortcuts"><kbd>↑</kbd><kbd>↓</kbd> <span>nav</span> · <kbd>/</kbd> <span>search</span></div>
             </div>
-            <a id="diag-scanner" class="tele-card-val tele-endpoint-link" href="http://{self.settings.scanner_ip}:8080/" target="_blank" rel="noopener" title="Open Brother Web Admin">{self.settings.scanner_ip}:8080</a>
-          </div>
-          <div class="tele-card">
-            <div class="tele-card-header">
-              <span class="tele-card-label">Daemon Engine State</span>
+
+            <div class="search-row">
+              <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <circle cx="11" cy="11" r="8"/>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+              </svg>
+              <input type="search" id="search-box" class="search-input" placeholder="Search archive..." oninput="onSearchInput()" aria-label="Search archive">
+              <button class="search-clear-btn" id="search-clear" onclick="clearSearch()" style="display:none;" title="Clear search" aria-label="Clear search">✕</button>
+              <kbd class="search-kbd">/</kbd>
             </div>
-            <span id="diag-state" class="tele-card-val">Connecting</span>
-          </div>
-          <div class="tele-card">
-            <div class="tele-card-header">
-              <span class="tele-card-label">Process Uptime</span>
+
+            <div class="category-bar-wrap">
+              <nav class="category-bar" id="category-filters" aria-label="Filter by category">
+                <button class="category-chip active" onclick="setCategoryFilter('all', this)">All</button>
+              </nav>
             </div>
-            <span id="diag-uptime" class="tele-card-val">--</span>
           </div>
-          <div class="tele-card">
-            <div class="tele-card-header">
-              <span class="tele-card-label">Resident Memory (RSS)</span>
+
+          <div class="doc-list" id="doc-list" role="listbox" aria-label="Scanned documents">
+            <div class="zero-state">
+              <div class="zero-title">Loading documents...</div>
             </div>
-            <span id="diag-ram" class="tele-card-val">-- MB</span>
           </div>
-          <div class="tele-card tele-card-wide">
-            <div class="tele-card-header">
-              <span class="tele-card-label">Local Archive Destination</span>
-              <button class="btn-copy" onclick="copyPath()" title="Copy folder path" aria-label="Copy folder path">
-                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
-                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+        </section>
+
+        <!-- Detail: Live Inspector Pane -->
+        <section class="inspector-pane" id="inspector-pane" aria-label="Document Preview and Inspector">
+          <div class="inspector-header">
+            <div class="inspector-info">
+              <div class="inspector-title" id="inspector-filename">Select a document</div>
+              <div class="inspector-meta" id="inspector-meta">
+                <span id="meta-category" class="meta-tag category-tag cat-inbox" style="display:none;"></span>
+                <span id="meta-doc-date" class="meta-tag" style="display:none;"></span>
+                <span id="meta-scan-date" class="meta-tag" style="display:none;"></span>
+                <span id="meta-size" class="meta-tag" style="display:none;"></span>
+              </div>
+            </div>
+
+            <div class="inspector-actions">
+              <a class="btn-action" id="btn-download" href="#" download="" title="Download PDF" style="display:none;">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                  <polyline points="7 10 12 15 17 10"/>
+                  <line x1="12" y1="15" x2="12" y2="3"/>
                 </svg>
-                <span>Copy Path</span>
+                <span>Download</span>
+              </a>
+              <a class="btn-action" id="btn-open-external" href="#" target="_blank" rel="noopener" title="Open in new window" style="display:none;">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+                  <polyline points="15 3 21 3 21 9"/>
+                  <line x1="10" y1="14" x2="21" y2="3"/>
+                </svg>
+                <span>Open</span>
+              </a>
+              <button class="btn-action btn-danger" id="btn-delete-doc" onclick="deleteActiveDoc()" title="Delete document" style="display:none;">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="3 6 5 6 21 6"/>
+                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                </svg>
+                <span>Delete</span>
+              </button>
+              <button class="btn-action btn-close-mobile" onclick="closeMobileInspector()" title="Close viewer">
+                <span>Close</span>
               </button>
             </div>
-            <span id="diag-path" class="tele-card-val tele-path-val">{self.settings.output}</span>
-          </div>
-        </div>
-        <div class="telemetry-footer">
-          <span id="strip-detail" class="strip-detail">Brother DS-940DW ready · Insert document into feeder to scan</span>
-        </div>
-      </div>
-    </div>
-
-    <div id="strip-progress-bar" class="strip-progress-bar"></div>
-  </header>
-
-  <!-- Hardware Alert Banner (for Paper Jams, Feed Errors, Blocked Path) -->
-  <div id="hardware-alert-banner" class="alert-banner" style="display:none;" role="alert">
-    <div class="alert-container">
-      <div class="alert-icon-wrap" aria-hidden="true">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
-          <line x1="12" y1="9" x2="12" y2="13"/>
-          <line x1="12" y1="17" x2="12.01" y2="17"/>
-        </svg>
-      </div>
-      <div class="alert-body">
-        <div class="alert-heading" id="alert-heading">Paper Feed Error / Jam Detected</div>
-        <div class="alert-steps" id="alert-steps">
-          <span class="alert-step"><b>1.</b> Gently pull paper out of scanner path</span>
-          <span class="alert-step-divider">→</span>
-          <span class="alert-step"><b>2.</b> Press <b>Power</b> once to clear flashing red <b>(!)</b></span>
-          <span class="alert-step-divider">→</span>
-          <span class="alert-step"><b>3.</b> Re-insert sheet straight into slot</span>
-        </div>
-      </div>
-      <div class="alert-actions">
-        <button class="btn-alert-action" onclick="refreshAll()" title="Re-check scanner status">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <polyline points="23 4 23 10 17 10"/>
-            <polyline points="1 20 1 14 7 14"/>
-            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
-          </svg>
-          <span>Check Hardware</span>
-        </button>
-      </div>
-    </div>
-  </div>
-
-  <main class="workbench">
-    <!-- Master-Detail Split Grid -->
-    <div class="split-layout">
-      <!-- Master: Recent Scans Ledger -->
-      <section class="ledger-pane" aria-labelledby="ledger-heading">
-        <div class="ledger-header">
-          <div class="ledger-title-row">
-            <div class="ledger-title-wrap">
-              <h2 id="ledger-heading" class="ledger-title">Recent Scans</h2>
-              <span class="ledger-count" id="scan-count">0</span>
-            </div>
-            <div class="ledger-shortcuts"><kbd>↑</kbd><kbd>↓</kbd> <span>nav</span> · <kbd>/</kbd> <span>search</span></div>
           </div>
 
-          <div class="search-row">
-            <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <circle cx="11" cy="11" r="8"/>
-              <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+          <iframe class="viewer-frame" id="viewer-frame" src="about:blank" title="Document PDF Preview"></iframe>
+
+          <div class="zero-state" id="inspector-zero" style="display:flex;">
+            <svg class="zero-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
             </svg>
-            <input type="search" id="search-box" class="search-input" placeholder="Search archive..." oninput="onSearchInput()" aria-label="Search archive">
-            <button class="search-clear-btn" id="search-clear" onclick="clearSearch()" style="display:none;" title="Clear search" aria-label="Clear search">✕</button>
-            <kbd class="search-kbd">/</kbd>
+            <div class="zero-title">Ready for paper</div>
+            <div class="zero-desc">Select any document in the ledger to inspect, or feed paper into the DS-940DW to scan automatically.</div>
           </div>
+        </section>
+      </div>
+    </main>
 
-          <div class="category-bar-wrap">
-            <nav class="category-bar" id="category-filters" aria-label="Filter by category">
-              <button class="category-chip active" onclick="setCategoryFilter('all', this)">All</button>
-            </nav>
-          </div>
-        </div>
+    <!-- In-Page Quiet Diagnostics Footer -->
+    <footer class="diagnostics-footer" aria-label="System Diagnostics">
+      <div class="footer-left">
+        <span class="footer-item" title="Scanner Network Endpoint">
+          <span class="footer-label">Scanner:</span>
+          <a id="diag-scanner" class="footer-val footer-link" href="http://{self.settings.scanner_ip}:8080/" target="_blank" rel="noopener">{self.settings.scanner_ip}:8080</a>
+          <a id="diag-scanner-link" href="http://{self.settings.scanner_ip}:8080/" target="_blank" rel="noopener" class="footer-sublink" title="Open Brother Web Admin">↗</a>
+        </span>
+        <span class="footer-item" title="Daemon Engine State">
+          <span class="footer-label">State:</span>
+          <span id="diag-state" class="footer-val">Connecting</span>
+        </span>
+        <span class="footer-item" title="Process Uptime">
+          <span class="footer-label">Uptime:</span>
+          <span id="diag-uptime" class="footer-val">--</span>
+        </span>
+        <span class="footer-item" title="Resident Memory (RSS)">
+          <span class="footer-label">RAM:</span>
+          <span id="diag-ram" class="footer-val">-- MB</span>
+        </span>
+        <span id="strip-detail" class="footer-item" style="color:var(--text-muted);">Brother DS-940DW ready · Insert document into feeder to scan</span>
+      </div>
 
-        <div class="doc-list" id="doc-list" role="listbox" aria-label="Scanned documents">
-          <div class="zero-state">
-            <div class="zero-title">Loading documents...</div>
-          </div>
-        </div>
-      </section>
-
-      <!-- Detail: Live Inspector Pane -->
-      <section class="inspector-pane" id="inspector-pane" aria-label="Document Preview and Inspector">
-        <div class="inspector-header">
-          <div class="inspector-info">
-            <div class="inspector-title" id="inspector-filename">Select a document</div>
-            <div class="inspector-meta" id="inspector-meta">
-              <span id="meta-category" class="meta-tag category-tag cat-inbox" style="display:none;"></span>
-              <span id="meta-doc-date" class="meta-tag" style="display:none;"></span>
-              <span id="meta-scan-date" class="meta-tag" style="display:none;"></span>
-              <span id="meta-size" class="meta-tag" style="display:none;"></span>
-            </div>
-          </div>
-
-          <div class="inspector-actions">
-            <a class="btn-action" id="btn-download" href="#" download="" title="Download PDF" style="display:none;">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                <polyline points="7 10 12 15 17 10"/>
-                <line x1="12" y1="15" x2="12" y2="3"/>
-              </svg>
-              <span>Download</span>
-            </a>
-            <a class="btn-action" id="btn-open-external" href="#" target="_blank" rel="noopener" title="Open in new window" style="display:none;">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
-                <polyline points="15 3 21 3 21 9"/>
-                <line x1="10" y1="14" x2="21" y2="3"/>
-              </svg>
-              <span>Open</span>
-            </a>
-            <button class="btn-action btn-danger" id="btn-delete-doc" onclick="deleteActiveDoc()" title="Delete document" style="display:none;">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polyline points="3 6 5 6 21 6"/>
-                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
-              </svg>
-              <span>Delete</span>
-            </button>
-            <button class="btn-action btn-close-mobile" onclick="closeMobileInspector()" title="Close viewer">
-              <span>Close</span>
-            </button>
-          </div>
-        </div>
-
-        <iframe class="viewer-frame" id="viewer-frame" src="about:blank" title="Document PDF Preview"></iframe>
-
-        <div class="zero-state" id="inspector-zero" style="display:flex;">
-          <svg class="zero-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-            <polyline points="14 2 14 8 20 8"/>
-          </svg>
-          <div class="zero-title">Ready for paper</div>
-          <div class="zero-desc">Select any document in the ledger to inspect, or feed paper into the DS-940DW to scan automatically.</div>
-        </div>
-      </section>
-    </div>
-  </main>
+      <div class="footer-right">
+        <span class="footer-item" title="Local Archive Destination">
+          <span class="footer-label">Archive:</span>
+          <span id="diag-path" class="footer-val footer-path">{self.settings.output}</span>
+          <button class="btn-copy" onclick="copyPath()" title="Copy folder path" aria-label="Copy folder path">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+            </svg>
+            <span>Copy</span>
+          </button>
+        </span>
+      </div>
+    </footer>
+  </div>
 
   <div id="toast" class="toast" role="alert">Notification</div>
 
-  <!-- Accessible Deletion Confirmation Modal -->
+  <!-- Deletion Confirmation Modal -->
   <div id="confirm-modal" class="modal-backdrop" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="modal-title">
     <div class="modal-card">
       <div class="modal-icon-wrap" aria-hidden="true">
@@ -2153,27 +2069,6 @@ class DashboardHandler(BaseHTTPRequestHandler):
       if (clearBtn) clearBtn.style.display = 'none';
       filterScans();
       box.focus();
-    }}
-
-    /* Telemetry Drawer Management */
-    function initTelemetryDrawer() {{
-      const open = localStorage.getItem('ds940-telemetry-open') === 'true';
-      setTelemetryDrawerOpen(open);
-    }}
-
-    function setTelemetryDrawerOpen(open) {{
-      const drawer = document.getElementById('telemetry-drawer');
-      const btn = document.getElementById('tele-toggle-btn');
-      if (!drawer) return;
-      drawer.style.display = open ? 'block' : 'none';
-      if (btn) btn.classList.toggle('active', open);
-      localStorage.setItem('ds940-telemetry-open', open ? 'true' : 'false');
-    }}
-
-    function toggleTelemetry() {{
-      const drawer = document.getElementById('telemetry-drawer');
-      const isOpen = drawer && drawer.style.display !== 'none';
-      setTelemetryDrawerOpen(!isOpen);
     }}
 
     /* AI Sort Trigger */
@@ -2528,7 +2423,7 @@ class DashboardHandler(BaseHTTPRequestHandler):
         if (diagScannerLink) diagScannerLink.href = `http://${{scannerIp}}:8080/`;
 
         if (dot) dot.className = 'status-dot';
-        strip.className = 'app-header';
+        strip.className = 'page-masthead';
         progressBar.style.width = '0%';
         countdownWrap.style.display = 'none';
         if (stripActions) stripActions.innerHTML = '';
@@ -2550,12 +2445,12 @@ class DashboardHandler(BaseHTTPRequestHandler):
             const m = Math.floor(idleRem / 60);
             const s = Math.floor(idleRem % 60);
             const timeStr = m > 0 ? `${{m}}m ${{s}}s` : `${{s}}s`;
-            stripDetail.textContent = `Brother DS-940DW ready at ${{scannerIp}} · Sleeping in ${{timeStr}} to save battery`;
+            if (stripDetail) stripDetail.textContent = `Brother DS-940DW ready at ${{scannerIp}} · Sleeping in ${{timeStr}} to save battery`;
             if (stripActions) {{
               stripActions.innerHTML = `<span class="strip-sleep-pill" title="Battery saver countdown">🌙 ${{timeStr}}</span><div class="strip-btn-group"><button class="btn-strip" onclick="sessionAction(\\'extend\\')">+5m</button><button class="btn-strip" onclick="sessionAction(\\'pause\\')">Sleep Now</button></div>`;
             }}
           }} else {{
-            stripDetail.textContent = `Brother DS-940DW ready at ${{scannerIp}} · Insert document into feeder to scan`;
+            if (stripDetail) stripDetail.textContent = `Brother DS-940DW ready at ${{scannerIp}} · Insert document into feeder to scan`;
             if (stripActions) stripActions.innerHTML = '';
           }}
         }} else if (state === 'battery_saver_dormant') {{
@@ -2566,7 +2461,7 @@ class DashboardHandler(BaseHTTPRequestHandler):
           strip.classList.add('state-standby');
           stripTitle.textContent = 'Battery Saver Standby';
           stripBadge.textContent = 'Sleeping';
-          stripDetail.textContent = 'Scanner is sleeping to conserve battery · Press Power on scanner or click Wake to scan';
+          if (stripDetail) stripDetail.textContent = 'Scanner is sleeping to conserve battery · Press Power on scanner or click Wake to scan';
           if (stripActions) {{
             stripActions.innerHTML = '<button class="btn-strip btn-strip-primary" onclick="sessionAction(\\'wake\\')">Wake Session</button>';
           }}
@@ -2580,7 +2475,7 @@ class DashboardHandler(BaseHTTPRequestHandler):
           strip.classList.add('state-scanning');
           stripTitle.textContent = `Scanning Sheet ${{sheet}}...`;
           stripBadge.textContent = 'Duplex 300 DPI';
-          stripDetail.textContent = 'Drawing paper through feed rollers · Capturing front and back pages in 24-bit color';
+          if (stripDetail) stripDetail.textContent = 'Drawing paper through feed rollers · Capturing front and back pages in 24-bit color';
         }} else if (state === 'waiting_for_next_sheet') {{
           isActiveState = true;
           const sheet = data.sheet || 1;
@@ -2594,7 +2489,7 @@ class DashboardHandler(BaseHTTPRequestHandler):
           strip.classList.add('state-collation');
           stripTitle.textContent = `Insert Sheet ${{sheet + 1}} to Append`;
           stripBadge.textContent = 'Batch Window';
-          stripDetail.textContent = `Sheet ${{sheet}} captured (${{pages}} pages total) · Insert next sheet within ${{remaining}}s to append to this document`;
+          if (stripDetail) stripDetail.textContent = `Sheet ${{sheet}} captured (${{pages}} pages total) · Insert next sheet within ${{remaining}}s to append to this document`;
 
           countdownWrap.style.display = 'flex';
           countdownNum.textContent = `${{remaining}}s`;
@@ -2609,7 +2504,7 @@ class DashboardHandler(BaseHTTPRequestHandler):
           strip.classList.add('state-processing');
           stripTitle.textContent = 'Compiling PDF Document...';
           stripBadge.textContent = 'Processing';
-          stripDetail.textContent = 'Pruning blank sides with ink detection and assembling searchable PDF pages';
+          if (stripDetail) stripDetail.textContent = 'Pruning blank sides with ink detection and assembling searchable PDF pages';
         }} else if (state === 'filing_document') {{
           isActiveState = true;
           if (dot) dot.classList.add('active');
@@ -2619,7 +2514,7 @@ class DashboardHandler(BaseHTTPRequestHandler):
           strip.classList.add('state-processing');
           stripTitle.textContent = 'Filing Document...';
           stripBadge.textContent = 'Vision & Tags';
-          stripDetail.textContent = 'Running Apple Vision OCR, AI categorization, and writing native macOS Finder tags';
+          if (stripDetail) stripDetail.textContent = 'Running Apple Vision OCR, AI categorization, and writing native macOS Finder tags';
         }} else if (state === 'filed') {{
           isActiveState = true;
           const dest = data.destination || 'Document.pdf';
@@ -2634,7 +2529,7 @@ class DashboardHandler(BaseHTTPRequestHandler):
           strip.classList.add('state-filed');
           stripTitle.textContent = `Filed: ${{filename}}`;
           stripBadge.textContent = cat;
-          stripDetail.textContent = `Organized into ${{cat}}${{pages ? ' · ' + pages : ''}} · Ready for next document`;
+          if (stripDetail) stripDetail.textContent = `Organized into ${{cat}}${{pages ? ' · ' + pages : ''}} · Ready for next document`;
 
           if (lastFiledDestination !== dest) {{
             lastFiledDestination = dest;
@@ -2648,7 +2543,7 @@ class DashboardHandler(BaseHTTPRequestHandler):
           strip.classList.add('state-standby');
           stripTitle.textContent = 'Standby (Sleeping)';
           stripBadge.textContent = 'Wi-Fi Sleep';
-          stripDetail.textContent = `Scanner is sleeping at ${{scannerIp}} · Press Power on scanner or click Wake to scan`;
+          if (stripDetail) stripDetail.textContent = `Scanner is sleeping at ${{scannerIp}} · Press Power on scanner or click Wake to scan`;
           if (stripActions) {{
             stripActions.innerHTML = '<button class="btn-strip btn-strip-primary" onclick="sessionAction(\\'wake\\')">Wake Session</button>';
           }}
@@ -2660,7 +2555,7 @@ class DashboardHandler(BaseHTTPRequestHandler):
           strip.classList.add('state-warning');
           stripTitle.textContent = 'Paper Jam / Feed Error';
           stripBadge.textContent = 'Clear Paper & Press Power';
-          stripDetail.textContent = `Feeder jam detected at ${{scannerIp}} · Follow recovery instructions in alert banner below`;
+          if (stripDetail) stripDetail.textContent = `Feeder jam at ${{scannerIp}} · Follow recovery instructions above`;
           if (stripActions) {{
             stripActions.innerHTML = '<button class="btn-strip btn-strip-primary" onclick="refreshAll()">Check Hardware</button>';
           }}
@@ -2676,7 +2571,7 @@ class DashboardHandler(BaseHTTPRequestHandler):
           strip.classList.add('state-standby');
           stripTitle.textContent = cleanState;
           stripBadge.textContent = 'Status';
-          stripDetail.textContent = `Current hardware state: ${{state}}`;
+          if (stripDetail) stripDetail.textContent = `Current hardware state: ${{state}}`;
         }}
 
         const diagUptime = document.getElementById('diag-uptime');
@@ -2736,9 +2631,6 @@ class DashboardHandler(BaseHTTPRequestHandler):
       }} else if (e.key === '/' && !isInput) {{
         e.preventDefault();
         document.getElementById('search-box').focus();
-      }} else if (e.key.toLowerCase() === 'i' && !isInput) {{
-        e.preventDefault();
-        toggleTelemetry();
       }} else if ((e.key === 'ArrowDown' || e.key === 'ArrowUp') && !isInput) {{
         e.preventDefault();
         const filtered = getFilteredScans();
@@ -2753,7 +2645,6 @@ class DashboardHandler(BaseHTTPRequestHandler):
     }});
 
     initTheme();
-    initTelemetryDrawer();
     updateStatus();
     loadScans();
     setPollingInterval(2500);
