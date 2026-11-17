@@ -2254,12 +2254,15 @@ class DashboardHandler(BaseHTTPRequestHandler):
         }} else if (state === 'paper_blocked' || state === 'paper_jammed') {{
           if (dot) dot.classList.add('offline');
           if (label) label.textContent = 'Feeder Jammed';
-          if (diagState) diagState.textContent = 'Paper Jammed';
+          if (diagState) diagState.textContent = 'Paper Jammed / Feed Error';
 
           strip.classList.add('state-warning');
-          stripTitle.textContent = 'Feeder Jammed';
-          stripBadge.textContent = 'Action Required';
-          stripDetail.textContent = 'Paper is jammed in the scanner path · Please open cover and clear paper path';
+          stripTitle.textContent = 'Paper Jam / Feed Error';
+          stripBadge.textContent = 'Clear Paper & Press Power';
+          stripDetail.textContent = '1. Gently pull paper from rollers · 2. Press Power once to clear red (!) error · 3. Re-insert';
+          if (stripActions) {{
+            stripActions.innerHTML = '<button class="btn-strip btn-strip-primary" onclick="refreshAll()">Check Hardware</button>';
+          }}
         }} else {{
           if (dot) dot.classList.add('offline');
           const cleanState = state.replace(/_/g, ' ');
