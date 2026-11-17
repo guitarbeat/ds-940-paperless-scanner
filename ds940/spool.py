@@ -201,8 +201,10 @@ class ScanSpool:
             except Exception as err:
                 LOG.warning("AI filing failed (%s); using default naming: %s", type(err).__name__, err)
                 target = self.output / f"{folder.name}.pdf"
+                ai_meta = {}
         else:
             target = self.output / f"{folder.name}.pdf"
+            ai_meta = {}
 
         # Atomic staging guard: write to hidden .staging_xxx.tmp on target filesystem, fsync, chmod, and atomic replace
         staging_path = target.parent / f".staging_{uuid4().hex[:8]}.tmp"
@@ -220,6 +222,22 @@ class ScanSpool:
             except OSError:
                 pass
             staging_path.replace(target)
+
+        # Apply native macOS Finder color tags and Spotlight metadata
+        try:
+            from .finder_tags import set_finder_metadata
+            doc_category = ai_meta.get("category") or (target.parent.name if target.parent != self.output else "Inbox")
+            doc_sender = ai_meta.get("ai", {}).get("sender") or ""
+            doc_title = ai_meta.get("ai", {}).get("suggested_filename", target.name)
+            set_finder_metadata(
+                target,
+                category=doc_category,
+                tags=[t for t in [doc_category, doc_sender, "Brother DS-940DW"] if t],
+                title=doc_title,
+                keywords=[k for k in [doc_category, doc_sender, "scanned", "brother-ds940dw"] if k],
+            )
+        except Exception as tag_err:
+            LOG.warning("Could not apply Finder tags to %s: %s", target.name, tag_err)
 
         destination_rel = str(target.relative_to(self.output))
         manifest.update(phase="forwarded", destination=destination_rel)

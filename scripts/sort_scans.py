@@ -17,6 +17,7 @@ if str(repo_root) not in sys.path:
     sys.path.insert(0, str(repo_root))
 
 from ds940.ai import DEFAULT_CATEGORY, classify_document
+from ds940.finder_tags import set_finder_metadata, tag_all_scans
 from ds940.ocr import run_ocr
 from ds940.taxonomy import TaxonomyLedger
 
@@ -83,6 +84,13 @@ def sort_scans(
             target_dir.mkdir(parents=True, exist_ok=True)
             shutil.move(pdf, target_path)
             item["status"] = "moved"
+            set_finder_metadata(
+                target_path,
+                category=item["category"],
+                tags=[t for t in [item["category"], item.get("sender"), "Brother DS-940DW"] if t],
+                title=item.get("suggested_filename", target_path.name),
+                keywords=[k for k in [item["category"], item.get("sender"), "scanned", "brother-ds940dw"] if k],
+            )
             # Update log
             log_path = scans_dir / "SORT_LOG.md"
             with log_path.open("a", encoding="utf-8") as log_file:
@@ -114,6 +122,11 @@ def main():
         help="Execute the file moves (default is dry-run preview)",
     )
     parser.add_argument(
+        "--tag-all",
+        action="store_true",
+        help="Apply native macOS Finder color tags and Spotlight keywords to all documents in the archive",
+    )
+    parser.add_argument(
         "--json",
         action="store_true",
         help="Output results as JSON",
@@ -122,6 +135,16 @@ def main():
 
     scans_path = Path(args.dir).expanduser().resolve()
     api_key = os.environ.get("GEMINI_API_KEY", "").strip() or None
+
+    if args.tag_all:
+        tagged = tag_all_scans(scans_path)
+        if args.json:
+            print(json.dumps(tagged, indent=2))
+        else:
+            print(f"Applied native macOS Finder tags to {len(tagged)} documents in {scans_path}.")
+            for t in tagged:
+                print(f"  - {t['filename']} -> [{t['category']}] (color {t['color']})")
+        return
 
     results = sort_scans(scans_path, dry_run=not args.apply, api_key=api_key)
 
