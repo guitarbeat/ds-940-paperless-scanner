@@ -115,6 +115,8 @@ class WebDashboardTests(unittest.TestCase):
             self.assertIn("Recent Scans", html)
             self.assertIn("live-status-strip", html)
             self.assertIn("strip-title", html)
+            self.assertIn("header-session-actions", html)
+            self.assertIn("header-global-actions", html)
             self.assertIn("Doc Date", html)
             self.assertIn("Scanned", html)
 

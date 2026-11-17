@@ -430,7 +430,6 @@ class DashboardHandler(BaseHTTPRequestHandler):
       display: flex;
       flex-direction: column;
       padding: 0;
-      overflow: hidden;
       transition: border-bottom-color 180ms var(--ease), background-color 180ms var(--ease);
     }}
 
@@ -447,8 +446,7 @@ class DashboardHandler(BaseHTTPRequestHandler):
       display: flex;
       align-items: center;
       gap: 0.85rem;
-      flex: 1;
-      min-width: 0;
+      flex-shrink: 0;
     }}
 
     .brand-wrap {{
@@ -474,6 +472,7 @@ class DashboardHandler(BaseHTTPRequestHandler):
       letter-spacing: -0.015em;
       color: var(--text);
       white-space: nowrap;
+      flex-shrink: 0;
     }}
 
     .header-divider {{
@@ -487,8 +486,7 @@ class DashboardHandler(BaseHTTPRequestHandler):
       display: flex;
       align-items: center;
       gap: 0.6rem;
-      min-width: 0;
-      overflow: hidden;
+      flex-shrink: 0;
     }}
 
     .strip-beacon {{
@@ -511,6 +509,7 @@ class DashboardHandler(BaseHTTPRequestHandler):
       color: var(--text);
       line-height: 1.2;
       white-space: nowrap;
+      flex-shrink: 0;
     }}
 
     .strip-badge {{
@@ -524,6 +523,7 @@ class DashboardHandler(BaseHTTPRequestHandler):
       letter-spacing: 0.02em;
       text-transform: uppercase;
       white-space: nowrap;
+      flex-shrink: 0;
     }}
 
     .strip-sleep-pill {{
@@ -539,9 +539,18 @@ class DashboardHandler(BaseHTTPRequestHandler):
       display: inline-flex;
       align-items: center;
       gap: 0.35rem;
+      flex-shrink: 0;
     }}
 
-    .header-primary-actions {{
+    .header-session-actions {{
+      display: flex;
+      align-items: center;
+      gap: 0.65rem;
+      margin-left: auto;
+      flex-shrink: 0;
+    }}
+
+    .header-global-actions {{
       display: flex;
       align-items: center;
       gap: 0.65rem;
@@ -558,6 +567,7 @@ class DashboardHandler(BaseHTTPRequestHandler):
       border-radius: 4px;
       font-size: 0.72rem;
       color: var(--status-active);
+      flex-shrink: 0;
     }}
 
     .countdown-pulse-dot {{
@@ -591,6 +601,14 @@ class DashboardHandler(BaseHTTPRequestHandler):
       display: flex;
       align-items: center;
       gap: 0.45rem;
+      flex-shrink: 0;
+    }}
+
+    .strip-btn-group {{
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      flex-shrink: 0;
     }}
 
     .btn-strip {{
@@ -1417,14 +1435,20 @@ class DashboardHandler(BaseHTTPRequestHandler):
       border-color: #b91c1c;
     }}
 
-    /* Mobile Drawer & Modal View */
+    /* Responsive Breakpoints & Progressive Disclosure */
     @media (max-width: 960px) {{
       .btn-row-action {{
         opacity: 1;
       }}
       .header-primary-row {{
-        padding: 0.6rem 1rem 0.45rem;
+        padding: 0.55rem 1rem 0.45rem;
         gap: 0.75rem;
+      }}
+      .brand-title {{
+        display: none;
+      }}
+      .header-divider {{
+        display: none;
       }}
       .header-meta-row {{
         padding: 0.35rem 1rem 0.45rem;
@@ -1438,9 +1462,6 @@ class DashboardHandler(BaseHTTPRequestHandler):
       .header-telemetry-ledger {{
         flex-wrap: wrap;
         gap: 0.5rem 0.75rem;
-      }}
-      .header-divider {{
-        display: none;
       }}
       .split-layout {{
         grid-template-columns: 1fr;
@@ -1460,6 +1481,50 @@ class DashboardHandler(BaseHTTPRequestHandler):
       }}
       .btn-close-mobile {{
         display: inline-flex !important;
+      }}
+    }}
+
+    /* Mobile Viewports (<680px): Clean 2-Row Header with Full-Width Action Strip */
+    @media (max-width: 680px) {{
+      .header-primary-row {{
+        flex-wrap: wrap;
+        padding: 0.5rem 0.85rem 0.55rem;
+        gap: 0.45rem 0.65rem;
+      }}
+      .header-brand-status {{
+        order: 1;
+        flex: 1 1 auto;
+        min-width: 0;
+      }}
+      .header-global-actions {{
+        order: 2;
+        flex-shrink: 0;
+        margin-left: auto;
+      }}
+      .header-session-actions {{
+        display: none;
+      }}
+      .header-session-actions.has-actions {{
+        display: flex;
+        order: 3;
+        flex: 1 1 100%;
+        margin-left: 0;
+        justify-content: space-between;
+        padding-top: 0.45rem;
+        border-top: 1px solid var(--border-subtle);
+      }}
+      .strip-actions {{
+        width: 100%;
+        justify-content: space-between;
+      }}
+    }}
+
+    @media (max-width: 440px) {{
+      .strip-badge {{
+        display: none;
+      }}
+      .btn-strip {{
+        padding: 0.28rem 0.65rem;
       }}
     }}
 
@@ -1504,14 +1569,16 @@ class DashboardHandler(BaseHTTPRequestHandler):
         </div>
       </div>
 
-      <div class="header-primary-actions">
+      <div class="header-session-actions" id="header-session-actions">
         <div id="strip-countdown-wrap" class="strip-countdown-wrap">
           <span class="countdown-pulse-dot"></span>
           <span class="countdown-label">Batch:</span>
           <span id="strip-countdown-num" class="strip-countdown-num">8.0s</span>
         </div>
         <div id="strip-actions" class="strip-actions"></div>
+      </div>
 
+      <div class="header-global-actions">
         <div class="header-divider" aria-hidden="true"></div>
 
         <div class="header-actions">
@@ -2151,7 +2218,7 @@ class DashboardHandler(BaseHTTPRequestHandler):
             const timeStr = m > 0 ? `${{m}}m ${{s}}s` : `${{s}}s`;
             stripDetail.textContent = `Brother DS-940DW ready at ${{scannerIp}} · Sleeping in ${{timeStr}} to save battery`;
             if (stripActions) {{
-              stripActions.innerHTML = `<span class="strip-sleep-pill" title="Battery saver countdown">🌙 ${{timeStr}}</span><button class="btn-strip" onclick="sessionAction(\\'extend\\')">+5m</button><button class="btn-strip" onclick="sessionAction(\\'pause\\')">Sleep Now</button>`;
+              stripActions.innerHTML = `<span class="strip-sleep-pill" title="Battery saver countdown">🌙 ${{timeStr}}</span><div class="strip-btn-group"><button class="btn-strip" onclick="sessionAction(\\'extend\\')">+5m</button><button class="btn-strip" onclick="sessionAction(\\'pause\\')">Sleep Now</button></div>`;
             }}
           }} else {{
             stripDetail.textContent = `Brother DS-940DW ready at ${{scannerIp}} · Insert document into feeder to scan`;
@@ -2279,6 +2346,12 @@ class DashboardHandler(BaseHTTPRequestHandler):
         if (diagUptime) diagUptime.textContent = data.uptime || '--';
         const diagRam = document.getElementById('diag-ram');
         if (diagRam) diagRam.textContent = (data.memory_mb || '0.0') + ' MB';
+
+        const sessionActionsWrap = document.getElementById('header-session-actions');
+        const hasSessionContent = (stripActions && stripActions.children.length > 0) || (countdownWrap && countdownWrap.style.display === 'flex');
+        if (sessionActionsWrap) {{
+          sessionActionsWrap.classList.toggle('has-actions', Boolean(hasSessionContent));
+        }}
 
         setPollingInterval(isActiveState ? 750 : 2500);
       }} catch (e) {{
