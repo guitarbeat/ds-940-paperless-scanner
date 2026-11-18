@@ -3,11 +3,15 @@
 from __future__ import annotations
 
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+import hashlib
 import json
 import logging
 import os
 from pathlib import Path
 import re
+import shutil
+import subprocess
+import tempfile
 import threading
 import time
 import urllib.parse
@@ -149,6 +153,8 @@ class DashboardHandler(BaseHTTPRequestHandler):
             self.send_json(ledger.get_active_categories())
         elif path.startswith("/files/"):
             self.serve_file(path[7:])
+        elif path.startswith("/thumbs/"):
+            self.serve_thumbnail(path[8:])
         else:
             self.send_error(404, "Not Found")
 
@@ -253,6 +259,54 @@ class DashboardHandler(BaseHTTPRequestHandler):
         except OSError as err:
             LOG.exception("Error serving file %s: %s", target_path, err)
             self.send_error(500, f"Error reading file: {err}")
+
+    def serve_thumbnail(self, rel_path: str):
+        safe_rel = urllib.parse.unquote(rel_path).lstrip("/")
+        target_path = (self.settings.output / safe_rel).resolve()
+        try:
+            output_resolved = self.settings.output.resolve()
+            target_path.relative_to(output_resolved)
+        except ValueError:
+            self.send_error(403, "Access denied")
+            return
+
+        if not target_path.is_file():
+            self.send_error(404, "File not found")
+            return
+
+        cache_dir = self.settings.work / "thumbnails"
+        try:
+            cache_dir.mkdir(parents=True, exist_ok=True)
+            st = target_path.stat()
+            cache_key = hashlib.md5(f"{target_path}_{st.st_mtime}_{st.st_size}".encode()).hexdigest()
+            thumb_path = cache_dir / f"{cache_key}.png"
+
+            if not thumb_path.exists():
+                qlmanage_bin = shutil.which("qlmanage") or "/usr/bin/qlmanage"
+                if os.path.exists(qlmanage_bin) and target_path.stat().st_size > 500:
+                    with tempfile.TemporaryDirectory() as tmp:
+                        cmd = [qlmanage_bin, "-t", "-s", "256", "-o", tmp, str(target_path)]
+                        try:
+                            subprocess.run(cmd, capture_output=True, timeout=2.5)
+                            generated = list(Path(tmp).glob("*.png"))
+                            if generated:
+                                shutil.copyfile(generated[0], thumb_path)
+                        except subprocess.TimeoutExpired:
+                            LOG.warning("qlmanage timed out generating thumbnail for %s", target_path)
+
+            if thumb_path.exists():
+                data = thumb_path.read_bytes()
+                self.send_response(200)
+                self.send_header("Content-Type", "image/png")
+                self.send_header("Content-Length", str(len(data)))
+                self.send_header("Cache-Control", "public, max-age=86400")
+                self.end_headers()
+                self.wfile.write(data)
+                return
+        except Exception as err:
+            LOG.warning("Thumbnail generation error for %s: %s", target_path, err)
+
+        self.send_error(404, "Thumbnail not available")
 
     def serve_status(self):
         status_file = self.settings.work / "auto-status.json"
@@ -949,11 +1003,61 @@ class DashboardHandler(BaseHTTPRequestHandler):
     }}
 
     .finder-doc-icon {{
+      width: 58px;
+      height: 74px;
+      position: relative;
+      margin-bottom: 0.45rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }}
+
+    .doc-thumbnail-img {{
+      width: 56px;
+      height: 72px;
+      object-fit: cover;
+      object-position: top;
+      background: #ffffff;
+      border-radius: 4px;
+      border: 1px solid var(--border);
+      box-shadow: 0 2px 5px rgba(0,0,0,0.12);
+      transition: transform 120ms var(--ease), box-shadow 120ms var(--ease);
+      display: block;
+    }}
+
+    .finder-icon-card:hover .doc-thumbnail-img {{
+      transform: translateY(-2px);
+      box-shadow: 0 4px 10px rgba(0,0,0,0.18);
+    }}
+
+    .doc-fallback-wrap {{
       width: 56px;
       height: 68px;
       position: relative;
-      margin-bottom: 0.45rem;
       filter: drop-shadow(0 2px 4px rgba(0,0,0,0.12));
+    }}
+
+    .list-name-col {{
+      display: inline-flex;
+      align-items: center;
+      gap: 0.55rem;
+      font-weight: 600;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      min-width: 0;
+    }}
+
+    .list-thumb-img {{
+      width: 18px;
+      height: 23px;
+      object-fit: cover;
+      object-position: top;
+      background: #ffffff;
+      border-radius: 2px;
+      border: 1px solid var(--border);
+      flex-shrink: 0;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
     }}
 
     .doc-page-svg {{
@@ -1783,15 +1887,22 @@ class DashboardHandler(BaseHTTPRequestHandler):
                onclick="selectDocument(allScans.find(x => x.relative_path === '${{encodeURIComponent(doc.relative_path)}}'), ${{idx}})"
                ondblclick="openDocumentExternal('${{encodeURIComponent(doc.relative_path)}}')">
             <div class="finder-doc-icon">
-              <svg class="doc-page-svg" viewBox="0 0 56 68" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M0 4C0 1.79086 1.79086 0 4 0H38L56 18V64C56 66.2091 54.2091 68 52 68H4C1.79086 68 0 66.2091 0 64V4Z" fill="var(--bg-surface)"/>
-                <path d="M0 4C0 1.79086 1.79086 0 4 0H38L56 18V64C56 66.2091 54.2091 68 52 68H4C1.79086 68 0 66.2091 0 64V4Z" stroke="var(--border)" stroke-width="1.5"/>
-                <path d="M38 0V14C38 16.2091 39.7909 18 42 18H56" fill="var(--bg-subtle)" stroke="var(--border)" stroke-width="1.5"/>
-                <line x1="10" y1="26" x2="46" y2="26" stroke="var(--border)" stroke-width="1.5" stroke-linecap="round"/>
-                <line x1="10" y1="34" x2="46" y2="34" stroke="var(--border)" stroke-width="1.5" stroke-linecap="round"/>
-                <line x1="10" y1="42" x2="34" y2="42" stroke="var(--border)" stroke-width="1.5" stroke-linecap="round"/>
-              </svg>
-              <span class="doc-page-badge">PDF</span>
+              <img class="doc-thumbnail-img"
+                   src="/thumbs/${{encodeURIComponent(doc.relative_path)}}"
+                   alt="${{doc.filename}}"
+                   loading="lazy"
+                   onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+              <div class="doc-fallback-wrap" style="display:none;">
+                <svg class="doc-page-svg" viewBox="0 0 56 68" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M0 4C0 1.79086 1.79086 0 4 0H38L56 18V64C56 66.2091 54.2091 68 52 68H4C1.79086 68 0 66.2091 0 64V4Z" fill="var(--bg-surface)"/>
+                  <path d="M0 4C0 1.79086 1.79086 0 4 0H38L56 18V64C56 66.2091 54.2091 68 52 68H4C1.79086 68 0 66.2091 0 64V4Z" stroke="var(--border)" stroke-width="1.5"/>
+                  <path d="M38 0V14C38 16.2091 39.7909 18 42 18H56" fill="var(--bg-subtle)" stroke="var(--border)" stroke-width="1.5"/>
+                  <line x1="10" y1="26" x2="46" y2="26" stroke="var(--border)" stroke-width="1.5" stroke-linecap="round"/>
+                  <line x1="10" y1="34" x2="46" y2="34" stroke="var(--border)" stroke-width="1.5" stroke-linecap="round"/>
+                  <line x1="10" y1="42" x2="34" y2="42" stroke="var(--border)" stroke-width="1.5" stroke-linecap="round"/>
+                </svg>
+                <span class="doc-page-badge">PDF</span>
+              </div>
             </div>
             <div class="doc-card-title" title="${{doc.filename}}">${{title}}</div>
             <div class="doc-card-meta">${{date}} · ${{kb}}</div>
@@ -1802,7 +1913,10 @@ class DashboardHandler(BaseHTTPRequestHandler):
           <div class="finder-list-row ${{isSelected ? 'selected' : ''}}"
                onclick="selectDocument(allScans.find(x => x.relative_path === '${{encodeURIComponent(doc.relative_path)}}'), ${{idx}})"
                ondblclick="openDocumentExternal('${{encodeURIComponent(doc.relative_path)}}')">
-            <div style="font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${{title}}</div>
+            <div class="list-name-col">
+              <img class="list-thumb-img" src="/thumbs/${{encodeURIComponent(doc.relative_path)}}" alt="" loading="lazy" onerror="this.style.display='none';">
+              <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${{title}}</span>
+            </div>
             <div class="doc-card-meta">${{doc.scan_date || '--'}}</div>
             <div class="doc-card-meta">${{doc.doc_date || '--'}}</div>
             <div class="doc-card-meta">${{kb}}</div>

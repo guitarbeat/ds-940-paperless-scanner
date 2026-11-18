@@ -123,6 +123,38 @@ class WebDashboardTests(unittest.TestCase):
             self.assertIn("finder-sidebar", html)
             self.assertIn("finder-breadcrumbs", html)
 
+    def test_thumbnail_endpoint(self):
+        import hashlib
+        # 1. Non-existent file returns 404
+        url_404 = f"http://127.0.0.1:{self.port}/thumbs/nonexistent.pdf"
+        try:
+            with urllib.request.urlopen(url_404, timeout=3.0) as resp:
+                pass
+        except urllib.error.HTTPError as e:
+            self.assertEqual(e.code, 404)
+
+        # 2. Path traversal returns 403
+        url_403 = f"http://127.0.0.1:{self.port}/thumbs/../../etc/passwd"
+        try:
+            with urllib.request.urlopen(url_403, timeout=3.0) as resp:
+                pass
+        except urllib.error.HTTPError as e:
+            self.assertEqual(e.code, 403)
+
+        # 3. Cached thumbnail returns 200 with image/png
+        cache_dir = self.work / "thumbnails"
+        cache_dir.mkdir(parents=True, exist_ok=True)
+        pdf_path = (self.output / "test_doc.pdf").resolve()
+        st = pdf_path.stat()
+        cache_key = hashlib.md5(f"{pdf_path}_{st.st_mtime}_{st.st_size}".encode()).hexdigest()
+        (cache_dir / f"{cache_key}.png").write_bytes(b"\x89PNG\r\n\x1a\nfake-png-data")
+
+        url_thumb = f"http://127.0.0.1:{self.port}/thumbs/test_doc.pdf"
+        with urllib.request.urlopen(url_thumb, timeout=3.0) as resp:
+            self.assertEqual(resp.status, 200)
+            self.assertEqual(resp.headers.get("Content-Type"), "image/png")
+            self.assertEqual(resp.read(), b"\x89PNG\r\n\x1a\nfake-png-data")
+
     def test_categories_endpoint(self):
         url = f"http://127.0.0.1:{self.port}/api/categories"
         with urllib.request.urlopen(url, timeout=3.0) as resp:
