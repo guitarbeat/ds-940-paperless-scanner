@@ -823,12 +823,6 @@ class DashboardHandler(BaseHTTPRequestHandler):
       font-variant-numeric: tabular-nums;
     }}
 
-    .tag-dot {{
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      flex-shrink: 0;
-    }}
 
     /* Main Finder Browser Pane */
     .finder-main {{
@@ -864,10 +858,6 @@ class DashboardHandler(BaseHTTPRequestHandler):
       text-overflow: ellipsis;
     }}
 
-    .crumb-sep {{
-      color: var(--text-dim);
-      font-size: 0.7rem;
-    }}
 
     .crumb-active {{
       font-weight: 600;
@@ -1237,9 +1227,6 @@ class DashboardHandler(BaseHTTPRequestHandler):
       .strip-badge {{
         display: none !important;
       }}
-      .statusbar-item-secondary {{
-        display: none !important;
-      }}
     }}
 
     @media (max-width: 1024px) {{
@@ -1274,9 +1261,6 @@ class DashboardHandler(BaseHTTPRequestHandler):
       }}
       #btn-trigger-sort {{
         padding: 0.22rem 0.45rem;
-      }}
-      .crumb-root {{
-        display: none !important;
       }}
       .statusbar-path, .statusbar-archive-label {{
         display: none !important;
@@ -1357,8 +1341,6 @@ class DashboardHandler(BaseHTTPRequestHandler):
         <div class="titlebar-divider" aria-hidden="true"></div>
         <div class="finder-status-strip">
           <span id="strip-beacon" class="strip-beacon"></span>
-          <span id="status-dot" style="display:none;"></span>
-          <span id="status-label" style="display:none;"></span>
           <h2 id="strip-title" class="strip-title">Ready for paper</h2>
           <span id="strip-badge" class="strip-badge">Duplex 300 DPI</span>
         </div>
@@ -1430,7 +1412,6 @@ class DashboardHandler(BaseHTTPRequestHandler):
             <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
           </svg>
         </button>
-        <button id="tele-toggle-btn" style="display:none;"></button>
       </div>
 
       <div id="strip-progress-bar" class="strip-progress-bar" style="position:absolute; bottom:0; left:0; height:2px; width:0; background:var(--status-active); transition: width 0.7s linear;"></div>
@@ -1491,36 +1472,6 @@ class DashboardHandler(BaseHTTPRequestHandler):
             <!-- Dynamically populated from /api/folders -->
           </nav>
         </div>
-
-        <div class="sidebar-section">
-          <div class="sidebar-section-title">Tags</div>
-          <nav class="sidebar-nav" id="sidebar-tags">
-            <a class="sidebar-item" onclick="selectTag('Legal', this)">
-              <span class="sidebar-item-label">
-                <span class="tag-dot" style="background:#f59e0b;"></span>
-                <span>Legal & Citations</span>
-              </span>
-            </a>
-            <a class="sidebar-item" onclick="selectTag('Finance', this)">
-              <span class="sidebar-item-label">
-                <span class="tag-dot" style="background:#10b981;"></span>
-                <span>Banking & Finance</span>
-              </span>
-            </a>
-            <a class="sidebar-item" onclick="selectTag('Medical', this)">
-              <span class="sidebar-item-label">
-                <span class="tag-dot" style="background:#0ea5e9;"></span>
-                <span>Medical & Health</span>
-              </span>
-            </a>
-            <a class="sidebar-item" onclick="selectTag('Auto', this)">
-              <span class="sidebar-item-label">
-                <span class="tag-dot" style="background:#8b5cf6;"></span>
-                <span>Auto & Vehicles</span>
-              </span>
-            </a>
-          </nav>
-        </div>
       </aside>
 
       <!-- Center: Main Browser Area -->
@@ -1528,10 +1479,6 @@ class DashboardHandler(BaseHTTPRequestHandler):
         <!-- Breadcrumbs & Search -->
         <div class="finder-breadcrumbs" id="finder-breadcrumbs">
           <div class="crumb-trail">
-            <span class="crumb-root">Mac Mini</span>
-            <span class="crumb-sep crumb-root">›</span>
-            <span class="crumb-root">brother-scans</span>
-            <span class="crumb-sep crumb-root">›</span>
             <span class="crumb-active" id="crumb-folder">Recent Scans</span>
             <span class="doc-size" id="scan-count" style="margin-left:0.4rem;">0 items</span>
           </div>
@@ -1630,25 +1577,13 @@ class DashboardHandler(BaseHTTPRequestHandler):
         <span>·</span>
         <span class="statusbar-item" title="Scanner Network Endpoint">
           <span>Scanner:</span>
-          <a id="diag-scanner" class="statusbar-link" href="http://{self.settings.scanner_ip}:8080/" target="_blank" rel="noopener">{self.settings.scanner_ip}:8080</a>
-          <a id="diag-scanner-link" href="http://{self.settings.scanner_ip}:8080/" target="_blank" rel="noopener" class="statusbar-link" title="Open Brother Web Admin">↗</a>
+          <a id="diag-scanner" class="statusbar-link" href="http://{self.settings.scanner_ip}:8080/" target="_blank" rel="noopener" title="Open Brother Web Admin">{self.settings.scanner_ip}:8080 ↗</a>
         </span>
         <span>·</span>
         <span class="statusbar-item" title="Daemon Engine State">
           <span>State:</span>
           <span id="diag-state">Connecting</span>
         </span>
-        <span>·</span>
-        <span class="statusbar-item statusbar-item-secondary" title="Process Uptime">
-          <span>Uptime:</span>
-          <span id="diag-uptime">--</span>
-        </span>
-        <span class="statusbar-item-secondary">·</span>
-        <span class="statusbar-item statusbar-item-secondary" title="Resident Memory (RSS)">
-          <span>RAM:</span>
-          <span id="diag-ram">-- MB</span>
-        </span>
-        <span id="strip-detail" style="display:none;"></span>
       </div>
 
       <div class="statusbar-right">
@@ -1679,7 +1614,6 @@ class DashboardHandler(BaseHTTPRequestHandler):
   <script>
     let allScans = [];
     let currentFolder = 'all';
-    let currentTag = null;
     let currentViewMode = localStorage.getItem('ds940-view-mode') || 'grid';
     let isQuickLookOpen = true;
     let selectedIndex = -1;
@@ -1793,7 +1727,6 @@ class DashboardHandler(BaseHTTPRequestHandler):
       return allScans.filter(doc => {{
         if (currentFolder === 'Inbox' && !doc.is_unfiled) return false;
         if (currentFolder !== 'all' && currentFolder !== 'Inbox' && doc.folder !== currentFolder) return false;
-        if (currentTag && !((doc.category || '').toLowerCase().includes(currentTag.toLowerCase()))) return false;
         if (!q) return true;
         const matchTitle = (doc.filename || '').toLowerCase().includes(q);
         const matchCat = (doc.category || '').toLowerCase().includes(q);
@@ -1805,19 +1738,9 @@ class DashboardHandler(BaseHTTPRequestHandler):
 
     function selectFolder(folder, el) {{
       currentFolder = folder;
-      currentTag = null;
       document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
       if (el) el.classList.add('active');
       document.getElementById('crumb-folder').textContent = folder === 'all' ? 'Recent Scans' : folder;
-      renderScans();
-    }}
-
-    function selectTag(tag, el) {{
-      currentTag = tag;
-      currentFolder = 'all';
-      document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
-      if (el) el.classList.add('active');
-      document.getElementById('crumb-folder').textContent = `Tag: ${{tag}}`;
       renderScans();
     }}
 
@@ -2073,14 +1996,11 @@ class DashboardHandler(BaseHTTPRequestHandler):
         const res = await fetch('/api/status');
         const data = await res.json();
         
-        const dot = document.getElementById('status-dot');
-        const label = document.getElementById('status-label');
         const diagState = document.getElementById('diag-state');
         
         const strip = document.getElementById('live-status-strip');
         const stripTitle = document.getElementById('strip-title');
         const stripBadge = document.getElementById('strip-badge');
-        const stripDetail = document.getElementById('strip-detail');
         const countdownWrap = document.getElementById('strip-countdown-wrap');
         const countdownNum = document.getElementById('strip-countdown-num');
         const stripActions = document.getElementById('strip-actions');
@@ -2092,13 +2012,10 @@ class DashboardHandler(BaseHTTPRequestHandler):
 
         const diagScanner = document.getElementById('diag-scanner');
         if (diagScanner) {{
-          diagScanner.textContent = `${{scannerIp}}:8080`;
+          diagScanner.textContent = `${{scannerIp}}:8080 ↗`;
           diagScanner.href = `http://${{scannerIp}}:8080/`;
         }}
-        const diagScannerLink = document.getElementById('diag-scanner-link');
-        if (diagScannerLink) diagScannerLink.href = `http://${{scannerIp}}:8080/`;
 
-        if (dot) dot.className = 'status-dot';
         progressBar.style.width = '0%';
         countdownWrap.style.display = 'none';
         if (stripActions) stripActions.innerHTML = '';
@@ -2239,11 +2156,6 @@ class DashboardHandler(BaseHTTPRequestHandler):
           stripBadge.textContent = 'Status';
           if (stripDetail) stripDetail.textContent = `Current hardware state: ${{state}}`;
         }}
-
-        const diagUptime = document.getElementById('diag-uptime');
-        if (diagUptime) diagUptime.textContent = data.uptime || '--';
-        const diagRam = document.getElementById('diag-ram');
-        if (diagRam) diagRam.textContent = (data.memory_mb || '0.0') + ' MB';
 
         setPollingInterval(isActiveState ? 750 : 2500);
       }} catch (e) {{
