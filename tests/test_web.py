@@ -234,6 +234,15 @@ class WebDashboardTests(unittest.TestCase):
             self.assertEqual(data["status"], "ok")
             self.assertTrue(data["session_active"])
 
+    def test_dashboard_has_preview_toggle(self):
+        url = f"http://127.0.0.1:{self.port}/"
+        with urllib.request.urlopen(url, timeout=3.0) as resp:
+            self.assertEqual(resp.status, 200)
+            html = resp.read().decode("utf-8")
+            self.assertIn("btn-toggle-preview", html)
+            self.assertIn("toggleThumbnailPreview", html)
+            self.assertIn("ds940-show-thumbnails", html)
+
 
 if __name__ == "__main__":
     unittest.main()

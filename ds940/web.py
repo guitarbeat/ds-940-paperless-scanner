@@ -130,7 +130,7 @@ class DashboardHandler(BaseHTTPRequestHandler):
 
     def do_HEAD(self):
         parsed = urllib.parse.urlparse(self.path)
-        if parsed.path in ("/", "/index.html", "/api/status", "/api/scans", "/api/categories", "/api/folders") or parsed.path.startswith("/files/"):
+        if parsed.path in ("/", "/index.html", "/api/status", "/api/scans", "/api/categories", "/api/folders") or parsed.path.startswith("/files/") or parsed.path.startswith("/thumbs/"):
             self.send_response(200)
             self.end_headers()
         else:
@@ -1488,6 +1488,14 @@ class DashboardHandler(BaseHTTPRequestHandler):
           </button>
         </div>
 
+        <button class="btn-icon active" id="btn-toggle-preview" onclick="toggleThumbnailPreview()" title="Showing icon previews · Click to switch to standard PDF icons (P)" aria-label="Toggle icon preview thumbnails">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+            <circle cx="8.5" cy="8.5" r="1.5"/>
+            <polyline points="21 15 16 10 5 21"/>
+          </svg>
+        </button>
+
         <button class="btn-icon" id="btn-toggle-quicklook" onclick="toggleQuickLook()" title="Toggle Quick Look Preview (Spacebar)" aria-label="Toggle Quick Look">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
@@ -1719,6 +1727,7 @@ class DashboardHandler(BaseHTTPRequestHandler):
     let allScans = [];
     let currentFolder = 'all';
     let currentViewMode = localStorage.getItem('ds940-view-mode') || 'grid';
+    let showThumbnails = localStorage.getItem('ds940-show-thumbnails') !== 'false';
     let isQuickLookOpen = true;
     let selectedIndex = -1;
     let activeDoc = null;
@@ -1774,6 +1783,24 @@ class DashboardHandler(BaseHTTPRequestHandler):
       document.getElementById('view-toggle-list').classList.toggle('active', mode === 'list');
       document.getElementById('finder-grid').style.display = mode === 'grid' ? 'grid' : 'none';
       document.getElementById('finder-list').style.display = mode === 'list' ? 'flex' : 'none';
+    }}
+
+    /* Thumbnail Preview Toggle */
+    function updateThumbnailToggleUI() {{
+      const btn = document.getElementById('btn-toggle-preview');
+      if (!btn) return;
+      btn.classList.toggle('active', showThumbnails);
+      btn.title = showThumbnails
+        ? "Showing icon previews · Click to switch to standard PDF icons (P)"
+        : "Showing PDF icons · Click to switch to page preview thumbnails (P)";
+    }}
+
+    function toggleThumbnailPreview() {{
+      showThumbnails = !showThumbnails;
+      localStorage.setItem('ds940-show-thumbnails', showThumbnails ? 'true' : 'false');
+      updateThumbnailToggleUI();
+      renderScans();
+      showToast(showThumbnails ? 'Showing page preview icons' : 'Showing standard PDF icons');
     }}
 
     /* Quick Look Toggle */
@@ -1891,8 +1918,9 @@ class DashboardHandler(BaseHTTPRequestHandler):
                    src="/thumbs/${{encodeURIComponent(doc.relative_path)}}"
                    alt="${{doc.filename}}"
                    loading="lazy"
+                   style="${{showThumbnails ? '' : 'display:none;'}}"
                    onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
-              <div class="doc-fallback-wrap" style="display:none;">
+              <div class="doc-fallback-wrap" style="${{showThumbnails ? 'display:none;' : 'display:block;'}}">
                 <svg class="doc-page-svg" viewBox="0 0 56 68" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <path d="M0 4C0 1.79086 1.79086 0 4 0H38L56 18V64C56 66.2091 54.2091 68 52 68H4C1.79086 68 0 66.2091 0 64V4Z" fill="var(--bg-surface)"/>
                   <path d="M0 4C0 1.79086 1.79086 0 4 0H38L56 18V64C56 66.2091 54.2091 68 52 68H4C1.79086 68 0 66.2091 0 64V4Z" stroke="var(--border)" stroke-width="1.5"/>
@@ -1914,7 +1942,10 @@ class DashboardHandler(BaseHTTPRequestHandler):
                onclick="selectDocument(allScans.find(x => x.relative_path === '${{encodeURIComponent(doc.relative_path)}}'), ${{idx}})"
                ondblclick="openDocumentExternal('${{encodeURIComponent(doc.relative_path)}}')">
             <div class="list-name-col">
-              <img class="list-thumb-img" src="/thumbs/${{encodeURIComponent(doc.relative_path)}}" alt="" loading="lazy" onerror="this.style.display='none';">
+              ${{showThumbnails
+                ? `<img class="list-thumb-img" src="/thumbs/${{encodeURIComponent(doc.relative_path)}}" alt="" loading="lazy" onerror="this.style.display='none'; this.nextElementSibling.style.display='inline-block';"><svg class="list-doc-svg-fallback" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0; opacity:0.75; display:none;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>`
+                : `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0; opacity:0.75;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>`
+              }}
               <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${{title}}</span>
             </div>
             <div class="doc-card-meta">${{doc.scan_date || '--'}}</div>
@@ -2357,6 +2388,9 @@ class DashboardHandler(BaseHTTPRequestHandler):
       }} else if (e.key === '/' && !isInput) {{
         e.preventDefault();
         document.getElementById('search-box').focus();
+      }} else if (e.key.toLowerCase() === 'p' && !isInput) {{
+        e.preventDefault();
+        toggleThumbnailPreview();
       }} else if ((e.key === ' ' || e.code === 'Space') && !isInput) {{
         e.preventDefault();
         toggleQuickLook();
@@ -2374,6 +2408,7 @@ class DashboardHandler(BaseHTTPRequestHandler):
     }});
 
     initTheme();
+    updateThumbnailToggleUI();
     setViewMode(currentViewMode);
     updateStatus();
     loadFolders();
