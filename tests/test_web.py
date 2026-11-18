@@ -127,6 +127,27 @@ class WebDashboardTests(unittest.TestCase):
             cats = json.loads(resp.read().decode("utf-8"))
             self.assertIsInstance(cats, list)
 
+    def test_folders_and_scan_metadata_endpoint(self):
+        # Verify /api/folders endpoint
+        url = f"http://127.0.0.1:{self.port}/api/folders"
+        with urllib.request.urlopen(url, timeout=3.0) as resp:
+            self.assertEqual(resp.status, 200)
+            folders = json.loads(resp.read().decode("utf-8"))
+            self.assertIsInstance(folders, list)
+            names = [f["name"] for f in folders]
+            self.assertIn("Inbox", names)
+            self.assertIn("Bills", names)
+
+        # Verify /api/scans contains folder and is_unfiled
+        scans_url = f"http://127.0.0.1:{self.port}/api/scans"
+        with urllib.request.urlopen(scans_url, timeout=3.0) as resp:
+            scans = json.loads(resp.read().decode("utf-8"))
+            by_name = {s["filename"]: s for s in scans}
+            self.assertTrue(by_name["test_doc.pdf"]["is_unfiled"])
+            self.assertEqual(by_name["test_doc.pdf"]["folder"], "Inbox")
+            self.assertFalse(by_name["2026-10-02_Austin-Energy_Bill.pdf"]["is_unfiled"])
+            self.assertEqual(by_name["2026-10-02_Austin-Energy_Bill.pdf"]["folder"], "Bills")
+
     def test_delete_endpoint(self):
         url = f"http://127.0.0.1:{self.port}/api/delete"
         req = urllib.request.Request(

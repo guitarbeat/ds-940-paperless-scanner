@@ -86,10 +86,13 @@ def get_recent_scans(output_dir: Path, limit: int = 100) -> list[dict]:
                         else:
                             scan_date = time.strftime("%Y-%m-%d %H:%M", time.localtime(stat.st_mtime))
 
+                    is_unfiled = (category == "Inbox")
                     files.append({
                         "filename": fname,
                         "relative_path": str(rel_path),
                         "category": category,
+                        "folder": category,
+                        "is_unfiled": is_unfiled,
                         "size_bytes": stat.st_size,
                         "size_kb": round(stat.st_size / 1024, 1),
                         "modified": stat.st_mtime,
@@ -123,7 +126,7 @@ class DashboardHandler(BaseHTTPRequestHandler):
 
     def do_HEAD(self):
         parsed = urllib.parse.urlparse(self.path)
-        if parsed.path in ("/", "/index.html", "/api/status", "/api/scans", "/api/categories") or parsed.path.startswith("/files/"):
+        if parsed.path in ("/", "/index.html", "/api/status", "/api/scans", "/api/categories", "/api/folders") or parsed.path.startswith("/files/"):
             self.send_response(200)
             self.end_headers()
         else:
@@ -139,6 +142,8 @@ class DashboardHandler(BaseHTTPRequestHandler):
             self.serve_status()
         elif path == "/api/scans":
             self.send_json(get_recent_scans(self.settings.output))
+        elif path == "/api/folders":
+            self.serve_folders()
         elif path == "/api/categories":
             ledger = TaxonomyLedger(self.settings.output)
             self.send_json(ledger.get_active_categories())
@@ -146,6 +151,18 @@ class DashboardHandler(BaseHTTPRequestHandler):
             self.serve_file(path[7:])
         else:
             self.send_error(404, "Not Found")
+
+    def serve_folders(self):
+        output_dir = self.settings.output
+        folders = []
+        if output_dir.exists():
+            root_pdfs = [p for p in output_dir.glob("*.pdf") if p.is_file()]
+            folders.append({"name": "Inbox", "count": len(root_pdfs), "is_root": True})
+            for sub in sorted(output_dir.iterdir()):
+                if sub.is_dir() and not sub.name.startswith("."):
+                    sub_pdfs = [p for p in sub.glob("*.pdf") if p.is_file()]
+                    folders.append({"name": sub.name, "count": len(sub_pdfs), "is_root": False})
+        self.send_json(folders)
 
     def do_POST(self):
         parsed = urllib.parse.urlparse(self.path)
