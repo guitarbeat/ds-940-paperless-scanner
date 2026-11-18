@@ -320,88 +320,84 @@ class DashboardHandler(BaseHTTPRequestHandler):
   <title>Brother DS-940DW</title>
   <style>
     :root {{
-      --bg-page: #f6f7f9;
+      --bg-page: #e8ecf2;
+      --bg-window: #ffffff;
+      --bg-sidebar: #f0f3f8;
       --bg-surface: #ffffff;
-      --bg-subtle: #f0f2f5;
-      --bg-hover: #e8ecf1;
-      --bg-selected: #e2e8f0;
-      --border: #dbe0e7;
-      --border-subtle: #ebedf2;
-      --border-focus: #2563eb;
-      --text: #191c21;
-      --text-muted: #5e6674;
-      --text-dim: #848f9f;
-      --accent: #1d4ed8;
-      --accent-hover: #1e40af;
-      --accent-soft: rgba(29, 78, 216, 0.08);
-      --status-ready: #16a34a;
-      --status-active: #d97706;
-      --status-standby: #64748b;
-      --status-danger: #dc2626;
-      --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
-      --shadow-md: 0 4px 14px rgba(0, 0, 0, 0.08);
-      --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.12);
+      --bg-subtle: #f4f6fa;
+      --bg-hover: #e6ebf4;
+      --bg-selected: #007aff;
+      --bg-selected-text: #ffffff;
+      --border: #d0d7e2;
+      --border-subtle: #e2e8f0;
+      --border-focus: #007aff;
+      --text: #1d2129;
+      --text-muted: #5a6474;
+      --text-dim: #8892a2;
+      --accent: #007aff;
+      --accent-hover: #0062cc;
+      --accent-soft: rgba(0, 122, 255, 0.12);
+      --status-ready: #34c759;
+      --status-active: #ff9500;
+      --status-standby: #8e8e93;
+      --status-danger: #ff3b30;
+      --shadow-window: 0 16px 44px rgba(0, 0, 0, 0.16), 0 0 0 1px rgba(0, 0, 0, 0.08);
+      --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06);
       --ease: cubic-bezier(0.16, 1, 0.3, 1);
-      --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
       --ease-press: cubic-bezier(0.4, 0, 0.2, 1);
     }}
 
     [data-theme="dark"] {{
-      --bg-page: #0f1115;
-      --bg-surface: #171920;
-      --bg-subtle: #1f232d;
-      --bg-hover: #262c38;
-      --bg-selected: #243147;
-      --border: #2c3342;
-      --border-subtle: #202531;
-      --border-focus: #3b82f6;
-      --text: #f0f2f5;
-      --text-muted: #9aa1ad;
-      --text-dim: #656d79;
-      --accent: #60a5fa;
-      --accent-hover: #3b82f6;
-      --accent-soft: rgba(96, 165, 250, 0.12);
-      --status-ready: #22c55e;
-      --status-active: #f59e0b;
-      --status-standby: #94a3b8;
-      --status-danger: #ef4444;
-      --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.25);
-      --shadow-md: 0 4px 14px rgba(0, 0, 0, 0.4);
-      --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.5);
+      --bg-page: #0d0f14;
+      --bg-window: #191c24;
+      --bg-sidebar: #13151c;
+      --bg-surface: #1e222c;
+      --bg-subtle: #242936;
+      --bg-hover: #2a3140;
+      --bg-selected: #0a84ff;
+      --bg-selected-text: #ffffff;
+      --border: #2e3546;
+      --border-subtle: #252b38;
+      --border-focus: #0a84ff;
+      --text: #f2f4f8;
+      --text-muted: #9aa4b6;
+      --text-dim: #6d788c;
+      --accent: #0a84ff;
+      --accent-hover: #409cff;
+      --accent-soft: rgba(10, 132, 255, 0.16);
+      --status-ready: #30d158;
+      --status-active: #ff9f0a;
+      --status-standby: #98989d;
+      --status-danger: #ff453a;
+      --shadow-window: 0 20px 50px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.08);
+      --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
     }}
 
     @media (prefers-color-scheme: dark) {{
       :root:not([data-theme="light"]) {{
-        --bg-page: #0f1115;
-        --bg-surface: #171920;
-        --bg-subtle: #1f232d;
-        --bg-hover: #262c38;
-        --bg-selected: #243147;
-        --border: #2c3342;
-        --border-subtle: #202531;
-        --border-focus: #3b82f6;
-        --text: #f0f2f5;
-        --text-muted: #9aa1ad;
-        --text-dim: #656d79;
-        --accent: #60a5fa;
-        --accent-hover: #3b82f6;
-        --accent-soft: rgba(96, 165, 250, 0.12);
-        --status-ready: #22c55e;
-        --status-active: #f59e0b;
-        --status-standby: #94a3b8;
-        --status-danger: #ef4444;
-        --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.25);
-        --shadow-md: 0 4px 14px rgba(0, 0, 0, 0.4);
-        --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.5);
-      }}
-    }}
-
-    @media (prefers-reduced-motion: reduce) {{
-      *, ::before, ::after {{
-        animation-duration: 0.01ms !important;
-        animation-iteration-count: 1 !important;
-        transition-duration: 0.01ms !important;
-        scroll-behavior: auto !important;
+        --bg-page: #0d0f14;
+        --bg-window: #191c24;
+        --bg-sidebar: #13151c;
+        --bg-surface: #1e222c;
+        --bg-subtle: #242936;
+        --bg-hover: #2a3140;
+        --bg-selected: #0a84ff;
+        --bg-selected-text: #ffffff;
+        --border: #2e3546;
+        --border-subtle: #252b38;
+        --border-focus: #0a84ff;
+        --text: #f2f4f8;
+        --text-muted: #9aa4b6;
+        --text-dim: #6d788c;
+        --accent: #0a84ff;
+        --accent-hover: #409cff;
+        --accent-soft: rgba(10, 132, 255, 0.16);
+        --status-ready: #30d158;
+        --status-active: #ff9f0a;
+        --status-standby: #98989d;
+        --status-danger: #ff453a;
+        --shadow-window: 0 20px 50px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.08);
+        --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
       }}
     }}
 
@@ -409,124 +405,97 @@ class DashboardHandler(BaseHTTPRequestHandler):
     ::selection {{ background: var(--accent-soft); color: var(--accent); }}
 
     body {{
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro", "Helvetica Neue", Arial, sans-serif;
       background: var(--bg-page);
       color: var(--text);
       line-height: 1.45;
       min-height: 100vh;
-      font-variant-numeric: tabular-nums;
+      padding: 1.25rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
     }}
 
-    /* Unified Single Page Container */
-    .page-container {{
+    /* Main macOS Finder Window Shell */
+    .finder-window {{
+      width: 100%;
       max-width: 1680px;
-      margin: 0 auto;
-      padding: 1.25rem 1.5rem 1.5rem;
+      min-height: calc(100vh - 2.5rem);
+      background: var(--bg-window);
+      border-radius: 11px;
+      box-shadow: var(--shadow-window);
       display: flex;
       flex-direction: column;
-      gap: 1rem;
-      min-height: 100vh;
-    }}
-
-    button, a, input {{
-      font-family: inherit;
-    }}
-
-    button {{
-      cursor: pointer;
-      user-select: none;
-    }}
-
-    button:active,
-    .btn-strip:active,
-    .btn-icon:active,
-    .btn-action:active,
-    .btn-copy:active,
-    .category-chip:active,
-    .btn-row-action:active,
-    .btn-alert-action:active {{
-      transform: scale(0.96);
-    }}
-
-    h1, h2, h3, .brand-title, .strip-title, .ledger-title, .inspector-title, .zero-title {{
-      text-wrap: balance;
-    }}
-
-    p, .strip-detail, .zero-desc, .doc-meta-row {{
-      text-wrap: pretty;
-    }}
-
-    :focus-visible {{
-      outline: 2px solid var(--border-focus);
-      outline-offset: 2px;
-    }}
-
-    /* Page Masthead Card (In-Page, Not Sticky) */
-    .page-masthead {{
-      background: var(--bg-surface);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 0.75rem 1.25rem;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 0.75rem 1.25rem;
-      flex-wrap: wrap;
-      box-shadow: var(--shadow-sm);
-      position: relative;
       overflow: hidden;
-      transition: border-color 180ms var(--ease), background-color 180ms var(--ease);
+      border: 1px solid var(--border);
+      position: relative;
     }}
 
-    .masthead-brand-status {{
+    /* macOS Finder Window Titlebar / Toolbar */
+    .finder-titlebar {{
+      height: 48px;
+      background: var(--bg-surface);
+      border-bottom: 1px solid var(--border);
       display: flex;
       align-items: center;
+      justify-content: space-between;
+      padding: 0 1rem;
       gap: 0.75rem;
+      user-select: none;
       flex-shrink: 0;
-      min-width: 0;
+      position: relative;
     }}
 
-    .brand-wrap {{
+    .titlebar-left {{
       display: flex;
       align-items: center;
-      gap: 0.6rem;
+      gap: 0.85rem;
       flex-shrink: 0;
     }}
 
-    .brand-logo {{
-      width: 22px;
-      height: 22px;
-      color: var(--text);
+    .window-traffic-lights {{
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+    }}
+
+    .traffic-light {{
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      display: inline-block;
+    }}
+
+    .tl-red {{ background: #ff5f56; border: 1px solid #e0443e; }}
+    .tl-yellow {{ background: #ffbd2e; border: 1px solid #dea123; }}
+    .tl-green {{ background: #27c93f; border: 1px solid #1aab29; }}
+
+    .finder-brand {{
       display: flex;
       align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
-    }}
-
-    .brand-title {{
-      font-size: 0.95rem;
+      gap: 0.45rem;
       font-weight: 600;
-      letter-spacing: -0.015em;
+      font-size: 0.88rem;
       color: var(--text);
-      white-space: nowrap;
-      flex-shrink: 0;
+      letter-spacing: -0.01em;
     }}
 
-    .masthead-divider {{
+    .titlebar-divider {{
       width: 1px;
-      height: 20px;
+      height: 18px;
       background: var(--border);
-      flex-shrink: 0;
     }}
 
-    .masthead-status-indicator {{
+    /* Toolbar Status Strip */
+    .finder-status-strip {{
       display: flex;
       align-items: center;
-      gap: 0.55rem;
-      flex-shrink: 0;
-      min-width: 0;
+      gap: 0.5rem;
+      font-size: 0.82rem;
+      color: var(--text);
     }}
 
     .strip-beacon {{
@@ -534,28 +503,20 @@ class DashboardHandler(BaseHTTPRequestHandler):
       height: 8px;
       border-radius: 50%;
       background: var(--status-ready);
-      flex-shrink: 0;
-      transition: background-color 160ms ease, box-shadow 160ms ease;
-    }}
-
-    .status-dot {{
-      display: none;
+      transition: background-color 160ms ease;
     }}
 
     .strip-title {{
-      font-size: 0.9rem;
+      font-size: 0.82rem;
       font-weight: 600;
-      letter-spacing: -0.015em;
       color: var(--text);
-      line-height: 1.2;
       white-space: nowrap;
-      flex-shrink: 0;
     }}
 
     .strip-badge {{
       font-size: 0.68rem;
       font-weight: 600;
-      padding: 0.12rem 0.45rem;
+      padding: 0.1rem 0.45rem;
       border-radius: 4px;
       background: var(--bg-subtle);
       border: 1px solid var(--border);
@@ -563,7 +524,13 @@ class DashboardHandler(BaseHTTPRequestHandler):
       letter-spacing: 0.02em;
       text-transform: uppercase;
       white-space: nowrap;
-      flex-shrink: 0;
+    }}
+
+    .titlebar-center {{
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin: 0 auto;
     }}
 
     .strip-sleep-pill {{
@@ -571,98 +538,35 @@ class DashboardHandler(BaseHTTPRequestHandler):
       font-weight: 600;
       font-variant-numeric: tabular-nums;
       color: var(--text-muted);
-      background: var(--bg-surface);
+      background: var(--bg-subtle);
       border: 1px solid var(--border);
-      padding: 0.22rem 0.55rem;
+      padding: 0.2rem 0.5rem;
       border-radius: 4px;
       white-space: nowrap;
       display: inline-flex;
       align-items: center;
       gap: 0.35rem;
-      flex-shrink: 0;
-    }}
-
-    .header-session-actions {{
-      display: flex;
-      align-items: center;
-      gap: 0.55rem;
-      flex-shrink: 0;
-      margin-left: auto;
-    }}
-
-    .header-global-actions {{
-      display: flex;
-      align-items: center;
-      gap: 0.55rem;
-      flex-shrink: 0;
-    }}
-
-    .strip-countdown-wrap {{
-      display: none;
-      align-items: center;
-      gap: 0.35rem;
-      background: rgba(217, 119, 6, 0.1);
-      border: 1px solid rgba(217, 119, 6, 0.3);
-      padding: 0.15rem 0.5rem;
-      border-radius: 4px;
-      font-size: 0.72rem;
-      color: var(--status-active);
-      flex-shrink: 0;
-    }}
-
-    .countdown-pulse-dot {{
-      width: 6px;
-      height: 6px;
-      border-radius: 50%;
-      background: var(--status-active);
-      animation: pulse 1s infinite;
-    }}
-
-    .countdown-label {{
-      font-weight: 500;
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
-      font-size: 0.65rem;
-    }}
-
-    @keyframes pulse {{
-      0%, 100% {{ opacity: 1; }}
-      50% {{ opacity: 0.3; }}
-    }}
-
-    .strip-countdown-num {{
-      font-size: 0.88rem;
-      font-weight: 600;
-      font-variant-numeric: tabular-nums;
-      color: var(--status-active);
-    }}
-
-    .strip-actions {{
-      display: flex;
-      align-items: center;
-      gap: 0.45rem;
-      flex-shrink: 0;
     }}
 
     .strip-btn-group {{
       display: inline-flex;
       align-items: center;
-      gap: 0.4rem;
-      flex-shrink: 0;
+      gap: 0.35rem;
     }}
 
     .btn-strip {{
       display: inline-flex;
       align-items: center;
-      gap: 0.35rem;
-      font-size: 0.74rem;
+      gap: 0.3rem;
+      font-size: 0.73rem;
       font-weight: 500;
       color: var(--text-muted);
       background: var(--bg-surface);
       border: 1px solid var(--border);
-      padding: 0.24rem 0.6rem;
-      border-radius: 5px;
+      padding: 0.22rem 0.55rem;
+      border-radius: 4px;
       cursor: pointer;
+      white-space: nowrap;
       transition: background-color 100ms var(--ease), border-color 100ms var(--ease), color 100ms var(--ease), transform 80ms var(--ease-press);
     }}
 
@@ -681,54 +585,72 @@ class DashboardHandler(BaseHTTPRequestHandler):
 
     .btn-strip-primary:hover {{
       background: var(--accent-hover);
-      border-color: var(--accent-hover);
       color: #ffffff;
     }}
 
     .btn-strip-accent {{
       background: var(--accent-soft);
-      border-color: rgba(37, 99, 235, 0.25);
+      border-color: rgba(0, 122, 255, 0.25);
       color: var(--accent);
       font-weight: 600;
     }}
 
     .btn-strip-accent:hover {{
       background: var(--accent);
-      border-color: var(--accent);
       color: #ffffff;
     }}
 
-    .sort-spinner {{
-      display: inline-block;
-      width: 11px;
-      height: 11px;
-      border: 2px solid currentColor;
-      border-right-color: transparent;
-      border-radius: 50%;
-      animation: spin 0.6s linear infinite;
-    }}
-
-    @keyframes spin {{
-      to {{ transform: rotate(360deg); }}
-    }}
-
-    .masthead-actions {{
+    .titlebar-right {{
       display: flex;
       align-items: center;
-      gap: 0.4rem;
+      gap: 0.45rem;
+      flex-shrink: 0;
     }}
 
-    .btn-icon {{
+    .view-toggle-group {{
+      display: inline-flex;
+      background: var(--bg-subtle);
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      padding: 1px;
+    }}
+
+    .btn-view-toggle {{
+      background: transparent;
+      border: none;
+      width: 26px;
+      height: 24px;
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      width: 28px;
-      height: 28px;
-      border-radius: 5px;
+      border-radius: 4px;
+      color: var(--text-dim);
+      cursor: pointer;
+      transition: background-color 100ms var(--ease), color 100ms var(--ease);
+    }}
+
+    .btn-view-toggle:hover {{
+      color: var(--text);
+    }}
+
+    .btn-view-toggle.active {{
+      background: var(--bg-surface);
+      color: var(--text);
+      box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    }}
+
+    .btn-icon {{
+      width: 26px;
+      height: 26px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 4px;
       background: var(--bg-surface);
       border: 1px solid var(--border);
       color: var(--text-muted);
-      transition: background-color 120ms var(--ease), border-color 120ms var(--ease), color 120ms var(--ease), transform 80ms var(--ease-press);
+      cursor: pointer;
+      transition: background-color 100ms var(--ease), border-color 100ms var(--ease);
     }}
 
     .btn-icon:hover {{
@@ -738,42 +660,20 @@ class DashboardHandler(BaseHTTPRequestHandler):
     }}
 
     .btn-icon.active {{
-      background: var(--bg-selected);
-      border-color: var(--border-focus);
+      background: var(--accent-soft);
+      border-color: var(--accent);
       color: var(--accent);
     }}
 
-    .strip-progress-bar {{
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      height: 3px;
-      width: 0%;
-      background: var(--status-active);
-      box-shadow: 0 0 6px rgba(217, 119, 6, 0.4);
-      transition: width 0.7s linear;
-    }}
-
-    /* State modifier styles for masthead */
-    .page-masthead.state-ready .strip-beacon {{ background: var(--status-ready); }}
-    .page-masthead.state-scanning .strip-beacon {{ background: var(--accent); }}
-    .page-masthead.state-collation .strip-beacon {{ background: var(--status-active); }}
-    .page-masthead.state-processing .strip-beacon {{ background: #6366f1; }}
-    .page-masthead.state-filed .strip-beacon {{ background: var(--status-ready); }}
-    .page-masthead.state-warning .strip-beacon {{ background: var(--status-danger); }}
-    .page-masthead.state-standby .strip-beacon {{ background: var(--status-standby); }}
-
     /* Hardware Alert Banner */
     .alert-banner {{
-      background: rgba(220, 38, 38, 0.08);
-      border: 1px solid rgba(220, 38, 38, 0.25);
-      border-radius: 8px;
-      animation: alertSlideDown 160ms var(--ease-out);
-    }}
-
-    [data-theme="dark"] .alert-banner {{
-      background: rgba(239, 68, 68, 0.12);
-      border-color: rgba(239, 68, 68, 0.3);
+      background: rgba(255, 59, 48, 0.08);
+      border-bottom: 1px solid rgba(255, 59, 48, 0.25);
+      padding: 0.6rem 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      animation: alertSlideDown 160ms var(--ease);
     }}
 
     @keyframes alertSlideDown {{
@@ -781,41 +681,13 @@ class DashboardHandler(BaseHTTPRequestHandler):
       to {{ transform: translateY(0); opacity: 1; }}
     }}
 
-    .alert-container {{
-      padding: 0.75rem 1.15rem;
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-      flex-wrap: wrap;
-    }}
-
-    .alert-icon-wrap {{
-      width: 32px;
-      height: 32px;
-      border-radius: 6px;
-      background: rgba(220, 38, 38, 0.15);
+    .alert-icon {{
       color: var(--status-danger);
-      display: flex;
-      align-items: center;
-      justify-content: center;
       flex-shrink: 0;
     }}
 
     .alert-body {{
       flex: 1;
-      min-width: 260px;
-      display: flex;
-      flex-direction: column;
-      gap: 0.2rem;
-    }}
-
-    .alert-heading {{
-      font-size: 0.86rem;
-      font-weight: 600;
-      color: var(--status-danger);
-    }}
-
-    .alert-steps {{
       font-size: 0.78rem;
       color: var(--text);
       display: flex;
@@ -824,929 +696,557 @@ class DashboardHandler(BaseHTTPRequestHandler):
       flex-wrap: wrap;
     }}
 
-    .alert-step {{
-      display: inline-flex;
-      align-items: center;
-      gap: 0.25rem;
-    }}
-
-    .alert-step-divider {{
-      color: var(--text-dim);
-      font-size: 0.72rem;
+    .alert-title {{
+      font-weight: 600;
+      color: var(--status-danger);
     }}
 
     .btn-alert-action {{
-      display: inline-flex;
-      align-items: center;
-      gap: 0.35rem;
-      font-size: 0.76rem;
+      font-size: 0.72rem;
       font-weight: 600;
+      padding: 0.22rem 0.55rem;
+      border-radius: 4px;
       background: var(--status-danger);
-      border: 1px solid var(--status-danger);
-      color: #ffffff;
-      padding: 0.32rem 0.7rem;
-      border-radius: 5px;
+      color: #fff;
+      border: none;
       cursor: pointer;
-      transition: background-color 100ms var(--ease), transform 80ms var(--ease-press);
     }}
 
-    .btn-alert-action:hover {{
-      background: #b91c1c;
-      border-color: #b91c1c;
-    }}
-
-    /* Main Workbench */
-    main.workbench {{
-      width: 100%;
+    /* 3-Pane Finder Body Layout */
+    .finder-body {{
       flex: 1;
+      display: grid;
+      grid-template-columns: 210px minmax(0, 1fr) clamp(340px, 32vw, 440px);
+      min-height: 0;
+      position: relative;
+    }}
+
+    .finder-body.quicklook-collapsed {{
+      grid-template-columns: 210px minmax(0, 1fr);
+    }}
+
+    /* Left Source List Sidebar */
+    .finder-sidebar {{
+      background: var(--bg-sidebar);
+      border-right: 1px solid var(--border);
+      padding: 0.75rem 0.5rem;
       display: flex;
       flex-direction: column;
       gap: 1rem;
-      min-height: 0;
+      overflow-y: auto;
+      user-select: none;
     }}
 
-    /* Master-Detail Split Grid */
-    .split-layout {{
-      display: grid;
-      grid-template-columns: clamp(340px, 28vw, 420px) minmax(0, 1fr);
-      gap: 1.25rem;
-      flex: 1;
-      min-height: calc(100vh - 220px);
+    .sidebar-section-title {{
+      font-size: 0.68rem;
+      font-weight: 700;
+      color: var(--text-dim);
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      padding: 0 0.5rem 0.25rem;
     }}
 
-    /* Left Pane: Ledger */
-    .ledger-pane {{
-      background: var(--bg-surface);
-      border: 1px solid var(--border);
-      border-radius: 8px;
+    .sidebar-nav {{
       display: flex;
       flex-direction: column;
-      overflow: hidden;
-      box-shadow: var(--shadow-sm);
-      min-width: 0;
+      gap: 2px;
     }}
 
-    .ledger-header {{
-      padding: 0.85rem 1rem;
-      border-bottom: 1px solid var(--border);
-      background: var(--bg-surface);
+    .sidebar-item {{
       display: flex;
-      flex-direction: column;
-      gap: 0.75rem;
-    }}
-
-    .ledger-title-row {{
-      display: flex;
-      justify-content: space-between;
       align-items: center;
+      justify-content: space-between;
+      padding: 0.35rem 0.6rem;
+      border-radius: 5px;
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: var(--text);
+      cursor: pointer;
+      text-decoration: none;
+      transition: background-color 80ms var(--ease), color 80ms var(--ease);
     }}
 
-    .ledger-title-wrap {{
+    .sidebar-item:hover {{
+      background: var(--bg-hover);
+    }}
+
+    .sidebar-item.active {{
+      background: var(--bg-selected);
+      color: var(--bg-selected-text);
+      font-weight: 600;
+    }}
+
+    .sidebar-item.active .sidebar-count {{
+      background: rgba(255, 255, 255, 0.25);
+      color: #ffffff;
+    }}
+
+    .sidebar-item.active .sidebar-icon {{
+      color: #ffffff;
+    }}
+
+    .sidebar-item-label {{
       display: flex;
       align-items: center;
       gap: 0.5rem;
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }}
 
-    .ledger-title {{
-      font-size: 0.92rem;
+    .sidebar-icon {{
+      width: 16px;
+      height: 16px;
+      flex-shrink: 0;
+      color: var(--accent);
+    }}
+
+    .sidebar-count {{
+      font-size: 0.68rem;
+      font-weight: 600;
+      background: var(--bg-subtle);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-muted);
+      padding: 0.05rem 0.4rem;
+      border-radius: 10px;
+      font-variant-numeric: tabular-nums;
+    }}
+
+    .tag-dot {{
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }}
+
+    /* Main Finder Browser Pane */
+    .finder-main {{
+      background: var(--bg-window);
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+      overflow: hidden;
+    }}
+
+    /* Path Breadcrumbs Bar */
+    .finder-breadcrumbs {{
+      height: 36px;
+      border-bottom: 1px solid var(--border-subtle);
+      padding: 0 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      background: var(--bg-window);
+      font-size: 0.76rem;
+      color: var(--text-dim);
+      flex-shrink: 0;
+    }}
+
+    .crumb-trail {{
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      min-width: 0;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }}
+
+    .crumb-sep {{
+      color: var(--text-dim);
+      font-size: 0.7rem;
+    }}
+
+    .crumb-active {{
       font-weight: 600;
       color: var(--text);
     }}
 
-    .ledger-count {{
-      font-size: 0.72rem;
-      font-weight: 500;
-      color: var(--text-muted);
-      background: var(--bg-subtle);
-      border: 1px solid var(--border-subtle);
-      padding: 0.1rem 0.45rem;
-      border-radius: 4px;
-    }}
-
-    .ledger-shortcuts {{
-      display: flex;
-      align-items: center;
-      gap: 0.3rem;
-      font-size: 0.68rem;
-      color: var(--text-dim);
-    }}
-
-    .ledger-shortcuts kbd {{
-      background: var(--bg-subtle);
-      border: 1px solid var(--border-subtle);
-      padding: 0.05rem 0.25rem;
-      border-radius: 3px;
-      font-size: 0.62rem;
-      color: var(--text-muted);
-    }}
-
-    .search-row {{
+    .search-box-wrap {{
       position: relative;
-      display: flex;
-      align-items: center;
+      width: 180px;
     }}
 
     .search-input {{
       width: 100%;
-      background: var(--bg-page);
+      background: var(--bg-subtle);
       border: 1px solid var(--border);
-      border-radius: 6px;
-      padding: 0.45rem 3.4rem 0.45rem 2.1rem;
-      font-size: 0.8rem;
+      border-radius: 5px;
+      padding: 0.2rem 1.6rem 0.2rem 1.6rem;
+      font-size: 0.74rem;
       color: var(--text);
-      transition: background-color 120ms var(--ease), border-color 120ms var(--ease), box-shadow 120ms var(--ease);
     }}
 
     .search-input:focus {{
-      background: var(--bg-surface);
+      outline: none;
       border-color: var(--border-focus);
-      box-shadow: 0 0 0 3px var(--accent-soft);
+      box-shadow: 0 0 0 2px var(--accent-soft);
+      background: var(--bg-surface);
     }}
 
     .search-icon {{
       position: absolute;
-      left: 0.65rem;
-      width: 14px;
-      height: 14px;
+      left: 0.45rem;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 12px;
+      height: 12px;
       color: var(--text-dim);
       pointer-events: none;
-    }}
-
-    .search-clear-btn {{
-      position: absolute;
-      right: 1.85rem;
-      background: none;
-      border: none;
-      color: var(--text-dim);
-      font-size: 0.75rem;
-      cursor: pointer;
-      padding: 0.15rem 0.35rem;
-      line-height: 1;
-      border-radius: 3px;
-    }}
-
-    .search-clear-btn:hover {{
-      color: var(--text);
     }}
 
     .search-kbd {{
       position: absolute;
-      right: 0.6rem;
-      font-size: 0.64rem;
+      right: 0.45rem;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 0.6rem;
       color: var(--text-dim);
       background: var(--bg-surface);
       border: 1px solid var(--border);
-      padding: 0.1rem 0.35rem;
       border-radius: 3px;
+      padding: 0 3px;
       pointer-events: none;
     }}
 
-    /* Category Chips with Horizontal Scroll Gradient */
-    .category-bar-wrap {{
-      position: relative;
-      overflow: hidden;
-    }}
-
-    .category-bar {{
-      display: flex;
-      gap: 0.35rem;
-      overflow-x: auto;
-      padding-bottom: 0.2rem;
-      scrollbar-width: none;
-      -webkit-overflow-scrolling: touch;
-      mask-image: linear-gradient(to right, black 88%, transparent 100%);
-      -webkit-mask-image: linear-gradient(to right, black 88%, transparent 100%);
-    }}
-
-    .category-bar::-webkit-scrollbar {{
-      display: none;
-    }}
-
-    .category-chip {{
-      font-size: 0.73rem;
-      font-weight: 500;
-      padding: 0.22rem 0.55rem;
-      border-radius: 4px;
-      background: transparent;
-      border: 1px solid transparent;
-      color: var(--text-muted);
-      white-space: nowrap;
-      transition: background-color 100ms var(--ease), border-color 100ms var(--ease), color 100ms var(--ease), transform 80ms var(--ease-press);
-      flex-shrink: 0;
-    }}
-
-    .category-chip:hover {{
-      background: var(--bg-subtle);
-      color: var(--text);
-    }}
-
-    .category-chip.active {{
-      background: var(--bg-subtle);
-      border-color: var(--border);
-      color: var(--text);
-      font-weight: 600;
-    }}
-
-    /* Document Feed List */
-    .doc-list {{
+    /* Browser Content Area: Icon Grid */
+    .finder-content {{
       flex: 1;
       overflow-y: auto;
+      padding: 1.25rem;
     }}
 
-    .doc-item {{
-      padding: 0.75rem 0.95rem;
-      border-bottom: 1px solid var(--border-subtle);
+    .finder-grid {{
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(135px, 1fr));
+      gap: 1.25rem 1rem;
+      align-items: start;
+    }}
+
+    .finder-icon-card {{
       display: flex;
-      align-items: flex-start;
-      gap: 0.65rem;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      padding: 0.6rem 0.45rem;
+      border-radius: 6px;
       cursor: pointer;
-      background: var(--bg-surface);
+      user-select: none;
       position: relative;
-      transition: background-color 90ms var(--ease-out), transform 80ms var(--ease-press);
+      transition: background-color 80ms var(--ease);
     }}
 
-    .doc-item:hover {{
+    .finder-icon-card:hover {{
       background: var(--bg-hover);
     }}
 
-    .doc-item:active {{
-      transform: scale(0.985);
+    .finder-icon-card.selected {{
+      background: var(--accent-soft);
+      outline: 2px solid var(--accent);
+      outline-offset: -1px;
     }}
 
-    .doc-item.selected {{
-      background: var(--bg-selected);
-      box-shadow: inset 3px 0 0 var(--accent);
+    .finder-doc-icon {{
+      width: 56px;
+      height: 68px;
+      position: relative;
+      margin-bottom: 0.45rem;
+      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.12));
     }}
 
-    .doc-icon-wrap {{
-      color: var(--text-muted);
-      margin-top: 0.15rem;
-      flex-shrink: 0;
+    .doc-page-svg {{
+      width: 100%;
+      height: 100%;
     }}
 
-    .doc-item.selected .doc-icon-wrap {{
-      color: var(--accent);
+    .doc-page-badge {{
+      position: absolute;
+      bottom: 6px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 0.6rem;
+      font-weight: 700;
+      background: #ff3b30;
+      color: #fff;
+      padding: 0.05rem 0.35rem;
+      border-radius: 3px;
+      letter-spacing: 0.02em;
     }}
 
-    .doc-body {{
-      flex: 1;
-      min-width: 0;
-      display: flex;
-      flex-direction: column;
-      gap: 0.3rem;
-    }}
-
-    .doc-title-row {{
-      display: flex;
-      justify-content: space-between;
-      align-items: baseline;
-      gap: 0.5rem;
-      min-width: 0;
-    }}
-
-    .doc-title {{
-      font-size: 0.86rem;
-      font-weight: 600;
-      letter-spacing: -0.01em;
+    .doc-card-title {{
+      font-size: 0.74rem;
+      font-weight: 500;
       color: var(--text);
-      white-space: nowrap;
+      line-height: 1.25;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
       overflow: hidden;
       text-overflow: ellipsis;
-      flex: 1;
+      word-break: break-word;
+      max-width: 100%;
+      margin-bottom: 0.2rem;
+    }}
+
+    .doc-card-meta {{
+      font-size: 0.66rem;
+      color: var(--text-dim);
+      font-variant-numeric: tabular-nums;
+    }}
+
+    /* Compact List View */
+    .finder-list {{
+      display: none;
+      flex-direction: column;
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.76rem;
+    }}
+
+    .finder-list-header {{
+      display: grid;
+      grid-template-columns: minmax(200px, 2fr) 140px 110px 90px 120px 40px;
+      padding: 0.35rem 0.75rem;
+      font-size: 0.68rem;
+      font-weight: 600;
+      color: var(--text-dim);
+      border-bottom: 1px solid var(--border);
+      user-select: none;
+    }}
+
+    .finder-list-row {{
+      display: grid;
+      grid-template-columns: minmax(200px, 2fr) 140px 110px 90px 120px 40px;
+      padding: 0.45rem 0.75rem;
+      align-items: center;
+      border-bottom: 1px solid var(--border-subtle);
+      cursor: pointer;
+      transition: background-color 70ms var(--ease);
+    }}
+
+    .finder-list-row:hover {{
+      background: var(--bg-hover);
+    }}
+
+    .finder-list-row.selected {{
+      background: var(--bg-selected);
+      color: var(--bg-selected-text);
+    }}
+
+    .finder-list-row.selected .doc-card-meta,
+    .finder-list-row.selected .meta-tag {{
+      color: #ffffff;
+    }}
+
+    /* Right Quick Look Inspector Pane */
+    .quick-look-pane {{
+      background: var(--bg-surface);
+      border-left: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
       min-width: 0;
     }}
 
-    .doc-size {{
-      font-size: 0.7rem;
-      font-weight: 500;
-      color: var(--text-dim);
-      font-variant-numeric: tabular-nums;
-      flex-shrink: 0;
-      white-space: nowrap;
+    .quick-look-header {{
+      padding: 0.65rem 0.85rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+      background: var(--bg-surface);
     }}
 
-    .doc-meta-row {{
+    .quick-look-title-row {{
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 0.5rem;
+    }}
+
+    .quick-look-title {{
+      font-size: 0.86rem;
+      font-weight: 600;
+      color: var(--text);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      flex: 1;
+    }}
+
+    .quick-look-meta {{
       display: flex;
       align-items: center;
       gap: 0.45rem;
       flex-wrap: wrap;
       font-size: 0.72rem;
       color: var(--text-muted);
-      min-width: 0;
     }}
 
-    .meta-tag {{
-      display: inline-flex;
-      align-items: center;
-      gap: 0.25rem;
-      white-space: nowrap;
-    }}
-
-    /* Semantic Category Tag Badges */
-    .category-tag {{
-      font-size: 0.68rem;
-      font-weight: 600;
-      padding: 0.1rem 0.45rem;
-      border-radius: 4px;
-      white-space: nowrap;
-      flex-shrink: 0;
-      letter-spacing: 0.01em;
-      transition: background-color 100ms var(--ease);
-    }}
-
-    .cat-inbox {{
-      background: var(--bg-subtle);
-      border: 1px solid var(--border-subtle);
-      color: var(--text-muted);
-    }}
-
-    .cat-legal {{
-      background: rgba(217, 119, 6, 0.1);
-      border: 1px solid rgba(217, 119, 6, 0.25);
-      color: #b45309;
-    }}
-    [data-theme="dark"] .cat-legal {{
-      background: rgba(245, 158, 11, 0.12);
-      border-color: rgba(245, 158, 11, 0.3);
-      color: #fbbf24;
-    }}
-
-    .cat-finance {{
-      background: rgba(16, 185, 129, 0.1);
-      border: 1px solid rgba(16, 185, 129, 0.25);
-      color: #047857;
-    }}
-    [data-theme="dark"] .cat-finance {{
-      background: rgba(52, 211, 153, 0.12);
-      border-color: rgba(52, 211, 153, 0.3);
-      color: #34d399;
-    }}
-
-    .cat-auto {{
-      background: rgba(139, 92, 246, 0.1);
-      border: 1px solid rgba(139, 92, 246, 0.25);
-      color: #6d28d9;
-    }}
-    [data-theme="dark"] .cat-auto {{
-      background: rgba(167, 139, 250, 0.12);
-      border-color: rgba(167, 139, 250, 0.3);
-      color: #a78bfa;
-    }}
-
-    .cat-medical {{
-      background: rgba(14, 165, 233, 0.1);
-      border: 1px solid rgba(14, 165, 233, 0.25);
-      color: #0369a1;
-    }}
-    [data-theme="dark"] .cat-medical {{
-      background: rgba(56, 189, 248, 0.12);
-      border-color: rgba(56, 189, 248, 0.3);
-      color: #38bdf8;
-    }}
-
-    .cat-bills {{
-      background: rgba(249, 115, 22, 0.1);
-      border: 1px solid rgba(249, 115, 22, 0.25);
-      color: #c2410c;
-    }}
-    [data-theme="dark"] .cat-bills {{
-      background: rgba(251, 146, 60, 0.12);
-      border-color: rgba(251, 146, 60, 0.3);
-      color: #fb923c;
-    }}
-
-    .cat-taxes {{
-      background: rgba(225, 29, 72, 0.1);
-      border: 1px solid rgba(225, 29, 72, 0.25);
-      color: #be123c;
-    }}
-    [data-theme="dark"] .cat-taxes {{
-      background: rgba(251, 113, 133, 0.12);
-      border-color: rgba(251, 113, 133, 0.3);
-      color: #fb7185;
-    }}
-
-    .doc-actions {{
-      margin-left: 0.25rem;
-      flex-shrink: 0;
-    }}
-
-    .btn-row-action {{
-      position: relative;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      width: 26px;
-      height: 26px;
-      border: none;
-      background: transparent;
-      border-radius: 4px;
-      color: var(--text-dim);
-      flex-shrink: 0;
-      transition: background-color 100ms var(--ease), color 100ms var(--ease), transform 80ms var(--ease-press);
-    }}
-
-    .btn-row-action::before {{
-      content: "";
-      position: absolute;
-      inset: -4px;
-    }}
-
-    .btn-row-action:hover {{
-      color: var(--status-danger);
-      background: rgba(220, 38, 38, 0.08);
-    }}
-
-    /* Right Pane: Document Inspector */
-    .inspector-pane {{
-      background: var(--bg-surface);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-      box-shadow: var(--shadow-sm);
-      min-width: 0;
-    }}
-
-    .inspector-header {{
-      padding: 0.65rem 1rem;
-      border-bottom: 1px solid var(--border);
-      background: var(--bg-surface);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 0.75rem;
-      min-width: 0;
-    }}
-
-    .inspector-info {{
-      display: flex;
-      flex-direction: column;
-      gap: 0.25rem;
-      min-width: 0;
-      flex: 1;
-    }}
-
-    .inspector-title {{
-      font-size: 0.92rem;
-      font-weight: 600;
-      color: var(--text);
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }}
-
-    .inspector-meta {{
+    .quick-look-actions {{
       display: flex;
       align-items: center;
-      gap: 0.5rem;
-      font-size: 0.73rem;
-      color: var(--text-muted);
-      flex-wrap: wrap;
-    }}
-
-    .inspector-actions {{
-      display: flex;
-      align-items: center;
-      gap: 0.45rem;
-      flex-shrink: 0;
+      gap: 0.35rem;
+      margin-top: 0.2rem;
     }}
 
     .btn-action {{
       display: inline-flex;
       align-items: center;
-      gap: 0.35rem;
-      font-size: 0.76rem;
+      gap: 0.3rem;
+      font-size: 0.72rem;
       font-weight: 500;
-      color: var(--text-muted);
-      background: var(--bg-surface);
+      padding: 0.25rem 0.55rem;
+      border-radius: 4px;
+      background: var(--bg-subtle);
       border: 1px solid var(--border);
-      padding: 0.32rem 0.65rem;
-      border-radius: 5px;
+      color: var(--text);
       text-decoration: none;
-      transition: background-color 100ms var(--ease), border-color 100ms var(--ease), color 100ms var(--ease), transform 80ms var(--ease-press);
+      cursor: pointer;
     }}
 
     .btn-action:hover {{
       background: var(--bg-hover);
-      color: var(--text);
       border-color: var(--border-focus);
     }}
 
     .btn-action.btn-danger:hover {{
+      background: rgba(255, 59, 48, 0.1);
       color: var(--status-danger);
       border-color: var(--status-danger);
-      background: rgba(220, 38, 38, 0.06);
     }}
 
-    .viewer-frame {{
+    .quick-look-preview {{
       flex: 1;
       width: 100%;
       height: 100%;
-      min-height: 560px;
       border: none;
       background: var(--bg-subtle);
     }}
 
-    /* Zero State */
-    .zero-state {{
+    .quick-look-zero {{
       flex: 1;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      padding: 3rem 1.5rem;
+      padding: 2rem 1.5rem;
       text-align: center;
       color: var(--text-muted);
+      gap: 0.5rem;
     }}
 
-    .zero-icon {{
-      width: 36px;
-      height: 36px;
-      color: var(--text-dim);
-      margin-bottom: 0.85rem;
-    }}
-
-    .zero-title {{
-      font-size: 0.9rem;
-      font-weight: 600;
-      color: var(--text);
-      margin-bottom: 0.25rem;
-    }}
-
-    .zero-desc {{
-      font-size: 0.78rem;
-      color: var(--text-muted);
-      max-width: 320px;
-      line-height: 1.4;
-    }}
-
-    /* Quiet Diagnostics Footer (Clean in-page statusbar) */
-    footer.diagnostics-footer {{
+    /* Finder Statusbar Footer */
+    .finder-statusbar {{
+      height: 28px;
       background: var(--bg-surface);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 0.55rem 1rem;
-      font-size: 0.72rem;
-      color: var(--text-dim);
+      border-top: 1px solid var(--border);
       display: flex;
+      align-items: center;
       justify-content: space-between;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 0.5rem 1.25rem;
-      box-shadow: var(--shadow-sm);
-    }}
-
-    .footer-left {{
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-      flex-wrap: wrap;
-    }}
-
-    .footer-right {{
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-      margin-left: auto;
-    }}
-
-    .footer-item {{
-      display: inline-flex;
-      align-items: center;
-      gap: 0.35rem;
-      white-space: nowrap;
-    }}
-
-    .footer-label {{
-      font-weight: 600;
+      padding: 0 0.85rem;
+      font-size: 0.7rem;
       color: var(--text-dim);
-      text-transform: uppercase;
-      font-size: 0.65rem;
-      letter-spacing: 0.03em;
-    }}
-
-    .footer-val {{
-      font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
-      color: var(--text);
-      font-weight: 500;
-      font-variant-numeric: tabular-nums;
-    }}
-
-    .footer-link {{
-      color: var(--accent);
-      text-decoration: none;
-    }}
-
-    .footer-link:hover {{
-      text-decoration: underline;
-    }}
-
-    .footer-sublink {{
-      color: var(--accent);
-      text-decoration: none;
-      font-weight: 600;
-      margin-left: 0.1rem;
-    }}
-
-    .footer-path {{
-      max-width: 380px;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }}
-
-    .btn-copy {{
-      background: var(--bg-surface);
-      border: 1px solid var(--border);
-      color: var(--text-muted);
-      display: inline-flex;
-      align-items: center;
-      gap: 0.25rem;
-      padding: 0.12rem 0.35rem;
-      border-radius: 3px;
-      cursor: pointer;
-      font-size: 0.66rem;
-      transition: background-color 100ms var(--ease), border-color 100ms var(--ease);
-    }}
-
-    .btn-copy:hover {{
-      background: var(--bg-hover);
-      color: var(--text);
-    }}
-
-    /* Toast */
-    .toast {{
-      position: fixed;
-      bottom: 2.5rem;
-      right: 2rem;
-      background: var(--bg-surface);
-      border: 1px solid var(--border);
-      color: var(--text);
-      padding: 0.55rem 1rem;
-      border-radius: 6px;
-      font-size: 0.78rem;
-      font-weight: 500;
-      box-shadow: var(--shadow-md);
-      transform: translateY(8px) scale(0.96);
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 160ms var(--ease-out), transform 160ms var(--ease-out);
-      z-index: 1000;
-    }}
-
-    .toast.show {{
-      transform: translateY(0) scale(1);
-      opacity: 1;
-    }}
-
-    /* Confirmation Modal */
-    .modal-backdrop {{
-      position: fixed;
-      inset: 0;
-      background: rgba(15, 17, 21, 0.55);
-      backdrop-filter: blur(4px);
-      -webkit-backdrop-filter: blur(4px);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 1000;
-      padding: 1rem;
-      animation: fadeIn 150ms var(--ease-out);
-    }}
-
-    @keyframes fadeIn {{
-      from {{ opacity: 0; }}
-      to {{ opacity: 1; }}
-    }}
-
-    .modal-card {{
-      background: var(--bg-surface);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      box-shadow: var(--shadow-lg);
-      max-width: 440px;
-      width: 100%;
-      padding: 1.4rem;
-      display: flex;
-      gap: 1.1rem;
-      align-items: flex-start;
-      animation: modalSlideIn 180ms var(--ease-out);
-    }}
-
-    @keyframes modalSlideIn {{
-      from {{ transform: scale(0.96) translateY(6px); opacity: 0; }}
-      to {{ transform: scale(1) translateY(0); opacity: 1; }}
-    }}
-
-    .modal-icon-wrap {{
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
-      background: rgba(220, 38, 38, 0.1);
-      color: var(--status-danger);
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      user-select: none;
       flex-shrink: 0;
     }}
 
-    .modal-content {{
-      flex: 1;
-      min-width: 0;
-    }}
-
-    .modal-title {{
-      font-size: 1rem;
-      font-weight: 600;
-      color: var(--text);
-      margin: 0 0 0.35rem;
-    }}
-
-    .modal-desc {{
-      font-size: 0.8rem;
-      color: var(--text-muted);
-      line-height: 1.4;
-      margin: 0 0 0.65rem;
-    }}
-
-    .modal-filename {{
-      font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
-      font-size: 0.74rem;
-      color: var(--text);
-      background: var(--bg-subtle);
-      border: 1px solid var(--border-subtle);
-      padding: 0.35rem 0.6rem;
-      border-radius: 4px;
-      margin-bottom: 1.1rem;
-      word-break: break-all;
-    }}
-
-    .modal-actions {{
+    .statusbar-left {{
       display: flex;
-      justify-content: flex-end;
-      gap: 0.55rem;
+      align-items: center;
+      gap: 0.85rem;
     }}
 
-    .btn-modal {{
-      font-size: 0.78rem;
-      font-weight: 500;
-      padding: 0.38rem 0.85rem;
-      border-radius: 5px;
-      cursor: pointer;
-      transition: background-color 100ms var(--ease), border-color 100ms var(--ease), transform 80ms var(--ease-press);
+    .statusbar-right {{
+      display: flex;
+      align-items: center;
+      gap: 0.65rem;
+      margin-left: auto;
     }}
 
-    .btn-modal-cancel {{
-      background: var(--bg-surface);
+    .statusbar-item {{
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      white-space: nowrap;
+    }}
+
+    .statusbar-link {{
+      color: var(--accent);
+      text-decoration: none;
+    }}
+
+    .btn-copy {{
+      background: transparent;
       border: 1px solid var(--border);
       color: var(--text-muted);
-    }}
-
-    .btn-modal-cancel:hover {{
-      background: var(--bg-hover);
-      color: var(--text);
-    }}
-
-    .btn-modal-danger {{
-      background: var(--status-danger);
-      border: 1px solid var(--status-danger);
-      color: #ffffff;
-      font-weight: 600;
-    }}
-
-    .btn-modal-danger:hover {{
-      background: #b91c1c;
-      border-color: #b91c1c;
+      padding: 0.05rem 0.3rem;
+      border-radius: 3px;
+      font-size: 0.65rem;
+      cursor: pointer;
     }}
 
     /* Responsive Breakpoints */
-    @media (max-width: 960px) {{
-      .page-container {{
-        padding: 0.75rem 0.85rem;
-        gap: 0.75rem;
+    @media (max-width: 1100px) {{
+      .finder-body {{
+        grid-template-columns: 190px minmax(0, 1fr);
       }}
-      .btn-row-action {{
-        opacity: 1;
-      }}
-      .brand-title {{
+      .quick-look-pane {{
+        position: fixed;
+        right: 0;
+        top: 0;
+        bottom: 0;
+        width: 420px;
+        z-index: 200;
+        box-shadow: -10px 0 30px rgba(0,0,0,0.2);
         display: none;
       }}
-      .masthead-divider {{
-        display: none;
+      .quick-look-pane.mobile-open {{
+        display: flex;
       }}
-      .split-layout {{
+    }}
+
+    @media (max-width: 768px) {{
+      body {{
+        padding: 0.5rem;
+      }}
+      .finder-window {{
+        border-radius: 8px;
+        min-height: calc(100vh - 1rem);
+      }}
+      .finder-body {{
         grid-template-columns: 1fr;
       }}
-      .inspector-pane {{
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        z-index: 200;
-        border-radius: 0;
+      .finder-sidebar {{
         display: none;
       }}
-      .inspector-pane.mobile-open {{
-        display: flex;
-      }}
-      .btn-close-mobile {{
-        display: inline-flex !important;
-      }}
-    }}
-
-    @media (max-width: 680px) {{
-      .page-masthead {{
-        padding: 0.65rem 0.85rem;
-        gap: 0.5rem;
-      }}
-      .masthead-brand-status {{
-        order: 1;
-        flex: 1 1 auto;
-      }}
-      .header-global-actions {{
-        order: 2;
-        margin-left: auto;
-      }}
-      .header-session-actions {{
+      .titlebar-center {{
         display: none;
       }}
-      .header-session-actions.has-actions {{
-        display: flex;
-        order: 3;
-        flex: 1 1 100%;
-        margin-left: 0;
-        justify-content: space-between;
-        padding-top: 0.45rem;
-        border-top: 1px solid var(--border-subtle);
-      }}
-      .strip-actions {{
+      .quick-look-pane {{
         width: 100%;
-        justify-content: space-between;
-      }}
-      #btn-trigger-sort span {{
-        display: none;
-      }}
-      .footer-path {{
-        max-width: 200px;
-      }}
-      .inspector-header {{
-        flex-direction: column;
-        align-items: stretch;
-        gap: 0.5rem;
-        padding: 0.75rem 0.85rem;
-      }}
-      .inspector-actions {{
-        justify-content: flex-start;
-        flex-wrap: wrap;
-        gap: 0.4rem;
-      }}
-    }}
-
-    @media (max-width: 440px) {{
-      .strip-badge {{
-        display: none;
-      }}
-      .btn-strip {{
-        padding: 0.28rem 0.65rem;
-      }}
-    }}
-
-    @media (min-width: 961px) {{
-      .btn-close-mobile {{
-        display: none !important;
-      }}
-      .btn-row-action {{
-        opacity: 0;
-      }}
-      .doc-item:hover .btn-row-action,
-      .doc-item:focus-within .btn-row-action {{
-        opacity: 1;
       }}
     }}
   </style>
 </head>
 <body>
-  <div class="page-container">
-    <!-- In-Page Masthead: Brand, Live Hardware State & Session Controls -->
-    <section class="page-masthead state-ready" id="live-status-strip" role="region" aria-live="polite">
-      <div class="masthead-brand-status">
-        <div class="brand-wrap">
-          <div class="brand-logo" aria-hidden="true">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <rect x="2" y="4" width="20" height="16" rx="2"/>
-              <path d="M6 12h12"/>
-              <path d="M6 8h12"/>
-            </svg>
-          </div>
-          <h1 class="brand-title">Brother DS-940DW</h1>
+  <!-- Main Finder Window -->
+  <div class="finder-window" id="finder-window" role="application" aria-label="macOS Finder Document Workspace">
+    <!-- Window Titlebar / Toolbar -->
+    <header class="finder-titlebar" id="live-status-strip" role="region" aria-live="polite">
+      <div class="titlebar-left">
+        <div class="window-traffic-lights" aria-hidden="true">
+          <span class="traffic-light tl-red"></span>
+          <span class="traffic-light tl-yellow"></span>
+          <span class="traffic-light tl-green"></span>
         </div>
-
-        <div class="masthead-divider" aria-hidden="true"></div>
-
-        <div class="masthead-status-indicator">
+        <div class="finder-brand">
+          <span class="finder-brand-name">Brother DS-940DW</span>
+        </div>
+        <div class="titlebar-divider" aria-hidden="true"></div>
+        <div class="finder-status-strip">
           <span id="strip-beacon" class="strip-beacon"></span>
           <span id="status-dot" style="display:none;"></span>
           <span id="status-label" style="display:none;"></span>
@@ -1755,8 +1255,8 @@ class DashboardHandler(BaseHTTPRequestHandler):
         </div>
       </div>
 
-      <div class="header-session-actions" id="header-session-actions">
-        <div id="strip-countdown-wrap" class="strip-countdown-wrap">
+      <div class="titlebar-center header-session-actions" id="header-session-actions">
+        <div id="strip-countdown-wrap" class="strip-countdown-wrap" style="display:none;">
           <span class="countdown-pulse-dot"></span>
           <span class="countdown-label">Batch:</span>
           <span id="strip-countdown-num" class="strip-countdown-num">8.0s</span>
@@ -1764,7 +1264,7 @@ class DashboardHandler(BaseHTTPRequestHandler):
         <div id="strip-actions" class="strip-actions"></div>
       </div>
 
-      <div class="header-global-actions" id="header-global-actions">
+      <div class="titlebar-right header-global-actions" id="header-global-actions">
         <button class="btn-strip btn-strip-accent" id="btn-trigger-sort" onclick="triggerSortScans()" title="Sort and organize unfiled scans with Gemini AI">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
@@ -1772,237 +1272,316 @@ class DashboardHandler(BaseHTTPRequestHandler):
           <span>Organize</span>
         </button>
 
-        <div class="masthead-divider" aria-hidden="true"></div>
-
-        <div class="masthead-actions">
-          <button class="btn-icon" id="theme-toggle" onclick="toggleTheme()" title="Switch color theme" aria-label="Switch color theme">
-            <svg id="theme-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="12" cy="12" r="5"/>
-              <line x1="12" y1="1" x2="12" y2="3"/>
-              <line x1="12" y1="21" x2="12" y2="23"/>
-              <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
-              <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
-              <line x1="1" y1="12" x2="3" y2="12"/>
-              <line x1="21" y1="12" x2="23" y2="12"/>
-              <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
-              <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+        <div class="view-toggle-group" id="view-toggle" role="group" aria-label="View Mode">
+          <button class="btn-view-toggle active" id="view-toggle-grid" onclick="setViewMode('grid')" title="Icon Grid View" aria-label="Icon Grid View">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="3" width="7" height="7"/>
+              <rect x="14" y="3" width="7" height="7"/>
+              <rect x="14" y="14" width="7" height="7"/>
+              <rect x="3" y="14" width="7" height="7"/>
             </svg>
           </button>
-          <button class="btn-icon" onclick="refreshAll()" title="Refresh documents and status" aria-label="Refresh">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <polyline points="23 4 23 10 17 10"/>
-              <polyline points="1 20 1 14 7 14"/>
-              <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+          <button class="btn-view-toggle" id="view-toggle-list" onclick="setViewMode('list')" title="List View" aria-label="List View">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="8" y1="6" x2="21" y2="6"/>
+              <line x1="8" y1="12" x2="21" y2="12"/>
+              <line x1="8" y1="18" x2="21" y2="18"/>
+              <line x1="3" y1="6" x2="3.01" y2="6"/>
+              <line x1="3" y1="12" x2="3.01" y2="12"/>
+              <line x1="3" y1="18" x2="3.01" y2="18"/>
             </svg>
           </button>
-          <button id="tele-toggle-btn" style="display:none;"></button>
         </div>
+
+        <button class="btn-icon" id="btn-toggle-quicklook" onclick="toggleQuickLook()" title="Toggle Quick Look Preview (Spacebar)" aria-label="Toggle Quick Look">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+            <circle cx="12" cy="12" r="3"/>
+          </svg>
+        </button>
+
+        <button class="btn-icon" id="theme-toggle" onclick="toggleTheme()" title="Switch color theme" aria-label="Switch color theme">
+          <svg id="theme-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="5"/>
+            <line x1="12" y1="1" x2="12" y2="3"/>
+            <line x1="12" y1="21" x2="12" y2="23"/>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+            <line x1="1" y1="12" x2="3" y2="12"/>
+            <line x1="21" y1="12" x2="23" y2="12"/>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+          </svg>
+        </button>
+
+        <button class="btn-icon" onclick="refreshAll()" title="Refresh archive and hardware status" aria-label="Refresh">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="23 4 23 10 17 10"/>
+            <polyline points="1 20 1 14 7 14"/>
+            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+          </svg>
+        </button>
+        <button id="tele-toggle-btn" style="display:none;"></button>
       </div>
 
-      <div id="strip-progress-bar" class="strip-progress-bar"></div>
-    </section>
+      <div id="strip-progress-bar" class="strip-progress-bar" style="position:absolute; bottom:0; left:0; height:2px; width:0; background:var(--status-active); transition: width 0.7s linear;"></div>
+    </header>
 
     <!-- In-Page Hardware Alert Banner (for Paper Jams, Feed Errors) -->
     <div id="hardware-alert-banner" class="alert-banner" style="display:none;" role="alert">
-      <div class="alert-container">
-        <div class="alert-icon-wrap" aria-hidden="true">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
-            <line x1="12" y1="9" x2="12" y2="13"/>
-            <line x1="12" y1="17" x2="12.01" y2="17"/>
-          </svg>
-        </div>
-        <div class="alert-body">
-          <div class="alert-heading" id="alert-heading">Paper Feed Error / Jam Detected</div>
-          <div class="alert-steps" id="alert-steps">
-            <span class="alert-step"><b>1.</b> Gently pull paper out of scanner path</span>
-            <span class="alert-step-divider">→</span>
-            <span class="alert-step"><b>2.</b> Press <b>Power</b> once to clear flashing red <b>(!)</b></span>
-            <span class="alert-step-divider">→</span>
-            <span class="alert-step"><b>3.</b> Re-insert sheet straight into slot</span>
-          </div>
-        </div>
-        <div class="alert-actions">
-          <button class="btn-alert-action" onclick="refreshAll()" title="Re-check scanner status">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <polyline points="23 4 23 10 17 10"/>
-              <polyline points="1 20 1 14 7 14"/>
-              <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
-            </svg>
-            <span>Check Hardware</span>
-          </button>
-        </div>
+      <div class="alert-icon" aria-hidden="true">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+          <line x1="12" y1="9" x2="12" y2="13"/>
+          <line x1="12" y1="17" x2="12.01" y2="17"/>
+        </svg>
       </div>
+      <div class="alert-body">
+        <span class="alert-title" id="alert-heading">Paper Feed Error / Jam Detected:</span>
+        <span><b>1.</b> Clear sheet</span>
+        <span>→</span>
+        <span><b>2.</b> Press <b>Power</b> once to clear red (!)</span>
+        <span>→</span>
+        <span><b>3.</b> Re-insert sheet straight</span>
+      </div>
+      <button class="btn-alert-action" onclick="refreshAll()">Check Hardware</button>
     </div>
 
-    <!-- Main Workbench -->
-    <main class="workbench">
-      <div class="split-layout">
-        <!-- Master: Recent Scans Ledger -->
-        <section class="ledger-pane" aria-labelledby="ledger-heading">
-          <div class="ledger-header">
-            <div class="ledger-title-row">
-              <div class="ledger-title-wrap">
-                <h2 id="ledger-heading" class="ledger-title">Recent Scans</h2>
-                <span class="ledger-count" id="scan-count">0</span>
-              </div>
-              <div class="ledger-shortcuts"><kbd>↑</kbd><kbd>↓</kbd> <span>nav</span> · <kbd>/</kbd> <span>search</span></div>
-            </div>
+    <!-- 3-Pane Finder Body -->
+    <div class="finder-body" id="finder-body">
+      <!-- Left: Source List Sidebar -->
+      <aside class="finder-sidebar" id="finder-sidebar" aria-label="Finder Sidebar">
+        <div class="sidebar-section">
+          <div class="sidebar-section-title">Favorites</div>
+          <nav class="sidebar-nav" id="sidebar-favorites">
+            <a class="sidebar-item active" data-folder="all" onclick="selectFolder('all', this)">
+              <span class="sidebar-item-label">
+                <svg class="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+                </svg>
+                <span>Recent Scans</span>
+              </span>
+              <span class="sidebar-count" id="sidebar-count-all">0</span>
+            </a>
+            <a class="sidebar-item" data-folder="Inbox" onclick="selectFolder('Inbox', this)">
+              <span class="sidebar-item-label">
+                <svg class="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/>
+                  <path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/>
+                </svg>
+                <span>Inbox / Unfiled</span>
+              </span>
+              <span class="sidebar-count" id="sidebar-count-inbox">0</span>
+            </a>
+          </nav>
+        </div>
 
-            <div class="search-row">
-              <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <circle cx="11" cy="11" r="8"/>
-                <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        <div class="sidebar-section">
+          <div class="sidebar-section-title">Folders</div>
+          <nav class="sidebar-nav" id="sidebar-folders">
+            <!-- Dynamically populated from /api/folders -->
+          </nav>
+        </div>
+
+        <div class="sidebar-section">
+          <div class="sidebar-section-title">Tags</div>
+          <nav class="sidebar-nav" id="sidebar-tags">
+            <a class="sidebar-item" onclick="selectTag('Legal', this)">
+              <span class="sidebar-item-label">
+                <span class="tag-dot" style="background:#f59e0b;"></span>
+                <span>Legal & Citations</span>
+              </span>
+            </a>
+            <a class="sidebar-item" onclick="selectTag('Finance', this)">
+              <span class="sidebar-item-label">
+                <span class="tag-dot" style="background:#10b981;"></span>
+                <span>Banking & Finance</span>
+              </span>
+            </a>
+            <a class="sidebar-item" onclick="selectTag('Medical', this)">
+              <span class="sidebar-item-label">
+                <span class="tag-dot" style="background:#0ea5e9;"></span>
+                <span>Medical & Health</span>
+              </span>
+            </a>
+            <a class="sidebar-item" onclick="selectTag('Auto', this)">
+              <span class="sidebar-item-label">
+                <span class="tag-dot" style="background:#8b5cf6;"></span>
+                <span>Auto & Vehicles</span>
+              </span>
+            </a>
+          </nav>
+        </div>
+      </aside>
+
+      <!-- Center: Main Browser Area -->
+      <main class="finder-main" id="finder-main" aria-label="Filesystem Browser">
+        <!-- Breadcrumbs & Search -->
+        <div class="finder-breadcrumbs" id="finder-breadcrumbs">
+          <div class="crumb-trail">
+            <span>Mac Mini</span>
+            <span class="crumb-sep">›</span>
+            <span>brother-scans</span>
+            <span class="crumb-sep">›</span>
+            <span class="crumb-active" id="crumb-folder">Recent Scans</span>
+            <span class="doc-size" id="scan-count" style="margin-left:0.4rem;">0 items</span>
+          </div>
+
+          <div class="search-box-wrap">
+            <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8"/>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+            <input type="search" id="search-box" class="search-input" placeholder="Search files..." oninput="onSearchInput()" aria-label="Search files">
+            <kbd class="search-kbd">/</kbd>
+          </div>
+        </div>
+
+        <!-- Browser Content -->
+        <div class="finder-content" id="doc-list" role="listbox" aria-label="Documents">
+          <!-- Icon Grid View (Default) -->
+          <div class="finder-grid" id="finder-grid">
+            <!-- Rendered by JS -->
+          </div>
+
+          <!-- List View (Optional Toggle) -->
+          <div class="finder-list" id="finder-list">
+            <div class="finder-list-header">
+              <span>Name</span>
+              <span>Scanned</span>
+              <span>Doc Date</span>
+              <span>Size</span>
+              <span>Category</span>
+              <span></span>
+            </div>
+            <div id="finder-list-body"></div>
+          </div>
+        </div>
+      </main>
+
+      <!-- Right: macOS Quick Look Inspector -->
+      <section class="quick-look-pane" id="quick-look-pane" aria-label="Quick Look Document Inspector">
+        <div class="quick-look-header">
+          <div class="quick-look-title-row">
+            <h3 class="quick-look-title" id="inspector-filename">Select a document</h3>
+            <button class="btn-icon btn-close-mobile" onclick="toggleQuickLook()" title="Close Quick Look" style="display:none;">✕</button>
+          </div>
+
+          <div class="quick-look-meta" id="inspector-meta">
+            <span id="meta-category" class="category-tag cat-inbox" style="display:none;"></span>
+            <span id="meta-doc-date" class="meta-tag" style="display:none;"></span>
+            <span id="meta-scan-date" class="meta-tag" style="display:none;"></span>
+            <span id="meta-size" class="meta-tag" style="display:none;"></span>
+          </div>
+
+          <div class="quick-look-actions">
+            <a class="btn-action" id="btn-download" href="#" download="" title="Download PDF" style="display:none;">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="7 10 12 15 17 10"/>
+                <line x1="12" y1="15" x2="12" y2="3"/>
               </svg>
-              <input type="search" id="search-box" class="search-input" placeholder="Search archive..." oninput="onSearchInput()" aria-label="Search archive">
-              <button class="search-clear-btn" id="search-clear" onclick="clearSearch()" style="display:none;" title="Clear search" aria-label="Clear search">✕</button>
-              <kbd class="search-kbd">/</kbd>
-            </div>
-
-            <div class="category-bar-wrap">
-              <nav class="category-bar" id="category-filters" aria-label="Filter by category">
-                <button class="category-chip active" onclick="setCategoryFilter('all', this)">All</button>
-              </nav>
-            </div>
+              <span>Download</span>
+            </a>
+            <a class="btn-action" id="btn-open-external" href="#" target="_blank" rel="noopener" title="Open in new window" style="display:none;">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+                <polyline points="15 3 21 3 21 9"/>
+                <line x1="10" y1="14" x2="21" y2="3"/>
+              </svg>
+              <span>Open</span>
+            </a>
+            <button class="btn-action btn-danger" id="btn-delete-doc" onclick="deleteActiveDoc()" title="Delete document" style="display:none;">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="3 6 5 6 21 6"/>
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+              </svg>
+              <span>Delete</span>
+            </button>
           </div>
+        </div>
 
-          <div class="doc-list" id="doc-list" role="listbox" aria-label="Scanned documents">
-            <div class="zero-state">
-              <div class="zero-title">Loading documents...</div>
-            </div>
-          </div>
-        </section>
+        <iframe class="quick-look-preview" id="viewer-frame" src="about:blank" title="PDF Document Preview"></iframe>
 
-        <!-- Detail: Live Inspector Pane -->
-        <section class="inspector-pane" id="inspector-pane" aria-label="Document Preview and Inspector">
-          <div class="inspector-header">
-            <div class="inspector-info">
-              <div class="inspector-title" id="inspector-filename">Select a document</div>
-              <div class="inspector-meta" id="inspector-meta">
-                <span id="meta-category" class="meta-tag category-tag cat-inbox" style="display:none;"></span>
-                <span id="meta-doc-date" class="meta-tag" style="display:none;"></span>
-                <span id="meta-scan-date" class="meta-tag" style="display:none;"></span>
-                <span id="meta-size" class="meta-tag" style="display:none;"></span>
-              </div>
-            </div>
+        <div class="quick-look-zero" id="inspector-zero">
+          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="color:var(--text-dim);">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/>
+          </svg>
+          <div style="font-weight:600; font-size:0.86rem; color:var(--text);">Quick Look</div>
+          <div style="font-size:0.75rem;">Select any file and tap <b>Spacebar</b> to preview.</div>
+        </div>
+      </section>
+    </div>
 
-            <div class="inspector-actions">
-              <a class="btn-action" id="btn-download" href="#" download="" title="Download PDF" style="display:none;">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                  <polyline points="7 10 12 15 17 10"/>
-                  <line x1="12" y1="15" x2="12" y2="3"/>
-                </svg>
-                <span>Download</span>
-              </a>
-              <a class="btn-action" id="btn-open-external" href="#" target="_blank" rel="noopener" title="Open in new window" style="display:none;">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
-                  <polyline points="15 3 21 3 21 9"/>
-                  <line x1="10" y1="14" x2="21" y2="3"/>
-                </svg>
-                <span>Open</span>
-              </a>
-              <button class="btn-action btn-danger" id="btn-delete-doc" onclick="deleteActiveDoc()" title="Delete document" style="display:none;">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <polyline points="3 6 5 6 21 6"/>
-                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
-                </svg>
-                <span>Delete</span>
-              </button>
-              <button class="btn-action btn-close-mobile" onclick="closeMobileInspector()" title="Close viewer">
-                <span>Close</span>
-              </button>
-            </div>
-          </div>
-
-          <iframe class="viewer-frame" id="viewer-frame" src="about:blank" title="Document PDF Preview"></iframe>
-
-          <div class="zero-state" id="inspector-zero" style="display:flex;">
-            <svg class="zero-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-              <polyline points="14 2 14 8 20 8"/>
-            </svg>
-            <div class="zero-title">Ready for paper</div>
-            <div class="zero-desc">Select any document in the ledger to inspect, or feed paper into the DS-940DW to scan automatically.</div>
-          </div>
-        </section>
-      </div>
-    </main>
-
-    <!-- In-Page Quiet Diagnostics Footer -->
-    <footer class="diagnostics-footer" aria-label="System Diagnostics">
-      <div class="footer-left">
-        <span class="footer-item" title="Scanner Network Endpoint">
-          <span class="footer-label">Scanner:</span>
-          <a id="diag-scanner" class="footer-val footer-link" href="http://{self.settings.scanner_ip}:8080/" target="_blank" rel="noopener">{self.settings.scanner_ip}:8080</a>
-          <a id="diag-scanner-link" href="http://{self.settings.scanner_ip}:8080/" target="_blank" rel="noopener" class="footer-sublink" title="Open Brother Web Admin">↗</a>
+    <!-- Finder Statusbar Footer -->
+    <footer class="finder-statusbar diagnostics-footer" aria-label="Finder Statusbar">
+      <div class="statusbar-left">
+        <span class="statusbar-item" id="statusbar-summary">0 items, 0 MB</span>
+        <span>·</span>
+        <span class="statusbar-item" title="Scanner Network Endpoint">
+          <span>Scanner:</span>
+          <a id="diag-scanner" class="statusbar-link" href="http://{self.settings.scanner_ip}:8080/" target="_blank" rel="noopener">{self.settings.scanner_ip}:8080</a>
+          <a id="diag-scanner-link" href="http://{self.settings.scanner_ip}:8080/" target="_blank" rel="noopener" class="statusbar-link" title="Open Brother Web Admin">↗</a>
         </span>
-        <span class="footer-item" title="Daemon Engine State">
-          <span class="footer-label">State:</span>
-          <span id="diag-state" class="footer-val">Connecting</span>
+        <span>·</span>
+        <span class="statusbar-item" title="Daemon Engine State">
+          <span>State:</span>
+          <span id="diag-state">Connecting</span>
         </span>
-        <span class="footer-item" title="Process Uptime">
-          <span class="footer-label">Uptime:</span>
-          <span id="diag-uptime" class="footer-val">--</span>
+        <span>·</span>
+        <span class="statusbar-item" title="Process Uptime">
+          <span>Uptime:</span>
+          <span id="diag-uptime">--</span>
         </span>
-        <span class="footer-item" title="Resident Memory (RSS)">
-          <span class="footer-label">RAM:</span>
-          <span id="diag-ram" class="footer-val">-- MB</span>
+        <span>·</span>
+        <span class="statusbar-item" title="Resident Memory (RSS)">
+          <span>RAM:</span>
+          <span id="diag-ram">-- MB</span>
         </span>
-        <span id="strip-detail" class="footer-item" style="color:var(--text-muted);">Brother DS-940DW ready · Insert document into feeder to scan</span>
+        <span id="strip-detail" style="display:none;"></span>
       </div>
 
-      <div class="footer-right">
-        <span class="footer-item" title="Local Archive Destination">
-          <span class="footer-label">Archive:</span>
-          <span id="diag-path" class="footer-val footer-path">{self.settings.output}</span>
-          <button class="btn-copy" onclick="copyPath()" title="Copy folder path" aria-label="Copy folder path">
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
-              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
-            </svg>
-            <span>Copy</span>
-          </button>
+      <div class="statusbar-right">
+        <span class="statusbar-item" title="Local Archive Destination">
+          <span>Archive:</span>
+          <span id="diag-path" style="max-width:280px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{self.settings.output}</span>
+          <button class="btn-copy" onclick="copyPath()" title="Copy folder path" aria-label="Copy folder path">Copy</button>
         </span>
       </div>
     </footer>
   </div>
 
-  <div id="toast" class="toast" role="alert">Notification</div>
+  <div id="toast" class="toast" role="alert" style="position:fixed; bottom:2rem; right:2rem; background:var(--bg-surface); border:1px solid var(--border); padding:0.5rem 0.9rem; border-radius:6px; font-size:0.76rem; font-weight:500; box-shadow:0 8px 24px rgba(0,0,0,0.15); opacity:0; pointer-events:none; transition:opacity 160ms var(--ease);">Notification</div>
 
   <!-- Deletion Confirmation Modal -->
-  <div id="confirm-modal" class="modal-backdrop" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="modal-title">
-    <div class="modal-card">
-      <div class="modal-icon-wrap" aria-hidden="true">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <polyline points="3 6 5 6 21 6"/>
-          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
-        </svg>
-      </div>
-      <div class="modal-content">
-        <h3 id="modal-title" class="modal-title">Delete Document?</h3>
-        <p class="modal-desc">This action cannot be undone. The PDF will be permanently removed from your archive:</p>
-        <div id="modal-filename" class="modal-filename">document.pdf</div>
-        <div class="modal-actions">
-          <button class="btn-modal btn-modal-cancel" id="modal-cancel-btn" onclick="closeConfirmModal()">Cancel</button>
-          <button class="btn-modal btn-modal-danger" id="modal-confirm-btn" onclick="executePendingDelete()">Delete Document</button>
-        </div>
+  <div id="confirm-modal" class="modal-backdrop" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.45); backdrop-filter:blur(3px); -webkit-backdrop-filter:blur(3px); z-index:1000; align-items:center; justify-content:center; padding:1rem;">
+    <div class="modal-card" style="background:var(--bg-surface); border:1px solid var(--border); border-radius:10px; box-shadow:var(--shadow-window); max-width:400px; width:100%; padding:1.25rem;">
+      <h3 id="modal-title" style="font-size:0.95rem; font-weight:600; margin-bottom:0.35rem;">Move to Trash?</h3>
+      <p style="font-size:0.78rem; color:var(--text-muted); line-height:1.4; margin-bottom:0.6rem;">This PDF will be permanently removed from your Mac Mini archive:</p>
+      <div id="modal-filename" style="font-family:monospace; font-size:0.72rem; background:var(--bg-subtle); padding:0.3rem 0.5rem; border-radius:4px; margin-bottom:1rem; word-break:break-all;">document.pdf</div>
+      <div style="display:flex; justify-content:flex-end; gap:0.5rem;">
+        <button class="btn-strip" onclick="closeConfirmModal()">Cancel</button>
+        <button class="btn-strip btn-strip-primary" style="background:var(--status-danger); border-color:var(--status-danger);" onclick="executePendingDelete()">Delete Document</button>
       </div>
     </div>
   </div>
 
   <script>
     let allScans = [];
-    let currentCategory = 'all';
+    let currentFolder = 'all';
+    let currentTag = null;
+    let currentViewMode = localStorage.getItem('ds940-view-mode') || 'grid';
+    let isQuickLookOpen = true;
     let selectedIndex = -1;
     let activeDoc = null;
+    let pendingDelete = null;
 
     function showToast(msg) {{
       const t = document.getElementById('toast');
       t.textContent = msg;
-      t.classList.add('show');
-      setTimeout(() => t.classList.remove('show'), 2200);
+      t.style.opacity = '1';
+      setTimeout(() => t.style.opacity = '0', 2200);
     }}
 
     function copyPath() {{
@@ -2040,6 +1619,32 @@ class DashboardHandler(BaseHTTPRequestHandler):
       }}
     }}
 
+    /* View Mode Switcher (Grid vs List) */
+    function setViewMode(mode) {{
+      currentViewMode = mode;
+      localStorage.setItem('ds940-view-mode', mode);
+      document.getElementById('view-toggle-grid').classList.toggle('active', mode === 'grid');
+      document.getElementById('view-toggle-list').classList.toggle('active', mode === 'list');
+      document.getElementById('finder-grid').style.display = mode === 'grid' ? 'grid' : 'none';
+      document.getElementById('finder-list').style.display = mode === 'list' ? 'flex' : 'none';
+    }}
+
+    /* Quick Look Toggle */
+    function toggleQuickLook() {{
+      isQuickLookOpen = !isQuickLookOpen;
+      const pane = document.getElementById('quick-look-pane');
+      const body = document.getElementById('finder-body');
+      const btn = document.getElementById('btn-toggle-quicklook');
+      
+      btn.classList.toggle('active', isQuickLookOpen);
+      if (window.innerWidth <= 1100) {{
+        pane.classList.toggle('mobile-open', isQuickLookOpen);
+      }} else {{
+        body.classList.toggle('quicklook-collapsed', !isQuickLookOpen);
+        pane.style.display = isQuickLookOpen ? 'flex' : 'none';
+      }}
+    }}
+
     /* Category Semantic Color Helpers */
     function getCategoryClass(cat) {{
       if (!cat) return 'cat-inbox';
@@ -2056,8 +1661,6 @@ class DashboardHandler(BaseHTTPRequestHandler):
     /* Document Title Parser */
     function parseDisplayTitle(filename) {{
       const base = filename.endsWith('.pdf') ? filename.slice(0, -4) : filename;
-
-      // Unfiled brother scanner convention: brother-YYYYMMDD-HHMMSS-hash
       const unfiledMatch = base.match(/^brother-([0-9]{{4}})([0-9]{{2}})([0-9]{{2}})-([0-9]{{2}})([0-9]{{2}})([0-9]{{2}})-[a-f0-9]+$/);
       if (unfiledMatch) {{
         const y = parseInt(unfiledMatch[1]);
@@ -2065,299 +1668,217 @@ class DashboardHandler(BaseHTTPRequestHandler):
         const d = parseInt(unfiledMatch[3]);
         const hh = parseInt(unfiledMatch[4]);
         const mm = parseInt(unfiledMatch[5]);
-        const date = new Date(y, m, d, hh, mm);
-        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-        const month = months[date.getMonth()] || 'Scan';
-        let hour = date.getHours();
-        const ampm = hour >= 12 ? 'PM' : 'AM';
-        hour = hour % 12 || 12;
-        const minStr = String(date.getMinutes()).padStart(2, '0');
-        return `Unfiled Scan (${{month}} ${{d}}, ${{hour}}:${{minStr}} ${{ampm}})`;
+        const dt = new Date(y, m, d, hh, mm);
+        const mon = dt.toLocaleString('en-US', {{ month: 'short' }});
+        const h12 = hh % 12 || 12;
+        const ampm = hh >= 12 ? 'PM' : 'AM';
+        const minStr = String(mm).padStart(2, '0');
+        return `Unfiled Scan (${{mon}} ${{d}}, ${{h12}}:${{minStr}} ${{ampm}})`;
       }}
-
-      const dateMatch = base.match(/^[0-9]{{4}}-[0-9]{{2}}-[0-9]{{2}}_(.*)$/);
-      if (dateMatch) {{
-        return dateMatch[1].replace(/_/g, ' · ').replace(/-/g, ' ');
-      }}
-      return base.replace(/_/g, ' · ').replace(/-/g, ' ');
+      return base.replace(/^[0-9]{{4}}-[0-9]{{2}}-[0-9]{{2}}_/, '').replace(/_/g, ' · ').replace(/-/g, ' ');
     }}
 
-    /* Search Input & Clear */
-    function onSearchInput() {{
-      const val = document.getElementById('search-box').value;
-      const clearBtn = document.getElementById('search-clear');
-      if (clearBtn) clearBtn.style.display = val ? 'block' : 'none';
-      filterScans();
-    }}
-
-    function clearSearch() {{
-      const box = document.getElementById('search-box');
-      box.value = '';
-      const clearBtn = document.getElementById('search-clear');
-      if (clearBtn) clearBtn.style.display = 'none';
-      filterScans();
-      box.focus();
-    }}
-
-    /* AI Sort Trigger */
-    async function triggerSortScans() {{
-      const btn = document.getElementById('btn-trigger-sort');
-      if (btn) {{
-        btn.disabled = true;
-        btn.innerHTML = '<span class="sort-spinner"></span> <span>Organizing...</span>';
-      }}
-      try {{
-        const res = await fetch('/api/sort', {{ method: 'POST' }});
-        const data = await res.json();
-        if (data.status === 'ok') {{
-          const count = data.moved_count || 0;
-          showToast(`Organized ${{count}} document${{count === 1 ? '' : 's'}}`);
-          await loadScans();
-          await updateStatus();
-        }} else {{
-          showToast('Sort failed: ' + (data.message || 'Error'));
-        }}
-      }} catch (e) {{
-        showToast('Sort error: ' + e);
-      }} finally {{
-        if (btn) {{
-          btn.disabled = false;
-          btn.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg> <span>Organize</span>';
-        }}
-      }}
-    }}
-
-    /* Category Filtering */
-    function updateCategoryFilters() {{
-      const counts = {{}};
-      allScans.forEach(s => {{
-        const cat = s.category || 'Inbox';
-        counts[cat] = (counts[cat] || 0) + 1;
-      }});
-
-      const filterBar = document.getElementById('category-filters');
-      const cats = Object.keys(counts).sort();
-
-      let html = `<button class="category-chip ${{currentCategory === 'all' ? 'active' : ''}}" onclick="setCategoryFilter('all', this)">All (${{allScans.length}})</button>`;
-
-      cats.forEach(cat => {{
-        const isActive = currentCategory.toLowerCase() === cat.toLowerCase();
-        const escCat = cat.replace(/'/g, "\\'");
-        html += `<button class="category-chip ${{isActive ? 'active' : ''}}" onclick="setCategoryFilter('${{escCat}}', this)">${{cat}} (${{counts[cat]}})</button>`;
-      }});
-
-      filterBar.innerHTML = html;
-    }}
-
-    function setCategoryFilter(cat, el) {{
-      currentCategory = cat;
-      selectedIndex = -1;
-      updateCategoryFilters();
-      renderScans();
-    }}
-
-    function filterScans() {{
-      selectedIndex = -1;
-      renderScans();
-    }}
-
+    /* Filtering */
     function getFilteredScans() {{
-      const query = document.getElementById('search-box').value.toLowerCase().trim();
-      let filtered = allScans;
-      if (currentCategory !== 'all') {{
-        filtered = filtered.filter(s => (s.category || 'Inbox').toLowerCase() === currentCategory.toLowerCase());
+      const q = (document.getElementById('search-box').value || '').trim().toLowerCase();
+      return allScans.filter(doc => {{
+        if (currentFolder === 'Inbox' && !doc.is_unfiled) return false;
+        if (currentFolder !== 'all' && currentFolder !== 'Inbox' && doc.folder !== currentFolder) return false;
+        if (currentTag && !((doc.category || '').toLowerCase().includes(currentTag.toLowerCase()))) return false;
+        if (!q) return true;
+        const matchTitle = (doc.filename || '').toLowerCase().includes(q);
+        const matchCat = (doc.category || '').toLowerCase().includes(q);
+        const matchDocDate = (doc.doc_date || '').toLowerCase().includes(q);
+        const matchScanDate = (doc.scan_date || '').toLowerCase().includes(q);
+        return matchTitle || matchCat || matchDocDate || matchScanDate;
+      }});
+    }}
+
+    function selectFolder(folder, el) {{
+      currentFolder = folder;
+      currentTag = null;
+      document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
+      if (el) el.classList.add('active');
+      document.getElementById('crumb-folder').textContent = folder === 'all' ? 'Recent Scans' : folder;
+      renderScans();
+    }}
+
+    function selectTag(tag, el) {{
+      currentTag = tag;
+      currentFolder = 'all';
+      document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
+      if (el) el.classList.add('active');
+      document.getElementById('crumb-folder').textContent = `Tag: ${{tag}}`;
+      renderScans();
+    }}
+
+    function onSearchInput() {{
+      renderScans();
+    }}
+
+    function renderScans() {{
+      const filtered = getFilteredScans();
+      const grid = document.getElementById('finder-grid');
+      const listBody = document.getElementById('finder-list-body');
+      const countEl = document.getElementById('scan-count');
+      const statusbarSummary = document.getElementById('statusbar-summary');
+
+      countEl.textContent = `${{filtered.length}} item${{filtered.length === 1 ? '' : 's'}}`;
+      
+      const totalBytes = filtered.reduce((acc, x) => acc + (x.size_bytes || 0), 0);
+      const totalMb = (totalBytes / (1024 * 1024)).toFixed(1);
+      statusbarSummary.textContent = `${{filtered.length}} items, ${{totalMb}} MB`;
+
+      if (filtered.length === 0) {{
+        grid.innerHTML = '<div style="grid-column: 1/-1; padding: 3rem; text-align: center; color: var(--text-dim); font-size: 0.85rem;">No documents found in this folder.</div>';
+        listBody.innerHTML = '<div style="padding: 2rem; text-align: center; color: var(--text-dim);">No documents found.</div>';
+        return;
       }}
-      if (query) {{
-        filtered = filtered.filter(s => 
-          s.filename.toLowerCase().includes(query) || 
-          (s.category && s.category.toLowerCase().includes(query)) ||
-          (s.doc_date && s.doc_date.toLowerCase().includes(query)) ||
-          (s.scan_date && s.scan_date.toLowerCase().includes(query))
-        );
-      }}
-      return filtered;
+
+      // Render Grid
+      let gridHtml = '';
+      let listHtml = '';
+
+      filtered.forEach((doc, idx) => {{
+        const title = parseDisplayTitle(doc.filename);
+        const isSelected = activeDoc && (activeDoc.relative_path === doc.relative_path);
+        const kb = doc.size_kb ? `${{doc.size_kb}} KB` : '';
+        const date = doc.doc_date || doc.scan_date || '';
+
+        gridHtml += `
+          <div class="finder-icon-card ${{isSelected ? 'selected' : ''}}"
+               tabindex="0"
+               onclick="selectDocument(allScans.find(x => x.relative_path === '${{encodeURIComponent(doc.relative_path)}}'), ${{idx}})"
+               ondblclick="openDocumentExternal('${{encodeURIComponent(doc.relative_path)}}')">
+            <div class="finder-doc-icon">
+              <svg class="doc-page-svg" viewBox="0 0 56 68" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M0 4C0 1.79086 1.79086 0 4 0H38L56 18V64C56 66.2091 54.2091 68 52 68H4C1.79086 68 0 66.2091 0 64V4Z" fill="var(--bg-surface)"/>
+                <path d="M0 4C0 1.79086 1.79086 0 4 0H38L56 18V64C56 66.2091 54.2091 68 52 68H4C1.79086 68 0 66.2091 0 64V4Z" stroke="var(--border)" stroke-width="1.5"/>
+                <path d="M38 0V14C38 16.2091 39.7909 18 42 18H56" fill="var(--bg-subtle)" stroke="var(--border)" stroke-width="1.5"/>
+                <line x1="10" y1="26" x2="46" y2="26" stroke="var(--border)" stroke-width="1.5" stroke-linecap="round"/>
+                <line x1="10" y1="34" x2="46" y2="34" stroke="var(--border)" stroke-width="1.5" stroke-linecap="round"/>
+                <line x1="10" y1="42" x2="34" y2="42" stroke="var(--border)" stroke-width="1.5" stroke-linecap="round"/>
+              </svg>
+              <span class="doc-page-badge">PDF</span>
+            </div>
+            <div class="doc-card-title" title="${{doc.filename}}">${{title}}</div>
+            <div class="doc-card-meta">${{date}} · ${{kb}}</div>
+          </div>
+        `;
+
+        listHtml += `
+          <div class="finder-list-row ${{isSelected ? 'selected' : ''}}"
+               onclick="selectDocument(allScans.find(x => x.relative_path === '${{encodeURIComponent(doc.relative_path)}}'), ${{idx}})"
+               ondblclick="openDocumentExternal('${{encodeURIComponent(doc.relative_path)}}')">
+            <div style="font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${{title}}</div>
+            <div class="doc-card-meta">${{doc.scan_date || '--'}}</div>
+            <div class="doc-card-meta">${{doc.doc_date || '--'}}</div>
+            <div class="doc-card-meta">${{kb}}</div>
+            <div><span class="category-tag ${{getCategoryClass(doc.category)}}">${{doc.category || 'Inbox'}}</span></div>
+            <button class="btn-copy" onclick="event.stopPropagation(); triggerDeleteModal('${{encodeURIComponent(doc.relative_path)}}', '${{doc.filename}}')">✕</button>
+          </div>
+        `;
+      }});
+
+      grid.innerHTML = gridHtml;
+      listBody.innerHTML = listHtml;
     }}
 
     function selectDocument(doc, index) {{
       activeDoc = doc;
       selectedIndex = index;
-      
+
+      const pane = document.getElementById('quick-look-pane');
+      const filename = document.getElementById('inspector-filename');
+      const metaCat = document.getElementById('meta-category');
+      const metaDocDate = document.getElementById('meta-doc-date');
+      const metaScanDate = document.getElementById('meta-scan-date');
+      const metaSize = document.getElementById('meta-size');
+      const btnDownload = document.getElementById('btn-download');
+      const btnOpen = document.getElementById('btn-open-external');
+      const btnDelete = document.getElementById('btn-delete-doc');
       const frame = document.getElementById('viewer-frame');
       const zero = document.getElementById('inspector-zero');
-      const filenameEl = document.getElementById('inspector-filename');
-      const catEl = document.getElementById('meta-category');
-      const docDateEl = document.getElementById('meta-doc-date');
-      const scanDateEl = document.getElementById('meta-scan-date');
-      const sizeEl = document.getElementById('meta-size');
-      const dlBtn = document.getElementById('btn-download');
-      const openBtn = document.getElementById('btn-open-external');
-      const delBtn = document.getElementById('btn-delete-doc');
-      const pane = document.getElementById('inspector-pane');
 
       if (!doc) {{
-        frame.src = 'about:blank';
+        filename.textContent = 'Select a document';
+        metaCat.style.display = 'none';
+        metaDocDate.style.display = 'none';
+        metaScanDate.style.display = 'none';
+        metaSize.style.display = 'none';
+        btnDownload.style.display = 'none';
+        btnOpen.style.display = 'none';
+        btnDelete.style.display = 'none';
         frame.style.display = 'none';
+        frame.src = 'about:blank';
         zero.style.display = 'flex';
-        filenameEl.textContent = 'Select a document';
-        catEl.style.display = 'none';
-        docDateEl.style.display = 'none';
-        scanDateEl.style.display = 'none';
-        sizeEl.style.display = 'none';
-        dlBtn.style.display = 'none';
-        openBtn.style.display = 'none';
-        delBtn.style.display = 'none';
-        pane.classList.remove('mobile-open');
         return;
       }}
 
-      const fileUrl = '/files/' + doc.relative_path.split('/').map(encodeURIComponent).join('/');
-      frame.src = fileUrl;
+      filename.textContent = parseDisplayTitle(doc.filename);
+      filename.title = doc.filename;
+
+      metaCat.textContent = doc.category || 'Inbox';
+      metaCat.className = 'category-tag ' + getCategoryClass(doc.category);
+      metaCat.style.display = 'inline-flex';
+
+      if (doc.doc_date) {{
+        metaDocDate.textContent = 'Doc Date: ' + doc.doc_date;
+        metaDocDate.style.display = 'inline-flex';
+      }} else {{
+        metaDocDate.style.display = 'none';
+      }}
+
+      if (doc.scan_date) {{
+        metaScanDate.textContent = 'Scanned: ' + doc.scan_date;
+        metaScanDate.style.display = 'inline-flex';
+      }} else {{
+        metaScanDate.style.display = 'none';
+      }}
+
+      metaSize.textContent = (doc.size_kb || 0) + ' KB';
+      metaSize.style.display = 'inline-flex';
+
+      const fileUrl = '/files/' + encodeURIComponent(doc.relative_path);
+      btnDownload.href = fileUrl;
+      btnDownload.download = doc.filename;
+      btnDownload.style.display = 'inline-flex';
+
+      btnOpen.href = fileUrl;
+      btnOpen.style.display = 'inline-flex';
+      btnDelete.style.display = 'inline-flex';
+
+      frame.src = fileUrl + '#toolbar=0&navpanes=0';
       frame.style.display = 'block';
       zero.style.display = 'none';
 
-      filenameEl.textContent = parseDisplayTitle(doc.filename);
-      filenameEl.title = doc.filename;
-
-      const cat = doc.category || 'Inbox';
-      catEl.textContent = cat;
-      catEl.className = 'meta-tag category-tag ' + getCategoryClass(cat);
-      catEl.style.display = 'inline-block';
-
-      docDateEl.textContent = 'Doc Date: ' + (doc.doc_date || 'Not detected');
-      docDateEl.style.display = doc.doc_date ? 'inline-block' : 'none';
-
-      scanDateEl.textContent = 'Scanned: ' + (doc.scan_date || 'Recent');
-      scanDateEl.style.display = 'inline-block';
-
-      sizeEl.textContent = doc.size_kb + ' KB';
-      sizeEl.style.display = 'inline-block';
-
-      dlBtn.href = fileUrl;
-      dlBtn.download = doc.filename;
-      dlBtn.style.display = 'inline-flex';
-
-      openBtn.href = fileUrl;
-      openBtn.style.display = 'inline-flex';
-
-      delBtn.style.display = 'inline-flex';
-
-      pane.classList.add('mobile-open');
-      highlightSelectedRow();
-    }}
-
-    function closeMobileInspector() {{
-      document.getElementById('inspector-pane').classList.remove('mobile-open');
-    }}
-
-    function highlightSelectedRow() {{
-      const items = document.querySelectorAll('.doc-item');
-      items.forEach((item, idx) => {{
-        if (idx === selectedIndex) {{
-          item.classList.add('selected');
-          item.setAttribute('aria-selected', 'true');
-          item.scrollIntoView({{ block: 'nearest', behavior: 'smooth' }});
-        }} else {{
-          item.classList.remove('selected');
-          item.setAttribute('aria-selected', 'false');
-        }}
-      }});
-    }}
-
-    function renderScans() {{
-      const filtered = getFilteredScans();
-      const listContainer = document.getElementById('doc-list');
-      document.getElementById('scan-count').textContent = filtered.length;
-
-      if (filtered.length === 0) {{
-        const query = document.getElementById('search-box').value.trim();
-        const escQuery = query.replace(/"/g, '&quot;');
-        listContainer.innerHTML = `
-          <div class="zero-state">
-            <svg class="zero-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-              <circle cx="11" cy="11" r="8"/>
-              <line x1="21" y1="21" x2="16.65" y2="16.65"/>
-            </svg>
-            <div class="zero-title">${{query ? `No documents matching "${{escQuery}}"` : 'No documents in this view'}}</div>
-            <div class="zero-desc">${{query ? 'Check your spelling or clear your search to see all documents.' : 'Feed a new document into the Brother scanner to populate this archive.'}}</div>
-            ${{query ? '<button class="btn-action" onclick="clearSearch()" style="margin-top:0.75rem;">Clear search</button>' : ''}}
-          </div>
-        `;
-        selectDocument(null, -1);
-        return;
+      if (!isQuickLookOpen) {{
+        toggleQuickLook();
       }}
 
-      listContainer.innerHTML = filtered.map((s, idx) => {{
-        const headline = parseDisplayTitle(s.filename);
-        const isSelected = activeDoc && activeDoc.relative_path === s.relative_path;
-        const escRel = s.relative_path.replace(/'/g, "\\'");
-        const escName = s.filename.replace(/'/g, "\\'");
-        const cat = s.category || 'Inbox';
-        const catClass = getCategoryClass(cat);
-        const docDateStr = s.doc_date ? `📅 ${{s.doc_date}}` : '';
+      // Update selection styling in grid and list
+      document.querySelectorAll('.finder-icon-card').forEach((el, i) => el.classList.toggle('selected', i === index));
+      document.querySelectorAll('.finder-list-row').forEach((el, i) => el.classList.toggle('selected', i === index));
+    }}
 
-        return `
-          <div class="doc-item ${{isSelected ? 'selected' : ''}}" 
-               tabindex="0" 
-               role="option" 
-               aria-selected="${{isSelected ? 'true' : 'false'}}"
-               onclick="selectDocument(allScans.find(x => x.relative_path === '${{escRel}}'), ${{idx}})"
-               onkeydown="if(event.key === 'Enter' || event.key === ' ') {{ selectDocument(allScans.find(x => x.relative_path === '${{escRel}}'), ${{idx}}); event.preventDefault(); }}">
-            <div class="doc-icon-wrap" aria-hidden="true">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
-                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                <polyline points="14 2 14 8 20 8"/>
-              </svg>
-            </div>
-            <div class="doc-body">
-              <div class="doc-title-row">
-                <span class="doc-title" title="${{s.filename}}">${{headline}}</span>
-                <span class="doc-size">${{s.size_kb}} KB</span>
-              </div>
-              <div class="doc-meta-row">
-                <span class="category-tag ${{catClass}}">${{cat}}</span>
-                ${{docDateStr ? `<span class="meta-tag" title="Document Date">Doc Date: ${{s.doc_date}}</span>` : ''}}
-                <span class="meta-tag" title="Scan Timestamp">Scanned: ${{s.scan_date || 'Recent'}}</span>
-              </div>
-            </div>
-            <div class="doc-actions" onclick="event.stopPropagation()">
-              <button class="btn-row-action" onclick="confirmDelete('${{escRel}}', '${{escName}}')" title="Delete document" aria-label="Delete ${{headline}}">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <polyline points="3 6 5 6 21 6"/>
-                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
-                </svg>
-              </button>
-            </div>
-          </div>
-        `;
-      }}).join('');
+    function openDocumentExternal(relPath) {{
+      window.open('/files/' + relPath, '_blank');
+    }}
 
-      // Auto-select the first document on desktop if none selected
-      if (selectedIndex === -1 && filtered.length > 0 && window.innerWidth > 960) {{
-        selectDocument(filtered[0], 0);
-      }}
+    function triggerDeleteModal(relPath, fname) {{
+      pendingDelete = {{ relPath: decodeURIComponent(relPath), filename: fname }};
+      document.getElementById('modal-filename').textContent = fname;
+      document.getElementById('confirm-modal').style.display = 'flex';
+    }}
+
+    function closeConfirmModal() {{
+      document.getElementById('confirm-modal').style.display = 'none';
+      pendingDelete = null;
     }}
 
     function deleteActiveDoc() {{
       if (!activeDoc) return;
-      confirmDelete(activeDoc.relative_path, activeDoc.filename);
-    }}
-
-    let pendingDelete = null;
-
-    function confirmDelete(relPath, filename) {{
-      pendingDelete = {{ relPath, filename }};
-      const modal = document.getElementById('confirm-modal');
-      const nameEl = document.getElementById('modal-filename');
-      const cancelBtn = document.getElementById('modal-cancel-btn');
-      if (nameEl) nameEl.textContent = filename;
-      if (modal) modal.style.display = 'flex';
-      if (cancelBtn) cancelBtn.focus();
-    }}
-
-    function closeConfirmModal() {{
-      const modal = document.getElementById('confirm-modal');
-      if (modal) modal.style.display = 'none';
-      pendingDelete = null;
+      triggerDeleteModal(encodeURIComponent(activeDoc.relative_path), activeDoc.filename);
     }}
 
     async function executePendingDelete() {{
@@ -2380,6 +1901,7 @@ class DashboardHandler(BaseHTTPRequestHandler):
             selectDocument(null, -1);
           }}
           await loadScans();
+          await loadFolders();
         }} else {{
           showToast('Failed to delete: ' + (data.message || 'Error'));
         }}
@@ -2406,6 +1928,23 @@ class DashboardHandler(BaseHTTPRequestHandler):
         }}
       }} catch (e) {{
         showToast('Session action error: ' + e);
+      }}
+    }}
+
+    async function triggerSortScans() {{
+      const btn = document.getElementById('btn-trigger-sort');
+      btn.disabled = true;
+      showToast('⚡ Organizing unfiled scans with Gemini AI...');
+      try {{
+        const res = await fetch('/api/sort', {{ method: 'POST' }});
+        const data = await res.json();
+        showToast(data.message || 'Organize complete');
+        await loadScans();
+        await loadFolders();
+      }} catch (e) {{
+        showToast('Organize error: ' + e);
+      }} finally {{
+        btn.disabled = false;
       }}
     }}
 
@@ -2451,7 +1990,6 @@ class DashboardHandler(BaseHTTPRequestHandler):
         if (diagScannerLink) diagScannerLink.href = `http://${{scannerIp}}:8080/`;
 
         if (dot) dot.className = 'status-dot';
-        strip.className = 'page-masthead';
         progressBar.style.width = '0%';
         countdownWrap.style.display = 'none';
         if (stripActions) stripActions.innerHTML = '';
@@ -2464,7 +2002,6 @@ class DashboardHandler(BaseHTTPRequestHandler):
           if (label) label.textContent = 'Ready for paper';
           if (diagState) diagState.textContent = 'Ready (Idle)';
 
-          strip.classList.add('state-ready');
           stripTitle.textContent = 'Ready for paper';
           stripBadge.textContent = 'Duplex 300 DPI';
 
@@ -2486,7 +2023,6 @@ class DashboardHandler(BaseHTTPRequestHandler):
           if (label) label.textContent = 'Standby (Sleeping)';
           if (diagState) diagState.textContent = 'Battery Saver Standby';
 
-          strip.classList.add('state-standby');
           stripTitle.textContent = 'Battery Saver Standby';
           stripBadge.textContent = 'Sleeping';
           if (stripDetail) stripDetail.textContent = 'Scanner is sleeping to conserve battery · Press Power on scanner or click Wake to scan';
@@ -2500,7 +2036,6 @@ class DashboardHandler(BaseHTTPRequestHandler):
           if (label) label.textContent = `Scanning Sheet ${{sheet}}...`;
           if (diagState) diagState.textContent = `Scanning Duplex (Sheet ${{sheet}})`;
 
-          strip.classList.add('state-scanning');
           stripTitle.textContent = `Scanning Sheet ${{sheet}}...`;
           stripBadge.textContent = 'Duplex 300 DPI';
           if (stripDetail) stripDetail.textContent = 'Drawing paper through feed rollers · Capturing front and back pages in 24-bit color';
@@ -2514,7 +2049,6 @@ class DashboardHandler(BaseHTTPRequestHandler):
           if (label) label.textContent = `Batch (${{remaining}}s)`;
           if (diagState) diagState.textContent = `Collation (${{remaining}}s)`;
 
-          strip.classList.add('state-collation');
           stripTitle.textContent = `Insert Sheet ${{sheet + 1}} to Append`;
           stripBadge.textContent = 'Batch Window';
           if (stripDetail) stripDetail.textContent = `Sheet ${{sheet}} captured (${{pages}} pages total) · Insert next sheet within ${{remaining}}s to append to this document`;
@@ -2529,7 +2063,6 @@ class DashboardHandler(BaseHTTPRequestHandler):
           if (label) label.textContent = 'Compiling PDF...';
           if (diagState) diagState.textContent = 'Compiling PDF';
 
-          strip.classList.add('state-processing');
           stripTitle.textContent = 'Compiling PDF Document...';
           stripBadge.textContent = 'Processing';
           if (stripDetail) stripDetail.textContent = 'Pruning blank sides with ink detection and assembling searchable PDF pages';
@@ -2539,7 +2072,6 @@ class DashboardHandler(BaseHTTPRequestHandler):
           if (label) label.textContent = 'Filing Document...';
           if (diagState) diagState.textContent = 'Filing Document';
 
-          strip.classList.add('state-processing');
           stripTitle.textContent = 'Filing Document...';
           stripBadge.textContent = 'Vision & Tags';
           if (stripDetail) stripDetail.textContent = 'Running Apple Vision OCR, AI categorization, and writing native macOS Finder tags';
@@ -2554,7 +2086,6 @@ class DashboardHandler(BaseHTTPRequestHandler):
           if (label) label.textContent = `Filed: ${{filename}}`;
           if (diagState) diagState.textContent = `Filed (${{filename}})`;
 
-          strip.classList.add('state-filed');
           stripTitle.textContent = `Filed: ${{filename}}`;
           stripBadge.textContent = cat;
           if (stripDetail) stripDetail.textContent = `Organized into ${{cat}}${{pages ? ' · ' + pages : ''}} · Ready for next document`;
@@ -2562,13 +2093,13 @@ class DashboardHandler(BaseHTTPRequestHandler):
           if (lastFiledDestination !== dest) {{
             lastFiledDestination = dest;
             loadScans();
+            loadFolders();
           }}
         }} else if (state === 'scanner_offline') {{
           if (dot) dot.classList.add('offline');
           if (label) label.textContent = 'Standby (Sleep)';
           if (diagState) diagState.textContent = 'Standby (Sleep)';
 
-          strip.classList.add('state-standby');
           stripTitle.textContent = 'Standby (Sleeping)';
           stripBadge.textContent = 'Wi-Fi Sleep';
           if (stripDetail) stripDetail.textContent = `Scanner is sleeping at ${{scannerIp}} · Press Power on scanner or click Wake to scan`;
@@ -2580,7 +2111,6 @@ class DashboardHandler(BaseHTTPRequestHandler):
           if (label) label.textContent = 'Feeder Jammed';
           if (diagState) diagState.textContent = 'Paper Jammed / Feed Error';
 
-          strip.classList.add('state-warning');
           stripTitle.textContent = 'Paper Jam / Feed Error';
           stripBadge.textContent = 'Clear Paper & Press Power';
           if (stripDetail) stripDetail.textContent = `Feeder jam at ${{scannerIp}} · Follow recovery instructions above`;
@@ -2588,7 +2118,7 @@ class DashboardHandler(BaseHTTPRequestHandler):
             stripActions.innerHTML = '<button class="btn-strip btn-strip-primary" onclick="refreshAll()">Check Hardware</button>';
           }}
           if (alertBanner) {{
-            alertBanner.style.display = 'block';
+            alertBanner.style.display = 'flex';
           }}
         }} else {{
           if (dot) dot.classList.add('offline');
@@ -2596,7 +2126,6 @@ class DashboardHandler(BaseHTTPRequestHandler):
           if (label) label.textContent = cleanState;
           if (diagState) diagState.textContent = state;
 
-          strip.classList.add('state-standby');
           stripTitle.textContent = cleanState;
           stripBadge.textContent = 'Status';
           if (stripDetail) stripDetail.textContent = `Current hardware state: ${{state}}`;
@@ -2607,15 +2136,47 @@ class DashboardHandler(BaseHTTPRequestHandler):
         const diagRam = document.getElementById('diag-ram');
         if (diagRam) diagRam.textContent = (data.memory_mb || '0.0') + ' MB';
 
-        const sessionActionsWrap = document.getElementById('header-session-actions');
-        const hasSessionContent = (stripActions && stripActions.children.length > 0) || (countdownWrap && countdownWrap.style.display === 'flex');
-        if (sessionActionsWrap) {{
-          sessionActionsWrap.classList.toggle('has-actions', Boolean(hasSessionContent));
-        }}
-
         setPollingInterval(isActiveState ? 750 : 2500);
       }} catch (e) {{
         console.error('updateStatus error:', e);
+      }}
+    }}
+
+    async function loadFolders() {{
+      try {{
+        const res = await fetch('/api/folders');
+        const folders = await res.json();
+        const container = document.getElementById('sidebar-folders');
+        let html = '';
+
+        let inboxCount = 0;
+        let totalCount = 0;
+
+        folders.forEach(f => {{
+          totalCount += f.count;
+          if (f.name === 'Inbox') {{
+            inboxCount = f.count;
+            return;
+          }}
+          const isActive = currentFolder === f.name;
+          html += `
+            <a class="sidebar-item ${{isActive ? 'active' : ''}}" data-folder="${{f.name}}" onclick="selectFolder('${{f.name}}', this)">
+              <span class="sidebar-item-label">
+                <svg class="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+                </svg>
+                <span>${{f.name}}</span>
+              </span>
+              <span class="sidebar-count">${{f.count}}</span>
+            </a>
+          `;
+        }});
+
+        container.innerHTML = html;
+        document.getElementById('sidebar-count-inbox').textContent = inboxCount;
+        document.getElementById('sidebar-count-all').textContent = totalCount;
+      }} catch (e) {{
+        console.error('loadFolders error:', e);
       }}
     }}
 
@@ -2623,8 +2184,10 @@ class DashboardHandler(BaseHTTPRequestHandler):
       try {{
         const res = await fetch('/api/scans');
         allScans = await res.json();
-        updateCategoryFilters();
         renderScans();
+        if (selectedIndex === -1 && allScans.length > 0) {{
+          selectDocument(allScans[0], 0);
+        }}
       }} catch (e) {{
         console.error(e);
       }}
@@ -2633,10 +2196,11 @@ class DashboardHandler(BaseHTTPRequestHandler):
     function refreshAll() {{
       updateStatus();
       loadScans();
-      showToast('Archive refreshed');
+      loadFolders();
+      showToast('Finder archive refreshed');
     }}
 
-    /* Keyboard navigation */
+    /* Native Keyboard Listeners: Spacebar for Quick Look, Arrows for Grid Navigation */
     document.addEventListener('keydown', e => {{
       const isInput = document.activeElement.tagName === 'INPUT';
       const modal = document.getElementById('confirm-modal');
@@ -2647,7 +2211,6 @@ class DashboardHandler(BaseHTTPRequestHandler):
           closeConfirmModal();
           return;
         }}
-        closeMobileInspector();
         if (isInput) {{
           document.activeElement.blur();
         }}
@@ -2659,11 +2222,14 @@ class DashboardHandler(BaseHTTPRequestHandler):
       }} else if (e.key === '/' && !isInput) {{
         e.preventDefault();
         document.getElementById('search-box').focus();
-      }} else if ((e.key === 'ArrowDown' || e.key === 'ArrowUp') && !isInput) {{
+      }} else if ((e.key === ' ' || e.code === 'Space') && !isInput) {{
+        e.preventDefault();
+        toggleQuickLook();
+      }} else if ((e.key === 'ArrowDown' || e.key === 'ArrowUp' || e.key === 'ArrowRight' || e.key === 'ArrowLeft') && !isInput) {{
         e.preventDefault();
         const filtered = getFilteredScans();
         if (!filtered.length) return;
-        if (e.key === 'ArrowDown') {{
+        if (e.key === 'ArrowDown' || e.key === 'ArrowRight') {{
           selectedIndex = Math.min(filtered.length - 1, selectedIndex + 1);
         }} else {{
           selectedIndex = Math.max(0, selectedIndex - 1);
@@ -2673,10 +2239,13 @@ class DashboardHandler(BaseHTTPRequestHandler):
     }});
 
     initTheme();
+    setViewMode(currentViewMode);
     updateStatus();
+    loadFolders();
     loadScans();
     setPollingInterval(2500);
     setInterval(loadScans, 10000);
+    setInterval(loadFolders, 10000);
   </script>
 </body>
 </html>"""

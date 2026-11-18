@@ -119,6 +119,9 @@ class WebDashboardTests(unittest.TestCase):
             self.assertIn("header-global-actions", html)
             self.assertIn("Doc Date", html)
             self.assertIn("Scanned", html)
+            self.assertIn("finder-window", html)
+            self.assertIn("finder-sidebar", html)
+            self.assertIn("finder-breadcrumbs", html)
 
     def test_categories_endpoint(self):
         url = f"http://127.0.0.1:{self.port}/api/categories"
