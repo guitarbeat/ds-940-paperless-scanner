@@ -459,24 +459,6 @@ class DashboardHandler(BaseHTTPRequestHandler):
       min-width: 0;
     }}
 
-    .window-traffic-lights {{
-      display: inline-flex;
-      align-items: center;
-      gap: 7px;
-      flex-shrink: 0;
-    }}
-
-    .traffic-light {{
-      width: 12px;
-      height: 12px;
-      border-radius: 50%;
-      display: inline-block;
-      flex-shrink: 0;
-    }}
-
-    .tl-red {{ background: #ff5f56; border: 1px solid #e0443e; }}
-    .tl-yellow {{ background: #ffbd2e; border: 1px solid #dea123; }}
-    .tl-green {{ background: #27c93f; border: 1px solid #1aab29; }}
 
     .finder-brand {{
       display: flex;
@@ -1369,11 +1351,6 @@ class DashboardHandler(BaseHTTPRequestHandler):
     <!-- Window Titlebar / Toolbar -->
     <header class="finder-titlebar" id="live-status-strip" role="region" aria-live="polite">
       <div class="titlebar-left">
-        <div class="window-traffic-lights" aria-hidden="true">
-          <span class="traffic-light tl-red"></span>
-          <span class="traffic-light tl-yellow"></span>
-          <span class="traffic-light tl-green"></span>
-        </div>
         <div class="finder-brand">
           <span class="finder-brand-name">Brother DS-940DW</span>
         </div>
