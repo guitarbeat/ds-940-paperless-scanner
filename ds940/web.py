@@ -442,24 +442,28 @@ class DashboardHandler(BaseHTTPRequestHandler):
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 0 1rem;
-      gap: 0.75rem;
+      padding: 0 0.85rem;
+      gap: 0.5rem;
       user-select: none;
       flex-shrink: 0;
       position: relative;
+      min-width: 0;
+      overflow: hidden;
     }}
 
     .titlebar-left {{
       display: flex;
       align-items: center;
-      gap: 0.85rem;
-      flex-shrink: 0;
+      gap: 0.65rem;
+      flex-shrink: 1;
+      min-width: 0;
     }}
 
     .window-traffic-lights {{
       display: inline-flex;
       align-items: center;
       gap: 7px;
+      flex-shrink: 0;
     }}
 
     .traffic-light {{
@@ -467,6 +471,7 @@ class DashboardHandler(BaseHTTPRequestHandler):
       height: 12px;
       border-radius: 50%;
       display: inline-block;
+      flex-shrink: 0;
     }}
 
     .tl-red {{ background: #ff5f56; border: 1px solid #e0443e; }}
@@ -481,21 +486,25 @@ class DashboardHandler(BaseHTTPRequestHandler):
       font-size: 0.88rem;
       color: var(--text);
       letter-spacing: -0.01em;
+      flex-shrink: 0;
     }}
 
     .titlebar-divider {{
       width: 1px;
       height: 18px;
       background: var(--border);
+      flex-shrink: 0;
     }}
 
     /* Toolbar Status Strip */
     .finder-status-strip {{
       display: flex;
       align-items: center;
-      gap: 0.5rem;
+      gap: 0.45rem;
       font-size: 0.82rem;
       color: var(--text);
+      min-width: 0;
+      flex-shrink: 1;
     }}
 
     .strip-beacon {{
@@ -504,6 +513,7 @@ class DashboardHandler(BaseHTTPRequestHandler):
       border-radius: 50%;
       background: var(--status-ready);
       transition: background-color 160ms ease;
+      flex-shrink: 0;
     }}
 
     .strip-title {{
@@ -511,6 +521,9 @@ class DashboardHandler(BaseHTTPRequestHandler):
       font-weight: 600;
       color: var(--text);
       white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      min-width: 0;
     }}
 
     .strip-badge {{
@@ -524,13 +537,23 @@ class DashboardHandler(BaseHTTPRequestHandler):
       letter-spacing: 0.02em;
       text-transform: uppercase;
       white-space: nowrap;
+      flex-shrink: 0;
     }}
 
     .titlebar-center {{
       display: flex;
       align-items: center;
-      gap: 0.5rem;
-      margin: 0 auto;
+      gap: 0.4rem;
+      flex-shrink: 0;
+      white-space: nowrap;
+    }}
+
+    .strip-actions {{
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      flex-wrap: nowrap;
+      white-space: nowrap;
     }}
 
     .strip-sleep-pill {{
@@ -546,12 +569,15 @@ class DashboardHandler(BaseHTTPRequestHandler):
       display: inline-flex;
       align-items: center;
       gap: 0.35rem;
+      flex-shrink: 0;
     }}
 
     .strip-btn-group {{
       display: inline-flex;
       align-items: center;
-      gap: 0.35rem;
+      gap: 0.3rem;
+      flex-wrap: nowrap;
+      white-space: nowrap;
     }}
 
     .btn-strip {{
@@ -567,6 +593,7 @@ class DashboardHandler(BaseHTTPRequestHandler):
       border-radius: 4px;
       cursor: pointer;
       white-space: nowrap;
+      flex-shrink: 0;
       transition: background-color 100ms var(--ease), border-color 100ms var(--ease), color 100ms var(--ease), transform 80ms var(--ease-press);
     }}
 
@@ -603,8 +630,9 @@ class DashboardHandler(BaseHTTPRequestHandler):
     .titlebar-right {{
       display: flex;
       align-items: center;
-      gap: 0.45rem;
+      gap: 0.35rem;
       flex-shrink: 0;
+      margin-left: auto;
     }}
 
     .view-toggle-group {{
@@ -1140,6 +1168,7 @@ class DashboardHandler(BaseHTTPRequestHandler):
 
     /* Finder Statusbar Footer */
     .finder-statusbar {{
+      min-height: 28px;
       height: 28px;
       background: var(--bg-surface);
       border-top: 1px solid var(--border);
@@ -1151,45 +1180,87 @@ class DashboardHandler(BaseHTTPRequestHandler):
       color: var(--text-dim);
       user-select: none;
       flex-shrink: 0;
+      gap: 0.5rem;
+      overflow: hidden;
     }}
 
     .statusbar-left {{
       display: flex;
       align-items: center;
-      gap: 0.85rem;
+      gap: 0.5rem;
+      min-width: 0;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
     }}
 
     .statusbar-right {{
       display: flex;
       align-items: center;
-      gap: 0.65rem;
+      gap: 0.5rem;
+      flex-shrink: 0;
       margin-left: auto;
     }}
 
     .statusbar-item {{
       display: inline-flex;
       align-items: center;
-      gap: 0.3rem;
+      gap: 0.25rem;
       white-space: nowrap;
+      flex-shrink: 0;
     }}
 
     .statusbar-link {{
       color: var(--accent);
       text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+    }}
+
+    .statusbar-link:hover {{
+      text-decoration: underline;
+    }}
+
+    #diag-scanner {{
+      max-width: 170px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      display: inline-block;
+      vertical-align: bottom;
+    }}
+
+    .statusbar-path {{
+      max-width: 220px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      display: inline-block;
+      vertical-align: bottom;
     }}
 
     .btn-copy {{
       background: transparent;
       border: 1px solid var(--border);
       color: var(--text-muted);
-      padding: 0.05rem 0.3rem;
+      padding: 0.05rem 0.35rem;
       border-radius: 3px;
       font-size: 0.65rem;
       cursor: pointer;
+      flex-shrink: 0;
     }}
 
     /* Responsive Breakpoints */
-    @media (max-width: 1100px) {{
+    @media (max-width: 1200px) {{
+      .strip-badge {{
+        display: none !important;
+      }}
+      .statusbar-item-secondary {{
+        display: none !important;
+      }}
+    }}
+
+    @media (max-width: 1024px) {{
       .finder-body {{
         grid-template-columns: 190px minmax(0, 1fr);
       }}
@@ -1198,23 +1269,48 @@ class DashboardHandler(BaseHTTPRequestHandler):
         right: 0;
         top: 0;
         bottom: 0;
-        width: 420px;
+        width: 440px;
+        max-width: 100vw;
         z-index: 200;
-        box-shadow: -10px 0 30px rgba(0,0,0,0.2);
+        box-shadow: -10px 0 30px rgba(0,0,0,0.25);
         display: none;
       }}
       .quick-look-pane.mobile-open {{
         display: flex;
       }}
+      .btn-close-mobile {{
+        display: inline-flex !important;
+      }}
+      .finder-brand, .titlebar-divider {{
+        display: none !important;
+      }}
+    }}
+
+    @media (max-width: 820px) {{
+      #btn-trigger-sort .btn-text {{
+        display: none !important;
+      }}
+      #btn-trigger-sort {{
+        padding: 0.22rem 0.45rem;
+      }}
+      .crumb-root {{
+        display: none !important;
+      }}
+      .statusbar-path, .statusbar-archive-label {{
+        display: none !important;
+      }}
+      #diag-scanner {{
+        max-width: 120px;
+      }}
     }}
 
     @media (max-width: 768px) {{
       body {{
-        padding: 0.5rem;
+        padding: 0.35rem;
       }}
       .finder-window {{
         border-radius: 8px;
-        min-height: calc(100vh - 1rem);
+        min-height: calc(100vh - 0.7rem);
       }}
       .finder-body {{
         grid-template-columns: 1fr;
@@ -1223,10 +1319,46 @@ class DashboardHandler(BaseHTTPRequestHandler):
         display: none;
       }}
       .titlebar-center {{
-        display: none;
+        display: none !important;
       }}
       .quick-look-pane {{
-        width: 100%;
+        width: 100vw;
+      }}
+    }}
+
+    @media (max-width: 480px) {{
+      .finder-titlebar {{
+        padding: 0 0.5rem;
+        gap: 0.35rem;
+      }}
+      #strip-title {{
+        max-width: 100px;
+      }}
+      .search-kbd {{
+        display: none !important;
+      }}
+      .search-box-wrap {{
+        max-width: 130px;
+        min-width: 90px;
+      }}
+      .search-input {{
+        padding: 0.2rem 0.5rem 0.2rem 1.4rem;
+        font-size: 0.72rem;
+      }}
+      .finder-breadcrumbs {{
+        padding: 0 0.5rem;
+      }}
+      .finder-statusbar {{
+        padding: 0 0.5rem;
+        font-size: 0.67rem;
+      }}
+      #statusbar-summary {{
+        max-width: 80px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }}
+      #diag-scanner {{
+        max-width: 85px;
       }}
     }}
   </style>
@@ -1269,7 +1401,7 @@ class DashboardHandler(BaseHTTPRequestHandler):
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
           </svg>
-          <span>Organize</span>
+          <span class="btn-text">Organize</span>
         </button>
 
         <div class="view-toggle-group" id="view-toggle" role="group" aria-label="View Mode">
@@ -1419,10 +1551,10 @@ class DashboardHandler(BaseHTTPRequestHandler):
         <!-- Breadcrumbs & Search -->
         <div class="finder-breadcrumbs" id="finder-breadcrumbs">
           <div class="crumb-trail">
-            <span>Mac Mini</span>
-            <span class="crumb-sep">›</span>
-            <span>brother-scans</span>
-            <span class="crumb-sep">›</span>
+            <span class="crumb-root">Mac Mini</span>
+            <span class="crumb-sep crumb-root">›</span>
+            <span class="crumb-root">brother-scans</span>
+            <span class="crumb-sep crumb-root">›</span>
             <span class="crumb-active" id="crumb-folder">Recent Scans</span>
             <span class="doc-size" id="scan-count" style="margin-left:0.4rem;">0 items</span>
           </div>
@@ -1530,12 +1662,12 @@ class DashboardHandler(BaseHTTPRequestHandler):
           <span id="diag-state">Connecting</span>
         </span>
         <span>·</span>
-        <span class="statusbar-item" title="Process Uptime">
+        <span class="statusbar-item statusbar-item-secondary" title="Process Uptime">
           <span>Uptime:</span>
           <span id="diag-uptime">--</span>
         </span>
-        <span>·</span>
-        <span class="statusbar-item" title="Resident Memory (RSS)">
+        <span class="statusbar-item-secondary">·</span>
+        <span class="statusbar-item statusbar-item-secondary" title="Resident Memory (RSS)">
           <span>RAM:</span>
           <span id="diag-ram">-- MB</span>
         </span>
@@ -1544,8 +1676,8 @@ class DashboardHandler(BaseHTTPRequestHandler):
 
       <div class="statusbar-right">
         <span class="statusbar-item" title="Local Archive Destination">
-          <span>Archive:</span>
-          <span id="diag-path" style="max-width:280px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{self.settings.output}</span>
+          <span class="statusbar-archive-label">Archive:</span>
+          <span id="diag-path" class="statusbar-path">{self.settings.output}</span>
           <button class="btn-copy" onclick="copyPath()" title="Copy folder path" aria-label="Copy folder path">Copy</button>
         </span>
       </div>
