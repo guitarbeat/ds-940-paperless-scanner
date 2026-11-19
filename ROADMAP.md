@@ -28,9 +28,9 @@ Add user-facing controls and visibility so the service isn't a black box:
   - **Persistent Settings Drawer**: File-backed `~/.config/ds940/scanner.conf` edited directly from the web drawer without modifying system launchd plists.
   - [x] Multi-Page Collation Timeout: Multi-sheet buffer (8-second window) automatically merges sequential sheets into a single unified multi-page PDF.
 - **Status & History**:
-  - Live scanner state indicator (`Waiting for paper`, `Scanning`, `Offline`, `Jammed`).
-  - Recent scans list with 1-click preview and download.
-  - Real-time service log viewer.
+  - [x] Live scanner state indicator (`Waiting for paper`, `Scanning`, `Offline`, `Jammed`).
+  - [x] Recent scans list with 1-click preview and download.
+  - [x] Real-time service log viewer, hardware probe, and diagnostics inspector (press `D` or click toolbar icon).
 
 ### B. Audible State Chimes (`afplay`)
 - Native macOS CoreAudio chime notifications via background `afplay`:
@@ -71,3 +71,31 @@ Build a lightweight, zero-bloat mail filing assistant that runs entirely on macO
 
 4. **Direct Paperless-ngx REST Ingestion:**
    - Direct HTTP POST API forwarder to ingest documents into a self-hosted Paperless-ngx instance via token auth, bypassing network file sharing permissions and inotify drops.
+
+---
+
+## Phase 4: Advanced Hardware Presets & Scanbro Insights (Planned 💡)
+Features and enhancements cherry-picked from [Ruegen/scanbro](https://github.com/Ruegen/scanbro) for DS-940DW capabilities:
+
+1. **Long Receipt Scanning Mode (`long_receipt`):**
+   - Extend hardware scanning limits beyond the standard 14" duplex ceiling up to **31.5 inches (~80 cm / 9450 units @ 300ths of an inch)**.
+   - Enforce 1-sided simplex capture (`<scan:Duplex>false</scan:Duplex>`) tailored for grocery, pharmacy, and retail receipts.
+   - Inject `<scan:AutoCrop>true</scan:AutoCrop>` to trigger Brother's hardware tail sensor, stopping feed rollers immediately when paper finishes rather than scanning empty air.
+   - UI preset toggle in the dashboard toolbar and keyboard shortcut (`L`).
+
+2. **Intelligent Content-Box Auto-Cropping (`crop.py`):**
+   - Feeder-aware whitespace trimmer for receipts, checks, and business cards (which otherwise leave ~5.5 inches of blank scanner bed on an 8.5" swath).
+   - Fast 480 px downscaled luma detector (`CONTENT_LUMA = 236`) with customizable padding (`0.12"`).
+   - Origin-anchored left/top margins (`ORIGIN_ALIGN_FRAC = 0.08`) preserving headers and logos on the DS-940DW's top-fed, left-aligned tray while pruning trailing blank paper.
+
+3. **Zero-Config mDNS Network Discovery (`_uscan._tcp.local.`):**
+   - Automatic background browse for Brother eSCL scanners using Apple Bonjour / mDNS (`_uscan._tcp.local.`).
+   - Dynamically resolves scanner IP address and adapts if the router assigns a new DHCP lease, removing the requirement for static IP assignment.
+
+4. **Mailbox-Safe Compressed PDF Export (< 5 MB):**
+   - Smart size-bounded PDF compression utility for the Quick Look inspector (`Export for Email`).
+   - Iteratively adjusts scale and JPEG quality (targeting 78%–38%) to guarantee the output remains strictly under 5 MB for email and messaging attachments.
+
+5. **Wired USB Scanning Fallback (SANE/libusb `04f9:0466`):**
+   - USB backend communication for Brother vendor ID `04f9` / product `0466`.
+   - Allows seamless zero-network scanning over the USB-C cable when the scanner's Wi-Fi switch is turned off.
