@@ -15,6 +15,8 @@ import tempfile
 import threading
 import time
 import urllib.parse
+import urllib.request
+import xml.etree.ElementTree as ET
 
 from .config import Settings
 from .taxonomy import TaxonomyLedger
@@ -130,7 +132,7 @@ class DashboardHandler(BaseHTTPRequestHandler):
 
     def do_HEAD(self):
         parsed = urllib.parse.urlparse(self.path)
-        if parsed.path in ("/", "/index.html", "/api/status", "/api/scans", "/api/categories", "/api/folders") or parsed.path.startswith("/files/") or parsed.path.startswith("/thumbs/"):
+        if parsed.path in ("/", "/index.html", "/api/status", "/api/scans", "/api/categories", "/api/folders", "/api/debug/logs", "/api/debug/probe", "/api/debug/system") or parsed.path.startswith("/files/") or parsed.path.startswith("/thumbs/"):
             self.send_response(200)
             self.end_headers()
         else:
@@ -151,6 +153,12 @@ class DashboardHandler(BaseHTTPRequestHandler):
         elif path == "/api/categories":
             ledger = TaxonomyLedger(self.settings.output)
             self.send_json(ledger.get_active_categories())
+        elif path == "/api/debug/logs":
+            self.serve_debug_logs()
+        elif path == "/api/debug/probe":
+            self.serve_debug_probe()
+        elif path == "/api/debug/system":
+            self.serve_debug_system()
         elif path.startswith("/files/"):
             self.serve_file(path[7:])
         elif path.startswith("/thumbs/"):
@@ -364,6 +372,113 @@ class DashboardHandler(BaseHTTPRequestHandler):
             "last_scan": last_scan,
         }
         self.send_json(data)
+
+    def serve_debug_logs(self):
+        candidate_paths = [
+            Path.home() / "Library/Logs/ds940receiver.error.log",
+            Path.home() / "Library/Logs/ds940receiver.log",
+            Path("/Users/aaron/Library/Logs/ds940receiver.error.log"),
+            Path("/Users/aaron/Library/Logs/ds940receiver.log"),
+        ]
+        log_files = []
+        for cp in candidate_paths:
+            if cp.exists() and cp not in log_files:
+                log_files.append(cp)
+
+        all_lines = []
+        for lf in log_files:
+            try:
+                txt = lf.read_text(encoding="utf-8", errors="replace")
+                for line in txt.splitlines():
+                    s = line.strip()
+                    if s:
+                        all_lines.append(s)
+            except Exception as err:
+                all_lines.append(f"[Log Read Error {lf.name}]: {err}")
+        recent = all_lines[-250:]
+        self.send_json({"logs": recent, "count": len(recent)})
+
+    def serve_debug_probe(self):
+        scanner_ip = self.settings.scanner_ip
+        probe = {
+            "scanner_ip": scanner_ip,
+            "timestamp": time.time(),
+            "escl_url": f"http://{scanner_ip}:8080/eSCL/ScannerStatus",
+            "admin_url": f"http://{scanner_ip}/",
+            "escl_reachable": False,
+            "admin_reachable": False,
+            "latency_ms": None,
+            "state": "unknown",
+            "adf_state": "unknown",
+            "raw_xml": "",
+            "error": None,
+        }
+        t0 = time.time()
+        try:
+            req = urllib.request.Request(probe["escl_url"], headers={"User-Agent": "ds940-debug/1.0"})
+            with urllib.request.urlopen(req, timeout=2.0) as resp:
+                probe["latency_ms"] = round((time.time() - t0) * 1000, 1)
+                if resp.status == 200:
+                    probe["escl_reachable"] = True
+                    xml_str = resp.read().decode("utf-8", errors="replace")
+                    probe["raw_xml"] = xml_str
+                    root = ET.fromstring(xml_str)
+                    ns = {
+                        "scan": "http://schemas.hp.com/imaging/escl/2011/05/03",
+                        "pwg": "http://www.pwg.org/schemas/2010/12/sm",
+                    }
+                    st = root.find("pwg:State", ns)
+                    adf = root.find("scan:AdfState", ns)
+                    if st is not None and st.text:
+                        probe["state"] = st.text
+                    if adf is not None and adf.text:
+                        probe["adf_state"] = adf.text
+        except Exception as err:
+            probe["error"] = str(err)
+            if probe["latency_ms"] is None:
+                probe["latency_ms"] = round((time.time() - t0) * 1000, 1)
+
+        try:
+            req_adm = urllib.request.Request(probe["admin_url"], headers={"User-Agent": "ds940-debug/1.0"})
+            with urllib.request.urlopen(req_adm, timeout=1.5) as resp:
+                probe["admin_reachable"] = (resp.status == 200)
+        except Exception:
+            probe["admin_reachable"] = False
+
+        self.send_json(probe)
+
+    def serve_debug_system(self):
+        metrics = get_process_metrics()
+        spool_dir = self.settings.work / "spool"
+        spool_items = []
+        if spool_dir.exists():
+            for item in spool_dir.iterdir():
+                if item.is_dir():
+                    files = list(item.glob("*"))
+                    spool_items.append({"id": item.name, "files": len(files)})
+        
+        free_gb = 0.0
+        try:
+            st = shutil.disk_usage(self.settings.output)
+            free_gb = round(st.free / (1024 ** 3), 1)
+        except Exception:
+            pass
+
+        uptime_sec = int(time.time() - self.start_time)
+        hours, remainder = divmod(uptime_sec, 3600)
+        minutes, seconds = divmod(remainder, 60)
+
+        self.send_json({
+            "pid": os.getpid(),
+            "uptime": f"{hours}h {minutes}m {seconds}s",
+            "memory_mb": metrics.get("rss_mb", 0.0),
+            "free_gb": free_gb,
+            "spool_count": len(spool_items),
+            "spool_items": spool_items,
+            "scanner_ip": self.settings.scanner_ip,
+            "work_dir": str(self.settings.work),
+            "output_dir": str(self.settings.output),
+        })
 
     def serve_dashboard(self):
         html = f"""<!DOCTYPE html>
@@ -1431,6 +1546,85 @@ class DashboardHandler(BaseHTTPRequestHandler):
         max-width: 85px;
       }}
     }}
+
+    /* Diagnostics Modal & Tabs */
+    .diag-tab {{
+      background: none;
+      border: none;
+      border-bottom: 2px solid transparent;
+      padding: 0.6rem 0.9rem;
+      font-size: 0.76rem;
+      font-weight: 500;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 140ms var(--ease);
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+    }}
+    .diag-tab:hover {{
+      color: var(--text);
+      background: var(--bg-hover);
+    }}
+    .diag-tab.active {{
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+      font-weight: 600;
+    }}
+    .dbg-grid {{
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      gap: 0.75rem;
+    }}
+    .dbg-card {{
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.85rem 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+    }}
+    .dbg-card-title {{
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      color: var(--text-muted);
+    }}
+    .dbg-badge {{
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      padding: 0.2rem 0.55rem;
+      border-radius: 5px;
+      font-size: 0.72rem;
+      font-weight: 600;
+      width: fit-content;
+    }}
+    .dbg-badge-success {{ background: rgba(52, 199, 89, 0.12); color: var(--status-ready); border: 1px solid rgba(52, 199, 89, 0.25); }}
+    .dbg-badge-warning {{ background: rgba(255, 149, 0, 0.12); color: var(--status-active); border: 1px solid rgba(255, 149, 0, 0.25); }}
+    .dbg-badge-danger {{ background: rgba(255, 59, 48, 0.12); color: var(--status-danger); border: 1px solid rgba(255, 59, 48, 0.25); }}
+    .dbg-badge-neutral {{ background: var(--bg-subtle); color: var(--text-muted); border: 1px solid var(--border); }}
+    .dbg-log-box {{
+      background: #0d0f14;
+      color: #d1d5db;
+      font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+      font-size: 0.71rem;
+      line-height: 1.45;
+      padding: 0.75rem 1rem;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      overflow-y: auto;
+      white-space: pre-wrap;
+      word-break: break-all;
+      flex: 1;
+      min-height: 320px;
+      max-height: 440px;
+    }}
+    .dbg-log-error {{ color: #f87171; font-weight: 600; }}
+    .dbg-log-warn {{ color: #fbbf24; }}
+    .dbg-log-info {{ color: #60a5fa; }}
   </style>
 </head>
 <body>
@@ -1522,6 +1716,13 @@ class DashboardHandler(BaseHTTPRequestHandler):
             <polyline points="23 4 23 10 17 10"/>
             <polyline points="1 20 1 14 7 14"/>
             <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+          </svg>
+        </button>
+
+        <button class="btn-icon" id="btn-toggle-diagnostics" onclick="toggleDiagnostics()" title="Diagnostics & Live Logs (D)" aria-label="Diagnostics & Live Logs">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="4 17 10 11 4 5"/>
+            <line x1="12" y1="19" x2="20" y2="19"/>
           </svg>
         </button>
       </div>
@@ -1692,7 +1893,7 @@ class DashboardHandler(BaseHTTPRequestHandler):
           <a id="diag-scanner" class="statusbar-link" href="http://{self.settings.scanner_ip}/" target="_blank" rel="noopener" title="Open Brother Web Admin">{self.settings.scanner_ip} ↗</a>
         </span>
         <span>·</span>
-        <span class="statusbar-item" title="Daemon Engine State">
+        <span class="statusbar-item statusbar-link" onclick="toggleDiagnostics()" title="Click to open Live Diagnostics & Logs (D)" style="cursor:pointer;">
           <span>State:</span>
           <span id="diag-state">Connecting</span>
         </span>
@@ -1723,6 +1924,43 @@ class DashboardHandler(BaseHTTPRequestHandler):
     </div>
   </div>
 
+  <!-- Diagnostics & Debug Inspector Modal -->
+  <div id="diagnostics-modal" class="modal-backdrop" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.55); backdrop-filter:blur(4px); -webkit-backdrop-filter:blur(4px); z-index:1050; align-items:center; justify-content:center; padding:1.25rem;">
+    <div class="modal-card" style="background:var(--bg-surface); border:1px solid var(--border); border-radius:12px; box-shadow:var(--shadow-window); max-width:840px; width:100%; height:82vh; max-height:720px; display:flex; flex-direction:column; overflow:hidden; padding:0;">
+      <!-- Titlebar / Header -->
+      <div style="display:flex; align-items:center; justify-content:space-between; padding:0.85rem 1.15rem; border-bottom:1px solid var(--border); background:var(--bg-subtle);">
+        <div style="display:flex; align-items:center; gap:0.6rem;">
+          <div style="width:10px; height:10px; border-radius:50%; background:var(--status-ready);" id="dbg-dot"></div>
+          <div>
+            <div style="font-size:0.92rem; font-weight:600; color:var(--text); line-height:1.2;">Diagnostics & Hardware Inspector</div>
+            <div style="font-size:0.72rem; color:var(--text-muted);" id="dbg-header-sub">Scanner: {self.settings.scanner_ip} · PID <span id="dbg-pid">--</span></div>
+          </div>
+        </div>
+        <div style="display:flex; align-items:center; gap:0.5rem;">
+          <button class="btn-strip" onclick="runHardwareProbe()" id="btn-probe-quick" style="font-size:0.72rem; padding:0.25rem 0.55rem;">⚡ Probe Hardware</button>
+          <button class="btn-icon" onclick="closeDiagnostics()" title="Close Diagnostics (Esc)" style="width:26px; height:26px;">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <line x1="18" y1="6" x2="6" y2="18"/>
+              <line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Tab Navigation -->
+      <div style="display:flex; border-bottom:1px solid var(--border); background:var(--bg-window); padding:0 0.75rem;">
+        <button class="diag-tab active" id="tab-btn-probe" onclick="switchDiagTab('probe')">⚡ Hardware Probe</button>
+        <button class="diag-tab" id="tab-btn-logs" onclick="switchDiagTab('logs')">📋 Live Logs</button>
+        <button class="diag-tab" id="tab-btn-system" onclick="switchDiagTab('system')">📊 System & Spool</button>
+        <button class="diag-tab" id="tab-btn-raw" onclick="switchDiagTab('raw')">⚙️ Raw State</button>
+      </div>
+
+      <!-- Tab Content Area -->
+      <div style="flex:1; overflow-y:auto; padding:1.15rem; background:var(--bg-window); display:flex; flex-direction:column; gap:1rem;" id="diag-tab-content">
+      </div>
+    </div>
+  </div>
+
   <script>
     let allScans = [];
     let currentFolder = 'all';
@@ -1744,6 +1982,395 @@ class DashboardHandler(BaseHTTPRequestHandler):
       const p = document.getElementById('diag-path').textContent;
       navigator.clipboard.writeText(p);
       showToast('Path copied to clipboard');
+    }}
+
+    /* Diagnostics & Debug Inspector */
+    let isDiagnosticsOpen = false;
+    let currentDiagTab = 'probe';
+    let autoTailTimer = null;
+    let logLinesCache = [];
+    let logFilter = 'all';
+
+    function toggleDiagnostics() {{
+      if (isDiagnosticsOpen) {{
+        closeDiagnostics();
+      }} else {{
+        openDiagnostics();
+      }}
+    }}
+
+    function openDiagnostics(tab) {{
+      isDiagnosticsOpen = true;
+      document.getElementById('diagnostics-modal').style.display = 'flex';
+      switchDiagTab(tab || currentDiagTab);
+    }}
+
+    function closeDiagnostics() {{
+      isDiagnosticsOpen = false;
+      document.getElementById('diagnostics-modal').style.display = 'none';
+      if (autoTailTimer) {{
+        clearInterval(autoTailTimer);
+        autoTailTimer = null;
+      }}
+    }}
+
+    function switchDiagTab(tab) {{
+      currentDiagTab = tab;
+      document.querySelectorAll('.diag-tab').forEach(b => b.classList.remove('active'));
+      const activeBtn = document.getElementById(`tab-btn-${{tab}}`);
+      if (activeBtn) activeBtn.classList.add('active');
+
+      if (autoTailTimer) {{
+        clearInterval(autoTailTimer);
+        autoTailTimer = null;
+      }}
+
+      const content = document.getElementById('diag-tab-content');
+      if (tab === 'probe') {{
+        renderProbeTab(content);
+        runHardwareProbe();
+      }} else if (tab === 'logs') {{
+        renderLogsTab(content);
+        fetchLogs();
+      }} else if (tab === 'system') {{
+        renderSystemTab(content);
+        fetchSystemDebug();
+      }} else if (tab === 'raw') {{
+        renderRawTab(content);
+      }}
+    }}
+
+    function renderProbeTab(container) {{
+      container.innerHTML = `
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem; background:var(--bg-subtle); padding:0.6rem 0.85rem; border-radius:8px; border:1px solid var(--border);">
+          <div style="display:flex; align-items:center; gap:0.5rem;">
+            <button class="btn-strip btn-strip-primary" onclick="runHardwareProbe()" id="btn-probe-exec">⚡ Probe Scanner Now</button>
+            <span id="probe-spinner" style="display:none; font-size:0.75rem; color:var(--text-muted);">Probing hardware...</span>
+            <span id="probe-latency-pill" class="dbg-badge dbg-badge-neutral">Latency: --</span>
+          </div>
+          <div style="display:flex; align-items:center; gap:0.4rem;">
+            <button class="btn-strip" onclick="sessionAction('wake')">☀️ Wake (+3m)</button>
+            <button class="btn-strip" onclick="sessionAction('extend')">+5m</button>
+            <button class="btn-strip" onclick="sessionAction('pause')">🌙 Sleep</button>
+          </div>
+        </div>
+
+        <div class="dbg-grid">
+          <div class="dbg-card">
+            <span class="dbg-card-title">Paper Feeder (ADF)</span>
+            <div id="probe-adf-val" class="dbg-badge dbg-badge-neutral">Checking...</div>
+            <div style="font-size:0.72rem; color:var(--text-muted); line-height:1.35;" id="probe-adf-desc">Detects if physical paper is resting in the DS-940DW feed slot.</div>
+          </div>
+
+          <div class="dbg-card">
+            <span class="dbg-card-title">Hardware Power State</span>
+            <div id="probe-state-val" class="dbg-badge dbg-badge-neutral">Checking...</div>
+            <div style="font-size:0.72rem; color:var(--text-muted); line-height:1.35;" id="probe-state-desc">PWG operational state reported by scanner.</div>
+          </div>
+
+          <div class="dbg-card">
+            <span class="dbg-card-title">eSCL REST Port (8080)</span>
+            <div id="probe-escl-val" class="dbg-badge dbg-badge-neutral">Checking...</div>
+            <div style="font-size:0.72rem; line-height:1.35;">
+              <a id="probe-escl-link" href="#" target="_blank" rel="noopener" style="color:var(--accent); text-decoration:none;">Open eSCL Status XML ↗</a>
+            </div>
+          </div>
+
+          <div class="dbg-card">
+            <span class="dbg-card-title">Brother Web Admin (80)</span>
+            <div id="probe-admin-val" class="dbg-badge dbg-badge-neutral">Checking...</div>
+            <div style="font-size:0.72rem; line-height:1.35;">
+              <a id="probe-admin-link" href="#" target="_blank" rel="noopener" style="color:var(--accent); text-decoration:none;">Open Brother Console ↗</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="dbg-card" style="margin-top:0.25rem;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.4rem;">
+            <span class="dbg-card-title">Raw eSCL /ScannerStatus XML</span>
+            <button class="btn-strip" style="font-size:0.68rem; padding:0.15rem 0.4rem;" onclick="copyRawXml()">Copy XML</button>
+          </div>
+          <pre id="probe-raw-xml" style="font-family:monospace; font-size:0.68rem; max-height:140px; overflow-y:auto; background:var(--bg-subtle); padding:0.5rem; border-radius:4px; border:1px solid var(--border); color:var(--text); white-space:pre-wrap; word-break:break-all;">Loading XML...</pre>
+        </div>
+      `;
+    }}
+
+    async function runHardwareProbe() {{
+      const sp = document.getElementById('probe-spinner');
+      const btn = document.getElementById('btn-probe-exec');
+      if (sp) sp.style.display = 'inline';
+      if (btn) btn.disabled = true;
+
+      try {{
+        const res = await fetch('/api/debug/probe');
+        const d = await res.json();
+
+        const latPill = document.getElementById('probe-latency-pill');
+        if (latPill) {{
+          if (d.latency_ms !== null) {{
+            latPill.textContent = `${{d.latency_ms}} ms latency`;
+            latPill.className = d.latency_ms < 150 ? 'dbg-badge dbg-badge-success' : 'dbg-badge dbg-badge-warning';
+          }} else {{
+            latPill.textContent = 'Timed out';
+            latPill.className = 'dbg-badge dbg-badge-danger';
+          }}
+        }}
+
+        const adfVal = document.getElementById('probe-adf-val');
+        const adfDesc = document.getElementById('probe-adf-desc');
+        if (adfVal) {{
+          if (d.adf_state === 'ScannerAdfLoaded') {{
+            adfVal.textContent = '📄 Paper Loaded in Feeder';
+            adfVal.className = 'dbg-badge dbg-badge-success';
+            if (adfDesc) adfDesc.textContent = 'Paper detected! Feed rollers will draw sheet on session start.';
+          }} else if (d.adf_state === 'ScannerAdfEmpty') {{
+            adfVal.textContent = 'Feeder Empty';
+            adfVal.className = 'dbg-badge dbg-badge-neutral';
+            if (adfDesc) adfDesc.textContent = 'No document in slot. Insert a sheet to trigger auto-feed.';
+          }} else {{
+            adfVal.textContent = d.adf_state || 'Unknown';
+            adfVal.className = 'dbg-badge dbg-badge-warning';
+          }}
+        }}
+
+        const stateVal = document.getElementById('probe-state-val');
+        if (stateVal) {{
+          stateVal.textContent = d.state || 'Unknown';
+          stateVal.className = (d.state === 'Idle' || d.state === 'Testing') ? 'dbg-badge dbg-badge-success' : 'dbg-badge dbg-badge-warning';
+        }}
+
+        const esclVal = document.getElementById('probe-escl-val');
+        const esclLink = document.getElementById('probe-escl-link');
+        if (esclVal) {{
+          esclVal.textContent = d.escl_reachable ? 'Online (HTTP 200)' : 'Unreachable';
+          esclVal.className = d.escl_reachable ? 'dbg-badge dbg-badge-success' : 'dbg-badge dbg-badge-danger';
+        }}
+        if (esclLink) esclLink.href = d.escl_url;
+
+        const adminVal = document.getElementById('probe-admin-val');
+        const adminLink = document.getElementById('probe-admin-link');
+        if (adminVal) {{
+          adminVal.textContent = d.admin_reachable ? 'Online (HTTP 200)' : 'Unreachable';
+          adminVal.className = d.admin_reachable ? 'dbg-badge dbg-badge-success' : 'dbg-badge dbg-badge-danger';
+        }}
+        if (adminLink) adminLink.href = d.admin_url;
+
+        const rawXml = document.getElementById('probe-raw-xml');
+        if (rawXml) rawXml.textContent = d.raw_xml || (d.error ? `Error: ${{d.error}}` : 'No XML payload received.');
+
+        const dbgDot = document.getElementById('dbg-dot');
+        if (dbgDot) dbgDot.style.background = d.escl_reachable ? 'var(--status-ready)' : 'var(--status-danger)';
+      }} catch (err) {{
+        console.error('Probe error:', err);
+      }} finally {{
+        if (sp) sp.style.display = 'none';
+        if (btn) btn.disabled = false;
+      }}
+    }}
+
+    function renderLogsTab(container) {{
+      container.innerHTML = `
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem; background:var(--bg-subtle); padding:0.6rem 0.85rem; border-radius:8px; border:1px solid var(--border);">
+          <div style="display:flex; align-items:center; gap:0.5rem;">
+            <select id="log-filter-sel" onchange="setLogFilter(this.value)" class="btn-strip" style="cursor:pointer; font-size:0.74rem;">
+              <option value="all">All Logs (Latest 250)</option>
+              <option value="errors">Warnings & Errors Only</option>
+              <option value="info">Info Only</option>
+            </select>
+            <label style="display:flex; align-items:center; gap:0.35rem; font-size:0.74rem; color:var(--text-muted); cursor:pointer;">
+              <input type="checkbox" id="chk-autotail" onchange="toggleAutoTail(this.checked)" checked>
+              <span>Auto-tail (2.5s)</span>
+            </label>
+          </div>
+          <div style="display:flex; align-items:center; gap:0.4rem;">
+            <button class="btn-strip" onclick="fetchLogs()">🔄 Refresh</button>
+            <button class="btn-strip" onclick="copyLogs()">📋 Copy Logs</button>
+          </div>
+        </div>
+
+        <div id="dbg-log-box" class="dbg-log-box">Fetching live logs...</div>
+      `;
+      setupAutoTail();
+    }}
+
+    function toggleAutoTail(enable) {{
+      if (enable) {{
+        setupAutoTail();
+      }} else if (autoTailTimer) {{
+        clearInterval(autoTailTimer);
+        autoTailTimer = null;
+      }}
+    }}
+
+    function setupAutoTail() {{
+      if (autoTailTimer) clearInterval(autoTailTimer);
+      autoTailTimer = setInterval(() => {{
+        if (isDiagnosticsOpen && currentDiagTab === 'logs') {{
+          fetchLogs(true);
+        }}
+      }}, 2500);
+    }}
+
+    function setLogFilter(f) {{
+      logFilter = f;
+      renderLogLines();
+    }}
+
+    async function fetchLogs(isQuiet) {{
+      try {{
+        const res = await fetch('/api/debug/logs');
+        const data = await res.json();
+        logLinesCache = data.logs || [];
+        renderLogLines();
+      }} catch (err) {{
+        console.error('fetchLogs error:', err);
+      }}
+    }}
+
+    function renderLogLines() {{
+      const box = document.getElementById('dbg-log-box');
+      if (!box) return;
+      let filtered = logLinesCache;
+      if (logFilter === 'errors') {{
+        filtered = logLinesCache.filter(l => l.includes('WARNING') || l.includes('ERROR') || l.includes('Exception'));
+      }} else if (logFilter === 'info') {{
+        filtered = logLinesCache.filter(l => l.includes('INFO'));
+      }}
+
+      if (!filtered.length) {{
+        box.innerHTML = '<span style="color:#6b7280;">No logs match selected filter.</span>';
+        return;
+      }}
+
+      const html = filtered.map(line => {{
+        const escaped = line.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        if (line.includes('ERROR') || line.includes('Exception') || line.includes('Failed')) {{
+          return `<div class="dbg-log-error">${{escaped}}</div>`;
+        }} else if (line.includes('WARNING')) {{
+          return `<div class="dbg-log-warn">${{escaped}}</div>`;
+        }} else if (line.includes('INFO')) {{
+          return `<div class="dbg-log-info">${{escaped}}</div>`;
+        }}
+        return `<div>${{escaped}}</div>`;
+      }}).join('');
+
+      box.innerHTML = html;
+      box.scrollTop = box.scrollHeight;
+    }}
+
+    function copyLogs() {{
+      const text = logLinesCache.join('\\n');
+      navigator.clipboard.writeText(text);
+      showToast('250 log lines copied to clipboard');
+    }}
+
+    function renderSystemTab(container) {{
+      container.innerHTML = `
+        <div class="dbg-grid">
+          <div class="dbg-card">
+            <span class="dbg-card-title">Receiver Daemon Engine</span>
+            <div style="font-size:0.8rem; font-weight:600;" id="sys-engine">macOS LaunchAgent</div>
+            <div style="font-size:0.72rem; color:var(--text-muted);" id="sys-pid-wrap">PID: <span id="sys-pid">--</span> · Uptime: <span id="sys-uptime">--</span></div>
+            <div style="font-size:0.72rem; color:var(--text-muted);">RAM: <span id="sys-ram">-- MB</span></div>
+          </div>
+
+          <div class="dbg-card">
+            <span class="dbg-card-title">Spool Queue (work/spool)</span>
+            <div style="font-size:0.8rem; font-weight:600;" id="sys-spool-status">0 pending scan jobs</div>
+            <div style="font-size:0.72rem; color:var(--text-muted);" id="sys-spool-desc">Active sheets awaiting blank pruning or OCR assembly.</div>
+          </div>
+
+          <div class="dbg-card">
+            <span class="dbg-card-title">Archive Storage Destination</span>
+            <div style="font-size:0.8rem; font-weight:600;" id="sys-disk-free">-- GB Free Disk</div>
+            <div style="font-size:0.72rem; color:var(--text-muted); font-family:monospace; word-break:break-all;" id="sys-output-path">...</div>
+          </div>
+
+          <div class="dbg-card">
+            <span class="dbg-card-title">Network & Tailscale Bindings</span>
+            <div style="font-size:0.75rem; color:var(--text);">Dashboard Port: <b>9400</b> (Reverse-proxied)</div>
+            <div style="font-size:0.72rem; color:var(--text-muted);">Tailscale Funnel / Caddy: <b>https://scans.alw.lol</b></div>
+            <div style="font-size:0.72rem; color:var(--text-muted);">Physical Host: <span id="sys-scanner-host">BR5CF370DC7026.local</span></div>
+          </div>
+        </div>
+
+        <div class="dbg-card" style="margin-top:0.25rem;">
+          <span class="dbg-card-title">Pending Spool Items</span>
+          <div id="sys-spool-list" style="font-size:0.74rem; color:var(--text-muted); padding:0.4rem 0;">No active spool jobs found in working directory.</div>
+        </div>
+      `;
+    }}
+
+    async function fetchSystemDebug() {{
+      try {{
+        const res = await fetch('/api/debug/system');
+        const d = await res.json();
+        const p = document.getElementById('sys-pid');
+        if (p) p.textContent = d.pid;
+        const u = document.getElementById('sys-uptime');
+        if (u) u.textContent = d.uptime;
+        const r = document.getElementById('sys-ram');
+        if (r) r.textContent = `${{d.memory_mb}} MB`;
+        const df = document.getElementById('sys-disk-free');
+        if (df) df.textContent = `${{d.free_gb}} GB Free Disk Space`;
+        const op = document.getElementById('sys-output-path');
+        if (op) op.textContent = d.output_dir;
+        const sh = document.getElementById('sys-scanner-host');
+        if (sh) sh.textContent = `${{d.scanner_host}} (${{d.scanner_ip}})`;
+
+        const ss = document.getElementById('sys-spool-status');
+        if (ss) ss.textContent = `${{d.spool_count}} pending scan jobs`;
+
+        const sl = document.getElementById('sys-spool-list');
+        if (sl) {{
+          if (d.spool_items && d.spool_items.length) {{
+            sl.innerHTML = d.spool_items.map(x => `<div>📁 <b>${{x.id}}</b> (${{x.files}} files)</div>`).join('');
+          }} else {{
+            sl.textContent = 'Spool is clean. No stranded or incomplete scan batches.';
+          }}
+        }}
+      }} catch (err) {{
+        console.error('fetchSystemDebug error:', err);
+      }}
+    }}
+
+    async function renderRawTab(container) {{
+      container.innerHTML = `
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem; background:var(--bg-subtle); padding:0.6rem 0.85rem; border-radius:8px; border:1px solid var(--border);">
+          <div style="display:flex; gap:0.4rem; align-items:center;">
+            <a href="/api/status" target="_blank" class="btn-strip" style="text-decoration:none;">/api/status ↗</a>
+            <a href="/api/scans" target="_blank" class="btn-strip" style="text-decoration:none;">/api/scans ↗</a>
+            <a href="/api/folders" target="_blank" class="btn-strip" style="text-decoration:none;">/api/folders ↗</a>
+            <a href="/api/categories" target="_blank" class="btn-strip" style="text-decoration:none;">/api/categories ↗</a>
+          </div>
+          <button class="btn-strip btn-strip-primary" onclick="copyRawStatus()">📋 Copy JSON</button>
+        </div>
+        <pre id="raw-state-pre" style="font-family:monospace; font-size:0.71rem; background:#0d0f14; color:#a7f3d0; padding:0.85rem; border-radius:6px; max-height:420px; overflow-y:auto; border:1px solid var(--border); line-height:1.45;">Fetching /api/status JSON...</pre>
+      `;
+      try {{
+        const res = await fetch('/api/status');
+        const data = await res.json();
+        const el = document.getElementById('raw-state-pre');
+        if (el) el.textContent = JSON.stringify(data, null, 2);
+      }} catch (e) {{
+        console.error(e);
+      }}
+    }}
+
+    function copyRawStatus() {{
+      const el = document.getElementById('raw-state-pre');
+      if (el) {{
+        navigator.clipboard.writeText(el.textContent);
+        showToast('Status JSON copied to clipboard');
+      }}
+    }}
+
+    function copyRawXml() {{
+      const el = document.getElementById('probe-raw-xml');
+      if (el) {{
+        navigator.clipboard.writeText(el.textContent);
+        showToast('eSCL XML copied to clipboard');
+      }}
     }}
 
     /* Theme Management */
@@ -2380,6 +3007,10 @@ class DashboardHandler(BaseHTTPRequestHandler):
           closeConfirmModal();
           return;
         }}
+        if (isDiagnosticsOpen) {{
+          closeDiagnostics();
+          return;
+        }}
         if (isInput) {{
           document.activeElement.blur();
         }}
@@ -2388,16 +3019,19 @@ class DashboardHandler(BaseHTTPRequestHandler):
         executePendingDelete();
       }} else if (isModalOpen) {{
         return;
-      }} else if (e.key === '/' && !isInput) {{
+      }} else if (e.key.toLowerCase() === 'd' && !isInput) {{
+        e.preventDefault();
+        toggleDiagnostics();
+      }} else if (e.key === '/' && !isInput && !isDiagnosticsOpen) {{
         e.preventDefault();
         document.getElementById('search-box').focus();
-      }} else if (e.key.toLowerCase() === 'p' && !isInput) {{
+      }} else if (e.key.toLowerCase() === 'p' && !isInput && !isDiagnosticsOpen) {{
         e.preventDefault();
         toggleThumbnailPreview();
-      }} else if ((e.key === ' ' || e.code === 'Space') && !isInput) {{
+      }} else if ((e.key === ' ' || e.code === 'Space') && !isInput && !isDiagnosticsOpen) {{
         e.preventDefault();
         toggleQuickLook();
-      }} else if ((e.key === 'ArrowDown' || e.key === 'ArrowUp' || e.key === 'ArrowRight' || e.key === 'ArrowLeft') && !isInput) {{
+      }} else if ((e.key === 'ArrowDown' || e.key === 'ArrowUp' || e.key === 'ArrowRight' || e.key === 'ArrowLeft') && !isInput && !isDiagnosticsOpen) {{
         e.preventDefault();
         const filtered = getFilteredScans();
         if (!filtered.length) return;
