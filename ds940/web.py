@@ -1689,7 +1689,7 @@ class DashboardHandler(BaseHTTPRequestHandler):
         <span>·</span>
         <span class="statusbar-item" title="Scanner Network Endpoint">
           <span>Scanner:</span>
-          <a id="diag-scanner" class="statusbar-link" href="http://{self.settings.scanner_ip}:8080/" target="_blank" rel="noopener" title="Open Brother Web Admin">{self.settings.scanner_ip}:8080 ↗</a>
+          <a id="diag-scanner" class="statusbar-link" href="http://{self.settings.scanner_ip}/" target="_blank" rel="noopener" title="Open Brother Web Admin">{self.settings.scanner_ip} ↗</a>
         </span>
         <span>·</span>
         <span class="statusbar-item" title="Daemon Engine State">
@@ -2142,6 +2142,9 @@ class DashboardHandler(BaseHTTPRequestHandler):
         const data = await res.json();
         
         const diagState = document.getElementById('diag-state');
+        const dot = null;
+        const label = null;
+        const stripDetail = null;
         
         const strip = document.getElementById('live-status-strip');
         const stripTitle = document.getElementById('strip-title');
@@ -2157,8 +2160,8 @@ class DashboardHandler(BaseHTTPRequestHandler):
 
         const diagScanner = document.getElementById('diag-scanner');
         if (diagScanner) {{
-          diagScanner.textContent = `${{scannerIp}}:8080 ↗`;
-          diagScanner.href = `http://${{scannerIp}}:8080/`;
+          diagScanner.textContent = `${{scannerIp}} ↗`;
+          diagScanner.href = `http://${{scannerIp}}/`;
         }}
 
         progressBar.style.width = '0%';
