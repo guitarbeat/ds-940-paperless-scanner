@@ -13,7 +13,8 @@ if str(repo_root) not in sys.path:
 from ds940.finder_tags import set_finder_metadata
 from ds940.taxonomy import TaxonomyLedger
 
-SCANS_DIR = Path.home() / "Documents" / "brother-scans"
+_icloud_scans = Path.home() / "Library" / "Mobile Documents" / "com~apple~CloudDocs" / "brother-scans"
+SCANS_DIR = _icloud_scans if _icloud_scans.exists() else Path.home() / "Documents" / "brother-scans"
 
 FILES_TO_SORT = [
     {

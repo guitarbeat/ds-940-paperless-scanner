@@ -111,10 +111,12 @@ def sort_scans(
 
 def main():
     parser = argparse.ArgumentParser(description="Triage and sort scanned documents into category folders.")
+    _icloud_scans = Path.home() / "Library" / "Mobile Documents" / "com~apple~CloudDocs" / "brother-scans"
+    _default_scans = _icloud_scans if _icloud_scans.exists() else Path.home() / "Documents" / "brother-scans"
     parser.add_argument(
         "--dir",
-        default=str(Path.home() / "Documents" / "brother-scans"),
-        help="Path to scans directory (default: ~/Documents/brother-scans)",
+        default=str(_default_scans),
+        help="Path to scans directory (default: iCloud Drive brother-scans)",
     )
     parser.add_argument(
         "--apply",

@@ -43,7 +43,8 @@ class Settings:
             raise ValueError("SCAN_PAPER_SIZE must be a4, auto, legal, or letter")
 
         default_work = Path("./work")
-        default_output = Path.home() / "Documents" / "brother-scans"
+        icloud_scans = Path.home() / "Library" / "Mobile Documents" / "com~apple~CloudDocs" / "brother-scans"
+        default_output = icloud_scans if icloud_scans.exists() else Path.home() / "Documents" / "brother-scans"
 
         gemini_api_key = os.environ.get("GEMINI_API_KEY", "").strip()
         enable_ai_filing = os.environ.get("ENABLE_AI_FILING", "0").strip().lower() in ("1", "true", "yes")
