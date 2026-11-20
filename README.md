@@ -161,6 +161,17 @@ To inspect, reload, or stop the service on macOS, follow standard `launchctl` co
 
 ---
 
+## HTTPS Reverse Proxy (Caddy)
+
+The repository includes a built-in Caddy configuration to securely expose the local dashboard (`127.0.0.1:9400`) over TLS:
+
+- **Configuration:** [`caddy/Caddyfile`](caddy/Caddyfile) configured for `scans.alw.lol:8443` using Cloudflare DNS-01 ACME challenge.
+- **Runner Script:** [`scripts/run_caddy.sh`](scripts/run_caddy.sh)
+- **Authentication:** Automatically reads Cloudflare token from `~/.caddy_cloudflare_token`.
+- **LaunchAgent Service:** Managed via `~/Library/LaunchAgents/com.aaron.caddy.plist`.
+
+---
+
 ## Troubleshooting
 
 | Symptom | Cause | Solution |
