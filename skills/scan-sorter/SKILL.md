@@ -21,7 +21,7 @@ The Brother DS-940DW captures sheets into `~/Documents/brother-scans` (synced vi
 
 ## Target Paths
 
-- **Primary Tracked Folder (synced via iCloud):** `~/Library/Mobile Documents/com~apple~CloudDocs/brother-scans` (symlinked at `~/Documents/brother-scans` and `~/Scans`)
+- **Primary Tracked Folder (synced via iCloud):** `~/Library/Mobile Documents/com~apple~CloudDocs/brother-scans` (iCloud Drive root)
 - **Living Taxonomy Ledger:** `~/Documents/brother-scans/.taxonomy.json`
 - **Audit & Undo Log:** `~/Documents/brother-scans/SORT_LOG.md`
 - **Remote Host:** Local machine or remote hub via SSH (configurable via `SCANNER_SSH_TARGET`)

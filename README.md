@@ -15,7 +15,7 @@ flowchart LR
     C -->|"Pillow Spooler"| D["Assembled PDF\n(brother-YYYYMMDD-HHMMSS.pdf)"]
     D --> E["Apple Vision OCR\n(On-device Neural Engine text layer)"]
     E --> F["AI Mail Assistant\n(Gemini / LLM metadata extraction)"]
-    F --> G["~/Documents/brother-scans/<Category>/\n(YYYY-MM-DD_Sender_DocType.pdf)"]
+    F --> G["iCloud Drive: brother-scans/<Category>/\n(YYYY-MM-DD_Sender_DocType.pdf)"]
 ```
 
 ---
@@ -116,7 +116,7 @@ The background service runs 24/7 on your hub machine (e.g. Mac Mini) with minima
 
 1. **Wake the scanner:** Tap the **Power** button on the DS-940DW. It associates with your Wi-Fi within ~10 seconds.
 2. **Insert paper:** Slide a sheet face-up into the document slot. The scanner automatically detects the paper, pulls it through, and scans both sides.
-3. **Retrieve PDF:** Within 2 seconds of the sheet exiting, the final duplex PDF appears in your **`~/Documents/brother-scans`** folder (mirrored from `~/Scans`).
+3. **Retrieve PDF:** Within 2 seconds of the sheet exiting, the final duplex PDF appears in your **`brother-scans`** folder in iCloud Drive root.
 4. **Auto-sleep:** The scanner enters low-power sleep automatically after 3–5 minutes. The receiver detects the sleep state and backs off quietly.
 
 > [!CAUTION]
@@ -131,7 +131,7 @@ All settings can be configured via environment variables in `scripts/run_receive
 | Variable | Default | Purpose |
 |---|---|---|
 | `SCANNER_IP` / `SCANNER_HOST` | `192.168.0.25` | Local IPv4 address or mDNS hostname of the scanner. |
-| `OUTPUT_DIR` | `~/Scans` | Directory where finished PDFs are delivered (mirrored in `~/Documents/brother-scans`). |
+| `OUTPUT_DIR` | `~/Library/Mobile Documents/com~apple~CloudDocs/brother-scans` | Directory where finished PDFs are delivered (iCloud Drive root). |
 | `WORK_DIR` | `./work` | Staging spool and runtime status directory (`auto-status.json`, `worker.lock`). |
 | `SCAN_PAPER_SIZE` | `a4` | Paper bounds (`a4`, `auto`, or `legal`). |
 
@@ -179,7 +179,7 @@ The repository includes a built-in Caddy configuration to securely expose the lo
 | `Cannot reach scanner: No route to host` or `timed out` | Scanner is in low-power sleep or turned off. | Tap the Power button on the scanner to wake it up. The service will automatically reconnect within 15 seconds. |
 | `Scanner busy (HTTP 409)` | Another application or previous job holds the scanner. | Wait 30 seconds for firmware timeout, or toggle scanner power off and on. |
 | `Paper jammed in scanner feeder` | A sheet got caught or the cover was opened during scan. | Open the guide, remove the obstruction, and ensure the paper output flap is open for long documents. |
-| `Operation not permitted (getcwd)` | macOS TCC privacy restriction blocking `~/Documents`. | The service must be located in `~/Projects` and output to `~/Scans` (with a symlink to `~/Documents/brother-scans`). |
+| `Operation not permitted (getcwd)` | macOS TCC privacy restriction. | Ensure Full Disk Access is granted if needed for the background daemon to access iCloud Drive. |
 
 ---
 
@@ -192,7 +192,7 @@ The repository includes a built-in Caddy configuration to securely expose the lo
 - [ ] **Phase 3: Native Apple Vision OCR & AI Mail Assistant**
   - Instant on-device Apple Neural Engine text layer generation.
   - Gemini / LLM metadata extraction (date, sender, document type).
-  - Automatic filing and tagging into `~/Documents/brother-scans/<Category>/`.
+  - Automatic filing and tagging into `iCloud Drive/brother-scans/<Category>/`.
 - [ ] **Optional Paperless-ngx Ingestion:** Direct REST API forwarding to self-hosted Paperless-ngx instances.
 
 See [`ROADMAP.md`](ROADMAP.md) for complete technical specifications.
